@@ -1,0 +1,20 @@
+# Ignore Node.js build artifacts
+node_modules/
+.next/
+
+# Ignore development and production build directories
+/.next/
+/out/
+
+# Ignore environment files
+.env
+
+# Ignore logs
+*.log
+
+# Ignore VSCode settings
+.vscode/
+
+# Ignore package manager lock files
+package-lock.json
+yarn.lock
