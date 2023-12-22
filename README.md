@@ -1,5 +1,4 @@
-# Uber Clone
+# DIRECTION APP ALGER
 
-Building basic functionalities of Uber with Next.js
+With Next.js
 
-## [Live demo](https://gallant-mcclintock-c7b129.netlify.app)
