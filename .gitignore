@@ -1,20 +1,4 @@
-# Ignore Node.js build artifacts
-node_modules/
-.next/
-
-# Ignore development and production build directories
-/.next/
-/out/
-
-# Ignore environment files
+node_modules
+# Keep environment variables out of version control
 .env
-
-# Ignore logs
-*.log
-
-# Ignore VSCode settings
-.vscode/
-
-# Ignore package manager lock files
-package-lock.json
-yarn.lock
+.next

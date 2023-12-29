@@ -26,13 +26,14 @@
   }
 
   .pure-modal .panel-heading {
-    @apply bg-purple-600!important;
+    @apply bg-purple-600;
   }
 
   p.product-title {
-    margin-top: 0px !important;
+    margin-top: 0px;
   }
 }
+
 html,
 body {
   padding: 0;

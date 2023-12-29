@@ -1,4 +1,5 @@
-# DIRECTION APP ALGER TEAM FINTEL
+# Uber Clone
 
-With Next.js
+Building basic functionalities of Uber with Next.js
 
+## [Live demo](https://gallant-mcclintock-c7b129.netlify.app)
