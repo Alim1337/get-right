@@ -68,7 +68,7 @@ const CreateRide = () => {
   // ... (previous code remains unchanged)
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-screen bg-gray-100">
       <div className="w-full max-w-md">
         <h1 className="text-3xl mb-16 text-center">Create a Ride</h1>
         <form onSubmit={handleSubmit} className="bg-white shadow-xl border-2 rounded-xl px-8 pt-6 pb-8 mb-4">
