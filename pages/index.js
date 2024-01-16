@@ -3,7 +3,7 @@ import { useRouter } from "next/router"
 import { signOut, onAuthStateChanged } from "firebase/auth"
 import { auth } from "../firebase"
 
-import { GoPlusCircle } from "react-icons/go";
+
 import tw from "tailwind-styled-components"
 import Map from "../components/Map"
 import { SiUber } from "react-icons/si"
@@ -65,14 +65,13 @@ const Index = () => {
 
 
 
-                    <Link href='/createRide' passHref>
-                        <ActionButton>
-                            <ActionButtonImage>
-                                <GoPlusCircle size={34} />
-                            </ActionButtonImage>
-                            Publier un trajet
-                        </ActionButton>
-                    </Link>
+                    <ActionButton>
+                        {" "}
+                        <ActionButtonImage>
+                            <FaBiking size={34} />
+                        </ActionButtonImage>
+                        Wheels
+                    </ActionButton>
 
 
 
