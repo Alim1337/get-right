@@ -64,7 +64,8 @@ const Layout = ({ children, title = "Sample Title", isLoggedIn, onLogin }) => {
         </label>
         <button
           onClick={handleLoginClick}
-          className=" hover:bg-gray-100 text-gray-800 font-semibold  border border-gray-400 rounded shadow text-white p-3 w-full rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out transform hover:scale-110 animate-bounce"
+          className=" hover:bg-gray-100 text-gray-800 font-semibold  border border-gray-400 rounded shadow text-white p-3 w-full
+           rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out transform hover:scale-110 animate-bounce"
         >
           Log In
         </button>
