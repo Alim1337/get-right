@@ -50,6 +50,7 @@ const CreateRide = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Response:', data);
+        window.alert('Ride created successfully!');
         //router.push('/confirmation'); // Replace with your confirmation page
       } else {
         console.error('Error creating ride:', response.statusText);
