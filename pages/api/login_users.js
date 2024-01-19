@@ -35,9 +35,9 @@ export default async function handler(req, res) {
             );
 
             // Debug: Log the response data
-            console.log('Response Data:', { message: 'Login successful', token_login });
+            console.log('Response Data:', { message: 'Login successful', token_login, userId: user.userId });
 
-            return res.status(200).json({ message: 'Login successful', token_login });
+            return res.status(200).json({ message: 'Login successful', token_login, userId: user.userId });
         } else {
             // User not found, authentication failed
             // Debug: Log the response data for failed login

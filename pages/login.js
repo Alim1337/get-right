@@ -43,7 +43,10 @@ const Login = () => {
                 if (data.token_login) {
                     // handle successful login here
                     localStorage.setItem('token', data.token_login);
+                    //to retrieve driver id in createRide 
+                    localStorage.setItem('userId', data.userId);
                     console.log('Token:', data.token_login);
+                    console.log('UserId:', data.userId);
                     router.push("/"); // Redirect to the main page
                 } else {
                     // handle failed login here

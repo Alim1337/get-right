@@ -1,7 +1,10 @@
-// createRide.js
+
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const CreateRide = () => {
   const router = useRouter();
@@ -13,55 +16,97 @@ const CreateRide = () => {
   const [rideDetails, setRideDetails] = useState({
     departure: '',
     destination: '',
-    date: '',
+    date: '', // Combine date and time into a single property
+    time: '',
     seatsAvailable: 0,
     // Add more details as needed (e.g., time, price, etc.)
   });
 
   // Function to handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Perform validation before submitting the data
-    // You can also send this data to your backend or manage it as needed
-    console.log('Submitted details:', rideDetails);
-    // Redirect to a confirmation page or perform other actions
-    router.push('/confirmation'); // Replace '/confirmation' with your confirmation page
+
+    try {
+
+
+      const loggedInUserId = localStorage.getItem('userId');
+
+      if (!loggedInUserId) {
+        console.error('User not authenticated.'); // Handle this case appropriately
+        return;
+      }
+
+      // Add the driverId to the rideDetails before sending the request
+      const rideDataWithDriverId = { ...rideDetails, driverId: loggedInUserId };
+      // Fetch API route to create a ride
+      const response = await fetch('/api/apiCreateRide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rideDataWithDriverId),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Response:', data);
+        //router.push('/confirmation'); // Replace with your confirmation page
+      } else {
+        console.error('Error creating ride:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error creating ride:', error);
+    }
   };
+
 
   // Function to update state when form inputs change
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'date') {
-      const currentDate = new Date();
-      const selectedDate = new Date(value);
-      if (selectedDate < currentDate) {
-        setDateError('From today onward');
-        return;
+      console.log('Date:', value);
+      // Combine date and time into a single string
+
+      // Check if the selected date and time are not prior to the current date and time
+      const selectedDateTime = new Date(value); // Corrected date handling
+      const currentDateTime = new Date();
+
+      if (selectedDateTime < currentDateTime) {
+        setDateError('Selected date and time must be in the future');
       } else {
         setDateError('');
       }
-    }
 
-    // Seats available validation
-    if (name === 'seatsAvailable') {
+      setRideDetails({
+        ...rideDetails,
+        date: value,
+      });
+    }
+     else if (name === 'seatsAvailable') {
+      // Convert seatsAvailable to an integer
       const seats = parseInt(value, 10);
+
+      // Seats available validation
       if (seats > 4) {
         setSeatError('Seats cannot exceed 4');
-        return;
       } else {
         setSeatError('');
       }
+
+      setRideDetails({
+        ...rideDetails,
+        seatsAvailable: seats, // Update with the converted integer
+      });
+    } else {
+      // Handle other form inputs
+      setRideDetails({
+        ...rideDetails,
+        [name]: value,
+      });
     }
-
-
-
-
-    setRideDetails({
-      ...rideDetails,
-      [name]: value,
-    });
   };
+
 
   // createRide.js
 
@@ -111,6 +156,19 @@ const CreateRide = () => {
               <p className="text-red-500 text-s text-center">{dateError}</p>
             )}
           </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="time">
+              Time:
+              <input
+                type="time"
+                name="time"
+                value={rideDetails.time}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </label>
+          </div>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
               Seats Available:
@@ -127,7 +185,7 @@ const CreateRide = () => {
             )}
           </div>
           <div className='mt-10 text-center'>
-            <button disabled={dateError || seatError || true} type="submit" className=" left-1/2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            <button disabled={dateError || seatError} type="submit" className=" left-1/2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
               Publish Ride
             </button>
           </div>
