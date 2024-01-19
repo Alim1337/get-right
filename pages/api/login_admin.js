@@ -22,14 +22,14 @@ export default async function handler(req, res) {
 
     if (admin) {
       // User found, login successful
-      const token = jwt.sign(
+      const token_admin = jwt.sign(
         { userId: admin.userId, username: admin.username },
         SECRET_KEY,
         { expiresIn: '1h' }
       );
       
 
-      return res.status(200).json({ message: 'Login successful', token });
+      return res.status(200).json({ message: 'Login successful', token_admin });
     } else {
       // User not found, authentication failed
       return res.status(401).json({ message: 'Unauthorized' });

@@ -1,38 +1,42 @@
-import { useEffect } from "react"
-import tw from "tailwind-styled-components"
-import mapboxgl from "!mapbox-gl"
+// components/Map.js
+import { useEffect } from "react";
+import tw from "tailwind-styled-components";
+import mapboxgl from "mapbox-gl";
+
 export const accessToken =
-    "pk.eyJ1IjoidGhlYXNzZXQiLCJhIjoiY2tyb3V1ZTZmMWpsMDJubDdha2lsbXYxeSJ9.A_zwqkPVPGP75uNMSHlzNQ"
+  "pk.eyJ1IjoidGhlYXNzZXQiLCJhIjoiY2tyb3V1ZTZmMWpsMDJubDdha2lsbXYxeSJ9.A_zwqkPVPGP75uNMSHlzNQ";
 
-mapboxgl.accessToken = accessToken
+mapboxgl.accessToken = accessToken;
 
-const Map = ({ pickupCoords, dropoffCoords }) => {
-    useEffect(() => {
-        const map = new mapboxgl.Map({
-            container: "map",
-            style: "mapbox://styles/mapbox/streets-v11",
-            center: [44, 36.2],
-            zoom: 12,
-        })
+const Map = ({ location }) => {
+  useEffect(() => {
+    console.log("Received Coordinates:", location);
 
-        if (pickupCoords && dropoffCoords) {
-            addToMap(map, pickupCoords)
-            addToMap(map, dropoffCoords)
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/streets-v11",
+      center: location,
+      zoom: 3,
+    });
 
-            map.fitBounds([pickupCoords, dropoffCoords], {
-                padding: 50,
-            })
-        }
-    }, [pickupCoords, dropoffCoords])
+    addToMap(map, location);
 
-    const addToMap = (map, latLon) =>
-        new mapboxgl.Marker().setLngLat(latLon).addTo(map)
+    // Create a bounding box around the single point
+    const bounds = new mapboxgl.LngLatBounds(location, location);
 
-    return <Wrapper id='map'></Wrapper>
-}
+    map.fitBounds(bounds, {
+      padding: 50,
+    });
+  }, [location]);
+
+  const addToMap = (map, latLon) =>
+    new mapboxgl.Marker().setLngLat(latLon).addTo(map);
+
+  return <Wrapper id="map"></Wrapper>;
+};
 
 const Wrapper = tw.div`
     flex-1 h-1/2
-`
+`;
 
 export default Map;
