@@ -12,6 +12,9 @@ const Login = () => {
     const [showInscriptionFields, setShowInscriptionFields] = useState(false)
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -27,37 +30,45 @@ const Login = () => {
     const handleInscriptionClick = () => {
         setShowInscriptionFields(true)
     }
-
-    const handleLogin = async () => {
+    const handleRegister = async () => {
         try {
-            const response = await fetch('/api/login_users', {
+            const response = await fetch('/api/signup_user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: username, password }),
+                body: JSON.stringify({
+                    firstName,
+                    lastName,
+                    phoneNumber,
+                    email: username,
+                    password,
+                }),
             });
-
+    
             if (response.ok) {
                 const data = await response.json();
-                if (data.token_login) {
-                    // handle successful login here
-                    localStorage.setItem('token', data.token_login);
-                    console.log('Token:', data.token_login);
-                    router.push("/"); // Redirect to the main page
+                if (data.token_signup) {
+                    // handle successful registration here
+                    localStorage.setItem('token', data.token_signup);
+                    console.log('Token:', data.token_signup);
+                    // Redirect to the login page
+                    router.push("/");
+                    // Show a notification (you can use your preferred notification library)
+                    alert('Registration successful. You will log in.');
                 } else {
-                    // handle failed login here
-                    alert('Login failed');
+                    // handle failed registration here
+                    alert('Registration failed');
                 }
             } else {
                 // handle other error cases
                 console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
             }
         } catch (error) {
-            console.error('Error during login:', error);
+            console.error('Error during registration:', error);
         }
     };
-
+    
     return (
         <Wrapper>
             <LogoWrapper>
@@ -74,16 +85,16 @@ const Login = () => {
                     </SignInButtonL>
                 </>
             )}
-           {showInscriptionFields && (
-    <>
-        <Input type="text" placeholder="First Name" />
-        <Input type="text" placeholder="Last Name" />
-        <Input type="text" placeholder="Phone Number" />
-        <Input type="text" placeholder="Email" />
-        <Input type="password" placeholder="Password" />
-        <SignInButtonL onClick={handleInscriptionClick}>
+          {showInscriptionFields && (
+        <>
+          <Input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <Input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          <Input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+          <Input type="text" placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} />
+          <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <SignInButtonL onClick={handleRegister}>
             Register 
-        </SignInButtonL>
+          </SignInButtonL>
     </>
 )}
 
