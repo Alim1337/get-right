@@ -6,7 +6,7 @@ import { auth } from "../firebase";
 import tw from "tailwind-styled-components";
 import Map from "../components/Map";
 import { SiUber } from "react-icons/si";
-import { FaCar, FaBiking, FaCalendarAlt } from "react-icons/fa";
+import { FaCar, FaPlusCircle, FaCalendarAlt } from "react-icons/fa";
 import Link from "next/link";
 
 const Index = () => {
@@ -76,12 +76,15 @@ const Index = () => {
             </ActionButton>
           </Link>
 
-          <ActionButton>
-            <ActionButtonImage>
-              <FaBiking size={34} />
-            </ActionButtonImage>
-            Wheels
-          </ActionButton>
+          <Link href="/createRide" passHref>
+            <ActionButton>
+              <ActionButtonImage>
+                <FaPlusCircle size={34} />
+              </ActionButtonImage>
+              Create Ride
+            </ActionButton>
+          </Link>
+
 
           <ActionButton>
             <ActionButtonImage>
