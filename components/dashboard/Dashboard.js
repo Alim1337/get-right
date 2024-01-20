@@ -86,7 +86,9 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={toggleUserMenu}
-                className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700 focus:text-purple-700 hover:bg-purple-100 focus:bg-purple-100 border border-purple-600 rounded-md mb-3"
+                className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700
+                 focus:text-purple-700 hover:bg-purple-100 focus:bg-purple-100 border
+                  border-purple-600 rounded-md mb-3"
               >
                 <svg
                   aria-hidden="true"
@@ -148,7 +150,8 @@ const Dashboard = () => {
                   <button
                     type="button"
                     onClick={toggleRideMenu}
-                    className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700 focus:text-purple-700 hover:bg-purple-100 focus:bg-purple-100 border border-purple-600 rounded-md mb-3"
+                    className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700 focus:text-purple-700
+                     hover:bg-purple-100 focus:bg-purple-100 border border-purple-600 rounded-md mb-3"
                   >
                     <svg
                       aria-hidden="true"
@@ -217,8 +220,8 @@ const Dashboard = () => {
               </svg>
             </div>
             <div>
-              <span className="block text-2xl font-bold">1200</span>
-              <span className="block text-gray-500">Total Users</span>
+            <span className="block text-2xl font-bold">{users.length}</span>
+      <span className="block text-gray-500">Total Users</span>
             </div>
           </div>
           {/* Add more user-related metrics here */}
@@ -226,7 +229,8 @@ const Dashboard = () => {
         <section className="grid md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-3 xl:grid-flow-col gap-6">
           <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
             <div className="px-6 py-5 font-semibold border-b border-gray-100">Users</div>
-            <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
+            <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4
+             border border-gray-400 rounded shadow">
             Add
           </button>
             <div className="p-4 flex-grow">
@@ -256,7 +260,10 @@ const Dashboard = () => {
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
               <button
-                className="text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                className="text-white bg-gradient-to-r from-green-400 via-green-500
+                 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none
+                  focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg 
+                  dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
               >
                 Modify
               </button>
@@ -265,7 +272,8 @@ const Dashboard = () => {
                   setDeleteUserId(user.userId); // Set deleteUserId when the button is clicked
                   handleDeleteUser(user.userId); // Pass user.userId to handleDeleteUser
                 }}
-                className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                className="text-white bg-gradient-to-r from-red-400 via-red-500
+                 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
               >
                 Delete
               </button>
