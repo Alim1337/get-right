@@ -15,6 +15,7 @@ import { MdStars } from "react-icons/md";
 
 const CreateRide = () => {
   const router = useRouter();
+  const [driverId, setDriverId] = useState('');
 
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
@@ -35,6 +36,17 @@ const CreateRide = () => {
   });
   const [map, setMap] = useState(null);
   const [line, setLine] = useState(null);
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+    setDriverId(decodedToken.userId);
+    console.log('this is decodedToken', decodedToken);
+}, []);
+
+useEffect(() => {
+    console.log('this is driver id ', driverId);
+}, [driverId]); // This useEffect runs whenever driverId changes
+
 
   const setupMap = () => {
     mapboxgl.accessToken = accessToken;
@@ -116,11 +128,39 @@ const CreateRide = () => {
       setLine(newLine);
     }
   };
-
-  const handleSubmit = () => {
-    // Your existing submit logic here
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    try {
+      const response = await fetch('/api/apiCreateRide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          departure: pickup.locationName,
+          destination: dropoff.locationName,
+          date: rideDetails.date,
+          time: rideDetails.time,
+          seatsAvailable: rideDetails.seatsAvailable,
+          driverId: driverId,
+        }),
+      });
+  
+      if (response.ok) {
+        console.log('Ride created successfully');
+        // Show a notification before redirecting
+        window.alert('Ride created successfully');
+        // Redirect or perform any other actions after successful ride creation
+        router.push('/'); // Redirect to the home page
+      } else {
+        console.error('Failed to create ride');
+      }
+    } catch (error) {
+      console.error('Error during ride creation:', error);
+    }
   };
-
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
 

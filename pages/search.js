@@ -11,22 +11,35 @@ import { FaSquareFull } from "react-icons/fa";
 import { MdStars } from "react-icons/md";
 import Link from "next/link";
 import { accessToken } from "../components/Map";
+import ListRides from "../components/ListRides";
 
 const Search = () => {
-  const [pickup, setPickup] = useState({
-    coordinates: [0, 0],
-    locationName: "Unknown Location",
-  });
-  const [dropoff, setDropoff] = useState(null);
-  const [map, setMap] = useState(null);
-  const [line, setLine] = useState(null);
-
-  const setupMap = () => {
-    mapboxgl.accessToken = accessToken;
-
-    // Fetch current location
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    const [pickup, setPickup] = useState({
+        coordinates: [0, 0],
+        locationName: "Unknown Location",
+      });
+      const [dropoff, setDropoff] = useState(null);
+      const [map, setMap] = useState(null);
+      const [line, setLine] = useState(null);
+      const [searchTerm, setSearchTerm] = useState('');
+      const [searchResults, setSearchResults] = useState(null);
+      const [showSearchResults, setShowSearchResults] = useState(false);
+    const getCurrentLocation = () => {
+      return new Promise((resolve, reject) => {
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => resolve(position),
+          (error) => reject(error)
+        );
+  
+        setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
+      });
+    };
+  
+    const setupMap = async () => {
+      mapboxgl.accessToken = accessToken;
+  
+      try {
+        const position = await getCurrentLocation();
         const currentLocation = {
           coordinates: [position.coords.longitude, position.coords.latitude],
           locationName: await reverseGeocode(
@@ -36,16 +49,14 @@ const Search = () => {
         };
         setPickup(currentLocation);
         setupMapWithPickup(currentLocation);
-      },
-      (error) => {
+      } catch (error) {
         console.error("Error getting current location:", error);
         setupMapWithPickup({
           coordinates: [0, 0],
           locationName: "Unknown Location",
-        }); // Default pickup location if geolocation fails
+        });
       }
-    );
-  };
+    };
 
   const setupMapWithPickup = (pickupLocation) => {
     const newMap = new mapboxgl.Map({
@@ -55,7 +66,6 @@ const Search = () => {
       zoom: 12,
     });
 
-    // Add a marker on double click to set the pickup location
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
@@ -104,9 +114,34 @@ const Search = () => {
     }
   };
 
+  const handleSearch = async () => {
+    try {
+      console.log('searchTerm', searchTerm);
+      const response = await fetch(`/api/apiSearchTrips?searchTerm=${searchTerm}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Search results:', data); // Log the data received
+        setSearchResults(data);
+        setShowSearchResults(true);
+      } else {
+        console.error('Failed to fetch search results');
+      }
+    } catch (error) {
+      console.error('Error during search:', error);
+    }
+  };
+  
+
   useEffect(() => {
     setupMap();
-  }, []); // Run this effect once after the initial render
+  }, []);
+
 
   return (
     <Wrapper>
@@ -140,10 +175,12 @@ const Search = () => {
             value={`(${pickup.locationName})`}
             readOnly
             placeholder="Enter pickup location"
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Input
             value={dropoff ? dropoff.locationName : "Where to?"}
             readOnly
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </InputBoxes>
 
@@ -157,15 +194,18 @@ const Search = () => {
         <MdStars size={30} /> Saved Places
       </SavedPlaces>
 
-      {/* Confirm Locations */}
-      <ConfirmLocation>Confirm Location</ConfirmLocation>
+
+      <ConfirmLocation onClick={handleSearch}>Confirm Location</ConfirmLocation>
+      {showSearchResults && <ListRides rides={searchResults} />}
     </Wrapper>
   );
 };
 
+
 const Wrapper = tw.div`
     p-4 bg-gray-200 h-screen
 `;
+
 const ButtonContainer = tw.div`
     bg-white p-2 h-12
 `;
@@ -175,6 +215,7 @@ const BackButton = tw.button``;
 const InputContainer = tw.div`
     bg-white flex items-center py-4 my-4
 `;
+
 const FromToIcons = tw.div`
     w-10 h-16 flex flex-col items-center justify-between
 `;

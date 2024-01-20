@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
   const combinedDateTimeString = `${date}T${time}:00.000Z`;
   const departureTime = new Date(combinedDateTimeString);
-
+  //console.log("departure, destination, date, time, seatsAvailable, driverId ",departure, destination, date, time, seatsAvailable, driverId );
   try {
     const createdRide = await prisma.trips.create({
       data: {
