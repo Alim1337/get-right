@@ -81,7 +81,7 @@ const Index = () => {
               <ActionButtonImage>
                 <FaPlusCircle size={34} />
               </ActionButtonImage>
-              Create Ride
+              Create Trip
             </ActionButton>
           </Link>
 
@@ -90,7 +90,7 @@ const Index = () => {
             <ActionButtonImage>
               <FaCalendarAlt size={34} />
             </ActionButtonImage>
-            Reserve
+            See trips
           </ActionButton>
         </ActionButtons>
 
