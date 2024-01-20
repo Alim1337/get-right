@@ -149,24 +149,31 @@ const Search = () => {
     setupMap();
   }, []);
 
-  const handleRequestSeat = async (requestData) => {
+  
+  const handleRequestSeat = async (rideInfo) => {
     try {
+      // Send the ride information to the backend
       const response = await fetch('/api/requestSeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({
+          userId: userId, // Replace with actual user ID
+          tripId: rideInfo.ride_id,
+          // Include other relevant information if needed
+        }),
       });
+      console.log('userId,rideInfo.ride_id',userId,rideInfo.ride_id);
 
       if (response.ok) {
-        console.log('Seat requested successfully');
-        // You may want to handle the response accordingly
+        const data = await response.json();
+        console.log('Seat requested successfully:', data);
       } else {
         console.error('Failed to request seat');
       }
     } catch (error) {
-      console.error('Error during seat request:', error);
+      console.error('Error requesting seat:', error);
     }
   };
 

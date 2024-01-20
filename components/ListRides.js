@@ -7,7 +7,7 @@ const RideItem = ({ ride, onRequestSeat }) => {
   const handleRequestSeat = () => {
     if (seatRequests < ride.availableSeats) {
       setSeatRequests(seatRequests + 1);
-      // Send ride_id and other information to the backend
+      // Send ride_id and other information to the parent component (search page)
       onRequestSeat({
         ride_id: ride.tripId,
         // Include other relevant information if needed
@@ -16,6 +16,7 @@ const RideItem = ({ ride, onRequestSeat }) => {
       alert('No more seats available');
     }
   };
+
 
   return (
     <Ride>
@@ -31,6 +32,8 @@ const RideItem = ({ ride, onRequestSeat }) => {
     </Ride>
   );
 };
+
+//export default RideItem;
 
 const ListRides = ({ rides, onRequestSeat }) => (
   <Wrapper>
