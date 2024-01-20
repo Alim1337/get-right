@@ -30,6 +30,37 @@ const Login = () => {
     const handleInscriptionClick = () => {
         setShowInscriptionFields(true)
     }
+
+    const handleLogin = async () => {
+        try {
+            const response = await fetch('/api/login_users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: username, password }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.token_login) {
+                    // handle successful login here
+                    localStorage.setItem('token', data.token_login);
+                    console.log('Token:', data.token_login);
+                    router.push("/"); // Redirect to the main page
+                } else {
+                    // handle failed login here
+                    alert('Login failed');
+                }
+            } else {
+                // handle other error cases
+                console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
+            }
+        } catch (error) {
+            console.error('Error during login:', error);
+        }
+    };
+
     const handleRegister = async () => {
         try {
             const response = await fetch('/api/signup_user', {
@@ -106,6 +137,7 @@ const Login = () => {
         </Wrapper>
     )
 }
+
 
 
 // ... rest of your code
