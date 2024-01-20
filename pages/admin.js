@@ -42,6 +42,7 @@ export default function Admin() {
       console.error('Error during login:', error);
     }
   };
+  
 
   return (
     <Layout title="Home Layout" isLoggedIn={isLoggedIn} onLogin={handleLogin}>
