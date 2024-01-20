@@ -46,6 +46,8 @@ const Login = () => {
                 if (data.token_login) {
                     // handle successful login here
                     localStorage.setItem('token', data.token_login);
+                    //to retrieve driver id in createRide 
+                    localStorage.setItem('userId', data.userId);
                     console.log('Token:', data.token_login);
                     router.push("/"); // Redirect to the main page
                 } else {
@@ -82,6 +84,8 @@ const Login = () => {
                 if (data.token_signup) {
                     // handle successful registration here
                     localStorage.setItem('token', data.token_signup);
+                    //to retrieve driver id in createRide 
+                    localStorage.setItem('userId', data.userId);
                     console.log('Token:', data.token_signup);
                     // Redirect to the login page
                     router.push("/");

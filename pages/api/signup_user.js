@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     );
 
 
-      res.status(200).json({token_signup });
+      res.status(200).json({token_signup, userId: newUser.userId });
     } catch (error) {
       console.error('Error during user registration:', error);
       res.status(500).json({ error: 'Error during user registration' });
