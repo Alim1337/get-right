@@ -160,14 +160,16 @@ const Dashboard = () => {
                   <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                     <button
                       onClick={() => handleUserAction('show')}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
+                       hover:text-gray-900"
                       role="menuitem"
                     >
                       Show Users
                     </button>
                     <button
                       onClick={() => handleUserAction('add')}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
+                       hover:text-gray-900"
                       role="menuitem"
                     >
                       Add User
@@ -252,8 +254,13 @@ const Dashboard = () => {
             {/* Add more buttons for additional functionalities */}
           </div>
         </div>
-        <section className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <div className="flex items-center p-8 bg-white shadow rounded-lg">
+ 
+        <section className="grid md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-3 xl:grid-flow-col gap-6">
+          
+          <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
+            <div className="px-6 py-5 font-semibold border-b border-gray-100">Users</div>
+         
+            <div className="p-4 flex-grow">
             <div className="inline-flex flex-shrink-0 items-center justify-center
              h-16 w-16 text-purple-600 bg-purple-100 rounded-full mr-6">
               <svg
@@ -263,27 +270,27 @@ const Dashboard = () => {
                 stroke="currentColor"
                 className="h-6 w-6"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" 
+                strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10
+                 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 
+                 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 
+                 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
             <div>
             <span className="block text-2xl font-bold">{users.length}</span>
       <span className="block text-gray-500">Total Users</span>
             </div>
-          </div>
-          {/* Add more user-related metrics here */}
-        </section>
-        <section className="grid md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-3 xl:grid-flow-col gap-6">
-          <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
-            <div className="px-6 py-5 font-semibold border-b border-gray-100">Users</div>
             <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4
              border border-gray-400 rounded shadow">
             Add
           </button>
-            <div className="p-4 flex-grow">
               <div className="overflow-x-auto">
+                
               <table className="min-w-full divide-y divide-gray-200">
+                
   <thead className="bg-gray-50">
+    
     <tr>
       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
         Name
@@ -335,6 +342,27 @@ const Dashboard = () => {
           </div>
           {/* Add more sections for other functionalities */}
           <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
+          <div className="flex items-center p-8 bg-white shadow rounded-lg">
+            <div className="inline-flex flex-shrink-0 items-center justify-center
+             h-16 w-16 text-purple-600 bg-purple-100 rounded-full mr-6">
+              <svg
+                aria-hidden="true"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="h-6 w-6"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" 
+                strokeWidth={2} d="M30.915,17.439l-0.524-4.262c-0.103-0.818-0.818-1.418-1.643-1.373L27.6,11.868l-3.564-3.211    c-0.344-0.309-0.787-0.479-1.249-0.479l-7.241-0.001c-1.625,0-3.201,0.555-4.468,1.573l-4.04,3.246l-5.433,1.358    c-0.698,0.174-1.188,0.802-1.188,1.521v1.566C0.187,17.44,0,17.626,0,17.856v2.071c0,0.295,0.239,0.534,0.534,0.534h3.067   
+                 c-0.013-0.133-0.04-0.26-0.04-0.396c0-2.227,1.804-4.029,4.03-4.029s4.029,1.802,4.029,4.029c0,0.137-0.028,0.264-0.041,0.396    h8.493c-0.012-0.133-0.039-0.26-0.039-0.396c0-2.227,1.804-4.029,4.029-4.029c2.227,0,4.028,1.802,4.028,4.029    c0,0.137-0.026,0.264-0.04,0.396h2.861c0.295,0,0.533-0.239,0.533-0.534v-1.953C31.449,17.68,31.21,17.439,30.915,17.439z  
+                    M20.168,12.202l-10.102,0.511L12,11.158c1.051-0.845,2.357-1.305,3.706-1.305h4.462V12.202z M21.846,12.117V9.854h0.657    c0.228,0,0.447,0.084,0.616,0.237l2.062,1.856L21.846,12.117z" />
+              </svg>
+            </div>
+            <div>
+            <span className="block text-2xl font-bold">{rides.length}</span>
+      <span className="block text-gray-500">Total Trips</span>
+            </div>
+          </div>
             <div className="px-6 py-5 font-semibold border-b border-gray-100">Rides</div>
             <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4
               border border-gray-400 rounded shadow">
@@ -366,8 +394,11 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
+              
             {rides.map((ride) => (
+              
               <tr key={ride.tripId}>
+                   
                 {/* Adjust the cells based on your ride model */}
                 <td className="px-6 py-4 whitespace-nowrap">{ride.departureLocation}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{ride.destinationLocation}</td>
