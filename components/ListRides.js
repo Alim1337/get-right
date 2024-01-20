@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import tw from "tailwind-styled-components";
 
-const RideItem = ({ ride }) => {
+const RideItem = ({ ride, onRequestSeat }) => {
   const [seatRequests, setSeatRequests] = useState(0);
 
   const handleRequestSeat = () => {
     if (seatRequests < ride.availableSeats) {
       setSeatRequests(seatRequests + 1);
+      // Send ride_id and other information to the backend
+      onRequestSeat({
+        ride_id: ride.tripId,
+        // Include other relevant information if needed
+      });
     } else {
       alert('No more seats available');
     }
@@ -19,7 +24,7 @@ const RideItem = ({ ride }) => {
         <Location>{ride.destinationLocation}</Location>
         <Time>{new Date(ride.departureTime).toLocaleString()}</Time>
         <Seats>Available Seats: {ride.availableSeats - seatRequests}</Seats>
-        <Seats>Requested Seats: {seatRequests}</Seats> {/* Display the number of requested seats */}
+        <Seats>Requested Seats: {seatRequests}</Seats>
         <DriverID>Driver ID: {ride.driverId}</DriverID>
         <Button onClick={handleRequestSeat}>Request Seat</Button>
       </RideDetails>
@@ -27,10 +32,10 @@ const RideItem = ({ ride }) => {
   );
 };
 
-const ListRides = ({ rides }) => (
+const ListRides = ({ rides, onRequestSeat }) => (
   <Wrapper>
     {rides.map((ride) => (
-      <RideItem key={ride.tripId} ride={ride} />
+      <RideItem key={ride.tripId} ride={ride} onRequestSeat={onRequestSeat} />
     ))}
   </Wrapper>
 );
@@ -41,15 +46,15 @@ const Wrapper = tw.div`
 
 const Ride = tw.div`
   flex flex-row py-4 items-center cursor-pointer bg-white shadow-lg rounded-lg mb-4
-`; // Add background color, shadow, and rounded corners
+`;
 
 const RideDetails = tw.div`
   flex-1 px-4
-`; // Add padding
+`;
 
 const Location = tw.div`
   font-bold text-lg
-`; // Increase font size
+`;
 
 const Time = tw.div`
   text-sm text-blue-500
@@ -65,6 +70,6 @@ const DriverID = tw.div`
 
 const Button = tw.button`
   bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2
-`; // Add margin-top
+`;
 
 export default ListRides;

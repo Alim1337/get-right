@@ -22,6 +22,8 @@ const Search = () => {
       const [map, setMap] = useState(null);
       const [line, setLine] = useState(null);
       const [searchTerm, setSearchTerm] = useState('');
+      const [userId, setUserId] = useState(null);
+
       const [searchResults, setSearchResults] = useState(null);
       const [showSearchResults, setShowSearchResults] = useState(false);
     const getCurrentLocation = () => {
@@ -34,7 +36,12 @@ const Search = () => {
         setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
       });
     };
-  
+    useEffect(() => {
+      const token = localStorage.getItem('token');
+      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+      setUserId(decodedToken.userId);
+      console.log('this is decodedToken', decodedToken);
+  }, []);
     const setupMap = async () => {
       mapboxgl.accessToken = accessToken;
   
@@ -142,6 +149,26 @@ const Search = () => {
     setupMap();
   }, []);
 
+  const handleRequestSeat = async (requestData) => {
+    try {
+      const response = await fetch('/api/requestSeat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (response.ok) {
+        console.log('Seat requested successfully');
+        // You may want to handle the response accordingly
+      } else {
+        console.error('Failed to request seat');
+      }
+    } catch (error) {
+      console.error('Error during seat request:', error);
+    }
+  };
 
   return (
     <Wrapper>
@@ -196,7 +223,7 @@ const Search = () => {
 
 
       <ConfirmLocation onClick={handleSearch}>Confirm Location</ConfirmLocation>
-      {showSearchResults && <ListRides rides={searchResults} />}
+        {showSearchResults && <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} />}
     </Wrapper>
   );
 };
