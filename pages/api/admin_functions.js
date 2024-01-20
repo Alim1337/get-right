@@ -5,73 +5,127 @@ const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    // Get all users
     try {
       const users = await prisma.users.findMany();
-      //console.log(users);
-      return res.status(200).json({ users });
+      const rides = await prisma.trips.findMany();
+    //  console.log('rides',rides);
+
+      return res.status(200).json({ users, rides });
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching data:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   } else if (req.method === 'POST') {
-    // Add a new user
-    const { firstName, lastName, email, password, role } = req.body;
+    // Handle adding users or rides based on the request
+    if (req.body.type === 'user') {
+      const { firstName, lastName, email, password, role } = req.body;
 
-    try {
-      const newUser = await prisma.users.create({
-        data: {
-          firstName,
-          lastName,
-          email,
-          password,
-          role,
-        },
-      });
+      try {
+        const newUser = await prisma.users.create({
+          data: {
+            firstName,
+            lastName,
+            email,
+            password,
+            role,
+          },
+        });
 
-      return res.status(200).json({ message: 'User added successfully', user: newUser });
-    } catch (error) {
-      console.error('Error adding user:', error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(200).json({ message: 'User added successfully', user: newUser });
+      } catch (error) {
+        console.error('Error adding user:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
+    } else if (req.body.type === 'ride') {
+      // Handle adding a new ride
+      const { departureLocation, destinationLocation, departureTime, availableSeats, driverId } = req.body;
+
+      try {
+        const newRide = await prisma.rides.create({
+          data: {
+            departureLocation,
+            destinationLocation,
+            departureTime,
+            availableSeats,
+            driverId,
+          },
+        });
+
+        return res.status(200).json({ message: 'Ride added successfully', ride: newRide });
+      } catch (error) {
+        console.error('Error adding ride:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
     }
   } else if (req.method === 'DELETE') {
-    // Delete a user
-    const userId = req.body.userId;
-    console.log(userId);
-        try {
-      const deletedUser = await prisma.users.delete({
-        where: {
-          userId,
-        },
-      });
+    // Handle deleting users or rides based on the request
+    const { type, id } = req.body;
 
-      return res.status(200).json({ message: 'User deleted successfully', user: deletedUser });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+    if (type === 'user') {
+      try {
+        const deletedUser = await prisma.users.delete({
+          where: {
+            userId: id,
+          },
+        });
+
+        return res.status(200).json({ message: 'User deleted successfully', user: deletedUser });
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
+    } else if (type === 'ride') {
+      // Handle deleting a ride
+      try {
+        const deletedRide = await prisma.rides.delete({
+          where: {
+            tripId: id,
+          },
+        });
+
+        return res.status(200).json({ message: 'Ride deleted successfully', ride: deletedRide });
+      } catch (error) {
+        console.error('Error deleting ride:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
     }
   } else if (req.method === 'PUT') {
-    // Modify a user
-    const { userId, firstName, lastName, email, password, role } = req.body;
+    // Handle modifying users or rides based on the request
+    const { type, id, ...rest } = req.body;
 
-    try {
-      const modifiedUser = await prisma.users.update({
-        where: {
-          userId,
-        },
-        data: {
-          firstName,
-          lastName,
-          email,
-          password,
-          role,
-        },
-      });
+    if (type === 'user') {
+      try {
+        const modifiedUser = await prisma.users.update({
+          where: {
+            userId: id,
+          },
+          data: {
+            ...rest,
+          },
+        });
 
-      return res.status(200).json({ message: 'User modified successfully', user: modifiedUser });
-    } catch (error) {
-      console.error('Error modifying user:', error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+        return res.status(200).json({ message: 'User modified successfully', user: modifiedUser });
+      } catch (error) {
+        console.error('Error modifying user:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
+    } else if (type === 'ride') {
+      // Handle modifying a ride
+      try {
+        const modifiedRide = await prisma.rides.update({
+          where: {
+            tripId: id,
+          },
+          data: {
+            ...rest,
+          },
+        });
+
+        return res.status(200).json({ message: 'Ride modified successfully', ride: modifiedRide });
+      } catch (error) {
+        console.error('Error modifying ride:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
     }
   } else {
     return res.status(405).json({ message: 'Method Not Allowed' });

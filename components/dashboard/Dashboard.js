@@ -5,6 +5,8 @@ const Dashboard = () => {
   const [showRideMenu, setShowRideMenu] = useState(false);
   const [users, setUsers] = useState([]);
   const [deleteUserId, setDeleteUserId] = useState(null);
+  const [rides, setRides] = useState([]);
+  const [deleteRideId, setDeleteRideId] = useState(null);
 
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
@@ -69,6 +71,51 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error during user deletion:', error);
+    }
+  };
+  const fetchRides = async () => {
+    try {
+      const response = await fetch('/api/admin_functions');
+      const data = await response.json();
+      setRides(data.rides);
+      console.log(rides);
+    } catch (error) {
+      console.error('Error fetching rides:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch rides when the component mounts
+    fetchRides();
+  }, []);
+
+  const handleDeleteRide = async (rideId) => {
+    try {
+      if (!rideId) {
+        console.error('Invalid rideId for deletion');
+        return;
+      }
+
+      const response = await fetch('/api/admin_functions', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'ride',
+          id: rideId,
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Ride deleted successfully');
+        fetchRides(); // Fetch rides again to update the list
+        setDeleteRideId(null); // Reset deleteRideId after successful deletion
+      } else {
+        console.error('Failed to delete ride');
+      }
+    } catch (error) {
+      console.error('Error during ride deletion:', error);
     }
   };
 
@@ -287,6 +334,74 @@ const Dashboard = () => {
             </div>
           </div>
           {/* Add more sections for other functionalities */}
+          <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
+            <div className="px-6 py-5 font-semibold border-b border-gray-100">Rides</div>
+            <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4
+              border border-gray-400 rounded shadow">
+              Add
+            </button>
+            <div className="p-4 flex-grow">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Departure Location
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Destination Location
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Departure Time
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Available Seats
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Driver ID
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+            {rides.map((ride) => (
+              <tr key={ride.tripId}>
+                {/* Adjust the cells based on your ride model */}
+                <td className="px-6 py-4 whitespace-nowrap">{ride.departureLocation}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{ride.destinationLocation}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{ride.departureTime}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{ride.availableSeats}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{ride.driverId}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {/* Add buttons for ride actions (modify, delete) */}
+                  <button
+                    className="text-white bg-gradient-to-r from-green-400 via-green-500
+                      to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none
+                      focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg 
+                      dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                  >
+                    Modify
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteRideId(ride.tripId); // Set deleteRideId when the button is clicked
+                      handleDeleteRide(ride.tripId); // Pass ride.tripId to handleDeleteRide
+                    }}
+                    className="text-white bg-gradient-to-r from-red-400 via-red-500
+                      to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
     </>
