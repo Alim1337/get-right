@@ -98,13 +98,19 @@ const Index = () => {
           </ActionButton>
         </ActionButtons>
 
-        <Link href="/manageDrives" passHref>
-          <div className="flex flex-col items-center justify-center mt-8">
-            <ActionButton className="w-full">
-              {user && user.role === "driver" ? "Manage My Drives" : "Where to?"}
-            </ActionButton>
-          </div>
-        </Link>
+        <div className="flex flex-col items-center justify-center mt-8">
+          {user && user.role === 'driver' ? (
+            <Link href="/manageDrives" passHref>
+              <div className="w-full">
+                <ActionButton className="w-full">Manage My Drives</ActionButton>
+              </div>
+            </Link>
+          ) : (
+            <div className="w-full text-center justify-center">
+              <ActionButton className="w-full text-center">Where to?</ActionButton>
+            </div>
+          )}
+        </div>
 
       </ActionItems>
     </Wrapper>
