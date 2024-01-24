@@ -17,13 +17,13 @@ const Index = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-        router.push("/login");
+      router.push("/login");
     } else {
-        // Fetch user information including role
-        const userRole = localStorage.getItem("role");
-        setUser({ role: userRole });
+      // Fetch user information including role
+      const userRole = localStorage.getItem("role");
+      setUser({ role: userRole });
     }
-}, []);
+  }, []);
 
   useEffect(() => {
     const updateLocation = async () => {
@@ -98,9 +98,14 @@ const Index = () => {
           </ActionButton>
         </ActionButtons>
 
-        <InputButton>
-          {user && user.role === "driver" ? "Manage My Drives" : "Where to?"}
-        </InputButton>
+        <Link href="/manageDrives" passHref>
+          <div className="flex flex-col items-center justify-center mt-8">
+            <ActionButton className="w-full">
+              {user && user.role === "driver" ? "Manage My Drives" : "Where to?"}
+            </ActionButton>
+          </div>
+        </Link>
+
       </ActionItems>
     </Wrapper>
   );
