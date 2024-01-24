@@ -19,7 +19,21 @@ export default async function handler(req, res) {
         },
       });
 
-      return res.status(200).json({ trips });
+      const tripIds = trips.map((trip) => trip.tripId);
+
+      const rideRequests = await prisma.ride_requests.findMany({
+        where: {
+          tripId: {
+            in: tripIds,
+          },
+        },
+        include: {
+          users: true, // Include user information
+          trips: true,  // Include trip information
+        },
+      });
+
+      return res.status(200).json({ trips,rideRequests });
     } catch (error) {
       console.error('Error fetching trips:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
@@ -27,23 +41,32 @@ export default async function handler(req, res) {
       await prisma.$disconnect();
     }
   } else if (req.method === 'DELETE') {
-    // Retrieve tripId from query parameters
-    const tripId = parseInt(req.query.tripId, 10);
+    const { tripId, requestId } = req.query;
 
-    if (isNaN(tripId)) {
-      return res.status(400).json({ message: 'Bad Request - Missing or invalid tripId' });
+    if (!tripId && !requestId) {
+      return res.status(400).json({ message: 'Bad Request - Missing tripId or requestId' });
     }
 
     try {
-      await prisma.trips.delete({
-        where: {
-          tripId: tripId,
-        },
-      });
+      if (tripId) {
+        // Handle trip deletion
+        await prisma.trips.delete({
+          where: {
+            tripId: parseInt(tripId, 10),
+          },
+        });
+      } else if (requestId) {
+        // Handle ride request deletion
+        await prisma.ride_requests.delete({
+          where: {
+            requestId: parseInt(requestId, 10),
+          },
+        });
+      }
 
       return res.status(204).end(); // No content (successful deletion)
     } catch (error) {
-      console.error('Error deleting trip:', error);
+      console.error('Error deleting item:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     } finally {
       await prisma.$disconnect();
