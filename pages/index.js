@@ -99,10 +99,13 @@ const Index = () => {
         </ActionButtons>
 
         <Link href="/manageDrives" passHref>
-          <InputButton>
-            {user && user.role === "driver" ? "Manage My Drives" : "Where to?"}
-          </InputButton>
+          <div className="flex flex-col items-center justify-center mt-8">
+            <ActionButton className="w-full">
+              {user && user.role === "driver" ? "Manage My Drives" : "Where to?"}
+            </ActionButton>
+          </div>
         </Link>
+
       </ActionItems>
     </Wrapper>
   );

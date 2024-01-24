@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import mapboxgl from 'mapbox-gl';
 import { accessToken } from '../components/Map';
 import tw from "tailwind-styled-components";
+import Link from "next/link";
+import {BsArrowLeft} from "react-icons/bs";
 
 const ManageDrives = () => {
   const [trips, setTrips] = useState([]);
@@ -36,6 +38,13 @@ const ManageDrives = () => {
 
   return (
     <Wrapper>
+      <ButtonContainer>
+        <Link href="/" passHref>
+          <BackButton>
+            <BsArrowLeft size={30} />
+          </BackButton>
+        </Link>
+      </ButtonContainer>
       <h1 className="text-4xl font-bold text-center text-blue-600">Your Drives</h1>
       <div className="grid grid-cols-3 gap-4 mt-8">
         {trips.map((trip) => (
@@ -66,5 +75,10 @@ const ManageDrives = () => {
 const Wrapper = tw.div`
   p-4 bg-gray-200 h-screen
 `;
+const ButtonContainer = tw.div`
+  bg-white p-2 h-12
+`;
+
+const BackButton = tw.button``;
 
 export default ManageDrives;
