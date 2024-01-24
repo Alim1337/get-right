@@ -1,22 +1,23 @@
 import React, { useState } from "react";
 import tw from "tailwind-styled-components";
-
-const RideItem = ({ ride, onRequestSeat }) => {
+const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
   const [seatRequests, setSeatRequests] = useState(0);
 
   const handleRequestSeat = () => {
     if (seatRequests < ride.availableSeats) {
       setSeatRequests(seatRequests + 1);
-      // Send ride_id and other information to the parent component (search page)
-      onRequestSeat({
-        ride_id: ride.tripId,
-        // Include other relevant information if needed
-      });
+      onSeatCountChange((prev) => ({ ...prev, [ride.tripId]: seatRequests + 1 }));
     } else {
       alert('No more seats available');
     }
   };
 
+  const handleSubmit = () => {
+    onRequestSeat({
+      ride_id: ride.tripId,
+      requested_seats: seatRequests,
+    });
+  };
 
   return (
     <Ride>
@@ -28,6 +29,7 @@ const RideItem = ({ ride, onRequestSeat }) => {
         <Seats>Requested Seats: {seatRequests}</Seats>
         <DriverID>Driver ID: {ride.driverId}</DriverID>
         <Button onClick={handleRequestSeat}>Request Seat</Button>
+        <Button onClick={handleSubmit}>Submit</Button>
       </RideDetails>
     </Ride>
   );
@@ -35,13 +37,14 @@ const RideItem = ({ ride, onRequestSeat }) => {
 
 //export default RideItem;
 
-const ListRides = ({ rides, onRequestSeat }) => (
+const ListRides = ({ rides, onRequestSeat, onSeatCountChange }) => (
   <Wrapper>
     {rides.map((ride) => (
-      <RideItem key={ride.tripId} ride={ride} onRequestSeat={onRequestSeat} />
+      <RideItem key={ride.tripId} ride={ride} onRequestSeat={onRequestSeat} onSeatCountChange={onSeatCountChange} />
     ))}
   </Wrapper>
 );
+
 
 const Wrapper = tw.div`
   mt-4

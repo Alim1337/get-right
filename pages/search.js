@@ -23,6 +23,8 @@ const Search = () => {
       const [line, setLine] = useState(null);
       const [searchTerm, setSearchTerm] = useState('');
       const [userId, setUserId] = useState(null);
+      const [selectedSeats, setSelectedSeats] = useState({});
+
 
       const [searchResults, setSearchResults] = useState(null);
       const [showSearchResults, setShowSearchResults] = useState(false);
@@ -152,20 +154,19 @@ const Search = () => {
   
   const handleRequestSeat = async (rideInfo) => {
     try {
-      // Send the ride information to the backend
       const response = await fetch('/api/requestSeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: userId, // Replace with actual user ID
+          userId: userId,
           tripId: rideInfo.ride_id,
+          nbr_seat_req: selectedSeats[rideInfo.ride_id] || 0,
           // Include other relevant information if needed
         }),
       });
-      console.log('userId,rideInfo.ride_id',userId,rideInfo.ride_id);
-
+  
       if (response.ok) {
         const data = await response.json();
         console.log('Seat requested successfully:', data);
@@ -176,6 +177,7 @@ const Search = () => {
       console.error('Error requesting seat:', error);
     }
   };
+  
 
   return (
     <Wrapper>
@@ -230,7 +232,9 @@ const Search = () => {
 
 
       <ConfirmLocation onClick={handleSearch}>Confirm Location</ConfirmLocation>
-        {showSearchResults && <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} />}
+      {showSearchResults && (
+        <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={setSelectedSeats} />
+      )}
     </Wrapper>
   );
 };
