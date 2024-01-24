@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         if (user) {
             // User found, login successful
             const token_login = jwt.sign(
-                { userId: user.userId, email: user.email },
+                { userId: user.userId, email: user.email, role: user.role },
                 SECRET_KEY,
                 { expiresIn: '1h' }
             );
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
             // Debug: Log the response data
             console.log('Response Data:', { message: 'Login successful', token_login, userId: user.userId });
 
-            return res.status(200).json({ message: 'Login successful', token_login, userId: user.userId });
+            return res.status(200).json({ message: 'Login successful', token_login, userId: user.userId, role: user.role });
         } else {
             // User not found, authentication failed
             // Debug: Log the response data for failed login
