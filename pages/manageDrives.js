@@ -5,15 +5,15 @@ import mapboxgl from 'mapbox-gl';
 import { accessToken } from '../components/Map';
 import tw from "tailwind-styled-components";
 import Link from "next/link";
-import {BsArrowLeft} from "react-icons/bs";
+import { BsArrowLeft, BsTrashFill, BsCheck2, BsX } from "react-icons/bs";
 
 const ManageDrives = () => {
   const [trips, setTrips] = useState([]);
+  const [rideRequests, setRideRequests] = useState([]);
 
   useEffect(() => {
-    const fetchTrips = async () => {
+    const fetchData = async () => {
       try {
-        // Retrieve userId from localStorage or wherever you have it stored
         const userId = localStorage.getItem('userId');
 
         if (!userId) {
@@ -22,19 +22,57 @@ const ManageDrives = () => {
         }
 
         const response = await fetch(`/api/apiManageDrives?userId=${userId}`);
+
         if (response.ok) {
           const data = await response.json();
           setTrips(data.trips || []);
+          setRideRequests(data.rideRequests || []);
         } else {
-          console.error('Failed to fetch trips:', response.status, response.statusText);
+          console.error('Failed to fetch data:', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('Error fetching trips:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchTrips();
+    fetchData();
   }, []);
+
+  const handleDelete = async ({ tripId, requestId }) => {
+    // Display a confirmation prompt
+    const confirmDelete = requestId
+    ? window.confirm('Are you sure you want to delete this Ride request?')
+    : window.confirm('Are you sure you want to delete this drive?');
+    
+
+    if (!confirmDelete) {
+      return; // Do nothing if the user cancels the deletion
+    }
+
+    try {
+      const endpoint = requestId
+      ? `/api/apiManageDrives?requestId=${requestId}`
+      : `/api/apiManageDrives?tripId=${tripId}`;
+      
+      // You need to implement your own API endpoint to handle trip deletion
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        if (requestId) {
+          setRideRequests((prevRequests) => prevRequests.filter((request) => request.requestId !== requestId));
+        } else {
+          setTrips((prevTrips) => prevTrips.filter((trip) => trip.tripId !== tripId));
+        }
+      } else {
+        console.error('Failed to delete trip:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+    }
+  };
+
 
   return (
     <Wrapper>
@@ -45,29 +83,83 @@ const ManageDrives = () => {
           </BackButton>
         </Link>
       </ButtonContainer>
-      <h1 className="text-4xl font-bold text-center text-blue-600">Your Drives</h1>
-      <div className="grid grid-cols-3 gap-4 mt-8">
-        {trips.map((trip) => (
-          <div
-            key={trip.tripId}
-            className="p-4 border-2 border-blue-600 rounded-lg shadow-lg"
-          >
-            <p className="text-xl font-semibold text-blue-800">
-              Departure: {trip.departureLocation}
-            </p>
-            <p className="text-xl font-semibold text-blue-800">
-              Destination: {trip.destinationLocation}
-            </p>
-            <p className="text-lg text-gray-700">
-              Departure Time: {trip.departureTime.toString()}
-            </p>
-            <p className="text-lg text-gray-700">
-              Available Seats: {trip.availableSeats}
-            </p>
-            {/* Add other trip details as needed */}
+      <MainContainer>
+        <Section>
+          <h1 className="text-4xl font-bold text-center text-blue-600">Your Drives</h1>
+          <div className="grid mx-10 gap-4 mt-8">
+            {trips.map((trip) => (
+              <div
+                key={trip.tripId}
+                className="flex flex-col p-4 bg-white shadow-lg rounded-lg mb-4"
+              >
+                <Location className="font-bold text-lg">
+                  Departure: {trip.departureLocation}
+                </Location>
+                <Location className="font-bold text-lg">
+                  Destination: {trip.destinationLocation}
+                </Location>
+                <Time className="text-sm text-blue-500">
+                  Departure Time: {new Date(trip.departureTime).toLocaleString()}
+                </Time>
+                <Seats className="text-sm">
+                  Available Seats: {trip.availableSeats}
+                </Seats>
+                {/* Add other trip details as needed */}
+                <DeleteButton onClick={() => handleDelete({ tripId: trip.tripId })}>
+                  <BsTrashFill size={20} />
+                  Delete
+                </DeleteButton>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </Section>
+        <Section>
+          <h1 className="text-4xl font-bold text-center text-blue-600">Ride Requests</h1>
+          <div className="grid gap-4 mt-8 mx-10">
+            {rideRequests.map((request) => (
+              <div key={request.requestId} className="flex flex-col p-4 bg-white shadow-lg rounded-lg mb-4">
+                <Location className="font-bold text-lg">
+                  User Name: {request.users.firstName} {request.users.lastName}
+                </Location>
+                <Location className="font-bold text-lg">
+                  Phone Number: {request.users.phoneNumber}
+                </Location>
+                <Location className="font-bold text-lg">
+                  Trip Details:
+                </Location>
+                <Location>
+                  Departure: {request.trips.departureLocation}
+                </Location>
+                <Location>
+                  Destination: {request.trips.destinationLocation}
+                </Location>
+                <Time>
+                  Departure Time: {new Date(request.trips.departureTime).toLocaleString()}
+                </Time>
+                <Seats>
+                  Requested Seats: {request.nbr_seat_req}
+                </Seats>
+                <Status>
+                  Status: {request.status}
+                </Status>
+
+                <div className='flex gap-2 justify-end'>
+                  <ConfirmButton onClick={() => handle()}>
+                  <BsCheck2 size={20}/>
+                    Accept
+                  </ConfirmButton>
+                  <DeclineButton onClick={() => handleDelete({requestId: request.requestId})}>
+                  <BsX size={25}/>
+                    Decline
+                  </DeclineButton>
+                </div>
+                {/* ... Additional ride request details */}
+              </div>
+            ))}
+          </div>
+        </Section>
+
+      </MainContainer>
     </Wrapper>
   );
 };
@@ -75,10 +167,46 @@ const ManageDrives = () => {
 const Wrapper = tw.div`
   p-4 bg-gray-200 h-screen
 `;
+
 const ButtonContainer = tw.div`
   bg-white p-2 h-12
 `;
 
-const BackButton = tw.button``;
+const BackButton = tw.button`
+  border-none outline-none
+`;
+
+const Location = tw.div``;
+
+const Time = tw.div`
+    text-sm text-blue-500
+  `;
+
+const Seats = tw.div`
+    text-sm
+  `;
+  const Status = tw.div`
+    text-sm text-red-500
+  `;
+
+const MainContainer = tw.div`
+  flex
+`;
+
+const Section = tw.div`
+  flex-1
+`;
+
+const DeleteButton = tw.button`
+  mt-2 self-end bg-red-500 text-white p-2 rounded-lg flex justify-center items-center gap-2
+`;
+
+const DeclineButton = tw.button`
+  mt-2 self-end bg-red-500 text-white p-2 rounded-lg flex justify-center items-center 
+`;
+
+const ConfirmButton = tw.button`
+  mt-2 self-end bg-blue-500 text-white p-2 rounded-lg flex justify-center items-center
+`;
 
 export default ManageDrives;
