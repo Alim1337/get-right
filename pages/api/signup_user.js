@@ -1,17 +1,16 @@
-// pages/api/login_user.js
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt'; // Import the bcrypt library
 
 const prisma = new PrismaClient();
 const SECRET_KEY = 'HAXER'; 
-
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { firstName, lastName, phoneNumber, email, password } = req.body;
 
     try {
-   //   const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
 
       const newUser = await prisma.users.create({
         data: {
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
           phoneNumber:phoneNumber,
           studentId:phoneNumber,
           email:email,
-          password:password,//: hashedPassword,
+          password: hashedPassword, // Store the hashed password
           role: 'client',
         },
       });
@@ -30,8 +29,7 @@ export default async function handler(req, res) {
         { userId: newUser.userId, email: newUser.email },
         SECRET_KEY,
         { expiresIn: '1h' }
-    );
-
+      );
 
       res.status(200).json({token_signup, userId: newUser.userId });
     } catch (error) {
