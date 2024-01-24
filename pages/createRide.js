@@ -149,6 +149,7 @@ useEffect(() => {
   
       if (response.ok) {
         console.log('Ride created successfully');
+        localStorage.setItem('role', 'driver');
         // Show a notification before redirecting
         window.alert('Ride created successfully');
         // Redirect or perform any other actions after successful ride creation

@@ -48,6 +48,7 @@ const Login = () => {
                     localStorage.setItem('token', data.token_login);
                     //to retrieve driver id in createRide 
                     localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('role', data.role);
                     console.log('Token:', data.token_login);
                     router.push("/"); // Redirect to the main page
                 } else {

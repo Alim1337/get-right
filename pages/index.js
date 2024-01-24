@@ -17,9 +17,13 @@ const Index = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/login");
+        router.push("/login");
+    } else {
+        // Fetch user information including role
+        const userRole = localStorage.getItem("role");
+        setUser({ role: userRole });
     }
-  }, []);
+}, []);
 
   useEffect(() => {
     const updateLocation = async () => {
@@ -72,7 +76,7 @@ const Index = () => {
               <ActionButtonImage>
                 <FaCar size={34} />
               </ActionButtonImage>
-             Serch Ride
+              Serch Ride
             </ActionButton>
           </Link>
 
@@ -94,7 +98,9 @@ const Index = () => {
           </ActionButton>
         </ActionButtons>
 
-        <InputButton>Where to?</InputButton>
+        <InputButton>
+          {user && user.role === "driver" ? "Manage My Drives" : "Where to?"}
+        </InputButton>
       </ActionItems>
     </Wrapper>
   );

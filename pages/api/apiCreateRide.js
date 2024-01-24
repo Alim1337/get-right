@@ -27,6 +27,13 @@ export default async function handler(req, res) {
 
     console.log('Ride created successfully:', createdRide);
 
+    await prisma.users.update({
+      where: { userId: driver },
+      data: { role: 'driver' },
+    });
+
+    
+
     return res.status(200).json({ message: 'Ride created successfully' });
   } catch (error) {
     console.error('Error creating ride:', error);
