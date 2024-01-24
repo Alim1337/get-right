@@ -65,12 +65,13 @@ model users {
 }
 
 model ride_requests {
-  requestId Int                   @id @default(autoincrement())
-  userId    Int
-  tripId    Int
-  status    ride_requests_status? @default(pending)
-  users     users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
-  trips     trips                 @relation(fields: [tripId], references: [tripId], onUpdate: Restrict, map: "ride_requests_ibfk_2")
+  requestId    Int                   @id @default(autoincrement())
+  userId       Int
+  tripId       Int
+  status       ride_requests_status? @default(pending)
+  nbr_seat_req Int?
+  users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
+  trips        trips                 @relation(fields: [tripId], references: [tripId], onUpdate: Restrict, map: "ride_requests_ibfk_2")
 
   @@index([tripId], map: "tripId")
   @@index([userId], map: "userId")
