@@ -23,8 +23,6 @@ const Search = () => {
       const [line, setLine] = useState(null);
       const [searchTerm, setSearchTerm] = useState('');
       const [userId, setUserId] = useState(null);
-      const [selectedSeats, setSelectedSeats] = useState({});
-
 
       const [searchResults, setSearchResults] = useState(null);
       const [showSearchResults, setShowSearchResults] = useState(false);
@@ -114,38 +112,42 @@ const Search = () => {
       if (line) {
         line.remove();
       }
-
-      const newLine = new mapboxgl.NavigationControl()
-        .setLngLat(pickup.coordinates)
-        .addTo(map);
-
+  
+      const newLine = new mapboxgl.NavigationControl(); // Replace with the correct method for drawing lines
+      newLine.setLngLat(pickup.coordinates);
+      newLine.addTo(map);
+  
       setLine(newLine);
     }
   };
+  
+  // Your existing handleSearch function
+// Your existing handleSearch function
+// Your existing handleSearch function
+const handleSearch = async () => {
+  try {
+    console.log('searchTerm', searchTerm);
+    const response = await fetch(`/api/apiSearchTrips?searchTerm=${searchTerm}`, {
+      method: 'GET', // Keep it as GET
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-  const handleSearch = async () => {
-    try {
-      console.log('searchTerm', searchTerm);
-      const response = await fetch(`/api/apiSearchTrips?searchTerm=${searchTerm}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Search results:', data); // Log the data received
-        setSearchResults(data);
-        setShowSearchResults(true);
-      } else {
-        console.error('Failed to fetch search results');
-      }
-    } catch (error) {
-      console.error('Error during search:', error);
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Search results:', data);
+      setSearchResults(data);
+      setShowSearchResults(true);
+    } else {
+      console.error('Failed to fetch search results');
     }
-  };
-  
+  } catch (error) {
+    console.error('Error during search:', error);
+  }
+};
+
+
 
   useEffect(() => {
     setupMap();
@@ -154,30 +156,41 @@ const Search = () => {
   
   const handleRequestSeat = async (rideInfo) => {
     try {
+      // Send the ride information to the backend
       const response = await fetch('/api/requestSeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: userId,
+          userId: userId, // Replace with actual user ID
           tripId: rideInfo.ride_id,
-          nbr_seat_req: selectedSeats[rideInfo.ride_id] || 0,
+          nbr_seat_req: rideInfo.requested_seats, // Include requested seats
           // Include other relevant information if needed
         }),
       });
   
+      console.log('userId, rideInfo.ride_id', userId, rideInfo.ride_id);
+  
       if (response.ok) {
         const data = await response.json();
         console.log('Seat requested successfully:', data);
+        window.alert('Seat requested successfully!');
       } else {
         console.error('Failed to request seat');
+        window.alert('Failed to request seat. Please try again.');
       }
     } catch (error) {
       console.error('Error requesting seat:', error);
+      window.alert('An error occurred while requesting the seat. Please try again.');
     }
   };
   
+  
+  const handleSeatCountChange = (tripId, newSeatCount) => {
+    // Do something with the new seat count
+    console.log(`Trip ${tripId} has ${newSeatCount} requested seats.`);
+  };
 
   return (
     <Wrapper>
@@ -232,9 +245,8 @@ const Search = () => {
 
 
       <ConfirmLocation onClick={handleSearch}>Confirm Location</ConfirmLocation>
-      {showSearchResults && (
-        <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={setSelectedSeats} />
-      )}
+      {showSearchResults && <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />}    
+
     </Wrapper>
   );
 };

@@ -90,13 +90,15 @@ const Index = () => {
           </Link>
 
 
+          <Link href="/see_trips" passHref>
           <ActionButton>
             <ActionButtonImage>
               <FaCalendarAlt size={34} />
             </ActionButtonImage>
-            See trips
+            See Trips
           </ActionButton>
-        </ActionButtons>
+        </Link>
+      </ActionButtons>
 
         <div className="flex flex-col items-center justify-center mt-8">
           {user && user.role === 'driver' ? (

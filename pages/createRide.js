@@ -132,6 +132,10 @@ useEffect(() => {
     e.preventDefault();
   
     try {
+      // Reverse geocode to get coordinates for departure and destination
+      const pickupCoordinates = await reverseGeocodeCoordinates(pickup.locationName);
+      const dropoffCoordinates = await reverseGeocodeCoordinates(dropoff.locationName);
+  
       const response = await fetch('/api/apiCreateRide', {
         method: 'POST',
         headers: {
@@ -144,6 +148,10 @@ useEffect(() => {
           time: rideDetails.time,
           seatsAvailable: rideDetails.seatsAvailable,
           driverId: driverId,
+          departureLatitude: pickupCoordinates.latitude,
+          departureLongitude: pickupCoordinates.longitude,
+          destinationLatitude: dropoffCoordinates.latitude,
+          destinationLongitude: dropoffCoordinates.longitude,
         }),
       });
   
@@ -161,6 +169,22 @@ useEffect(() => {
       console.error('Error during ride creation:', error);
     }
   };
+  
+  // Function to get coordinates from location name using reverse geocoding
+  const reverseGeocodeCoordinates = async (locationName) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?access_token=${accessToken}`
+      );
+      const data = await response.json();
+      const coordinates = data.features[0]?.geometry?.coordinates || [0, 0];
+      return { latitude: coordinates[1], longitude: coordinates[0] };
+    } catch (error) {
+      console.error("Error fetching reverse geocoding coordinates:", error);
+      return { latitude: 0, longitude: 0 }; // Return default coordinates on error
+    }
+  };
+  
   
   const handleChange = (e) => {
     const { name, value } = e.target;

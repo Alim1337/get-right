@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import tw from "tailwind-styled-components";
+
 const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
   const [seatRequests, setSeatRequests] = useState(0);
 
   const handleRequestSeat = () => {
     if (seatRequests < ride.availableSeats) {
-      setSeatRequests(seatRequests + 1);
-      onSeatCountChange((prev) => ({ ...prev, [ride.tripId]: seatRequests + 1 }));
+      setSeatRequests((prev) => prev + 1);
+      onSeatCountChange(ride.tripId, seatRequests + 1);
     } else {
-      alert('No more seats available');
+      alert("No more seats available");
     }
   };
 
@@ -35,8 +36,6 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
   );
 };
 
-//export default RideItem;
-
 const ListRides = ({ rides, onRequestSeat, onSeatCountChange }) => (
   <Wrapper>
     {rides.map((ride) => (
@@ -44,7 +43,6 @@ const ListRides = ({ rides, onRequestSeat, onSeatCountChange }) => (
     ))}
   </Wrapper>
 );
-
 
 const Wrapper = tw.div`
   mt-4

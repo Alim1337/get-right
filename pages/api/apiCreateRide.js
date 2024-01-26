@@ -7,13 +7,25 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { departure, destination, date, time, seatsAvailable, driverId } = req.body;
+  const {
+    departure,
+    destination,
+    date,
+    time,
+    seatsAvailable,
+    driverId,
+    departureLatitude,
+    departureLongitude,
+    destinationLatitude,
+    destinationLongitude,
+  } = req.body;
+
   const seats = parseInt(seatsAvailable, 10);
   const driver = parseInt(driverId, 10);
 
   const combinedDateTimeString = `${date}T${time}:00.000Z`;
   const departureTime = new Date(combinedDateTimeString);
-  //console.log("departure, destination, date, time, seatsAvailable, driverId ",departure, destination, date, time, seatsAvailable, driverId );
+
   try {
     const createdRide = await prisma.trips.create({
       data: {
@@ -22,6 +34,10 @@ export default async function handler(req, res) {
         departureTime: departureTime,
         availableSeats: seats,
         driverId: driver,
+        departureLatitude: departureLatitude,
+        departureLongitude: departureLongitude,
+        destinationLatitude: destinationLatitude,
+        destinationLongitude: destinationLongitude,
       },
     });
 
@@ -31,8 +47,6 @@ export default async function handler(req, res) {
       where: { userId: driver },
       data: { role: 'driver' },
     });
-
-    
 
     return res.status(200).json({ message: 'Ride created successfully' });
   } catch (error) {

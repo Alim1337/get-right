@@ -1,5 +1,4 @@
 // apiSearchTrips.js
-
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -10,13 +9,42 @@ export default async function handler(req, res) {
   }
 
   const { searchTerm } = req.query;
- console.log('searchTerm',searchTerm);
+
   try {
+    const targetTrip = await prisma.trips.findFirst({
+      where: {
+        OR: [
+          { destinationLocation: { contains: searchTerm } },
+          // You may need to adjust the following condition based on your data structure
+          {
+            destinationLocation: { contains: searchTerm },
+          },
+        ],
+      },
+    });
+
+    if (!targetTrip) {
+      return res.status(404).json({ message: 'No matching trips found' });
+    }
+
+    const { destinationLatitude, destinationLongitude } = targetTrip;
+
+    // Now, you can find trips with the same destination or nearby locations
     const trips = await prisma.trips.findMany({
       where: {
         OR: [
-          { departureLocation: { contains: searchTerm } },
-          { destinationLocation: { contains: searchTerm } },
+          { destinationLocation: targetTrip.destinationLocation },
+          // You may need to adjust the following condition based on your data structure
+          {
+            destinationLatitude: {
+              gte: destinationLatitude - 0.045,
+              lte: destinationLatitude + 0.045,
+            },
+            destinationLongitude: {
+              gte: destinationLongitude - 0.045,
+              lte: destinationLongitude + 0.045,
+            },
+          },
         ],
       },
     });
