@@ -121,45 +121,43 @@ const Index = () => {
 };
 
 const DisconnectButton = tw.button`
-  inline-block rounded-full bg-black text-white px-6 pb-2 pt-2.5 text-xl font-medium uppercase leading-normal text-center transition duration-300 ease-in-out hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50 active:bg-gray-900
+  inline-block rounded-full bg-black text-white px-6 pb-2 pt-2.5 text-xl font-medium uppercase leading-normal text-center transition-all duration-500 ease-in-out hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50 active:bg-gray-900
 `;
 
 const ActionButton = tw.button`
-  inline-block w-full rounded-full bg-gray-200 text-black px-6 pb-2 pt-2.5 text-2xl font-serif uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition duration-150 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)]
+  inline-block w-full rounded-full bg-gray-200 text-black px-6 pb-2 pt-2.5 text-2xl font-serif uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)]
 `;
 
-
 const Wrapper = tw.div`
-  flex flex-col bg-red-300 h-screen
+  flex flex-col bg-red-300 h-screen transition-all duration-500 ease-in-out
 `;
 
 const ActionItems = tw.div`
-  bg-white flex-1 p-4
+  bg-white flex-1 p-4 transition-all duration-500 ease-in-out
 `;
 
 const Header = tw.div`
-  flex justify-between items-center
+  flex justify-between items-center transition-all duration-500 ease-in-out
 `;
 
 const Profile = tw.div`
-  flex flex-row items-center
+  flex flex-row items-center transition-all duration-500 ease-in-out
 `;
 
 const Name = tw.div`
-  mr-2 text-sm
+  mr-2 text-sm transition-all duration-500 ease-in-out
 `;
 
 const UserImage = tw.img`
-  h-8 w-auto cursor-pointer rounded-full
+  h-8 w-auto cursor-pointer rounded-full transition-all duration-500 ease-in-out
 `;
 
 const ActionButtons = tw.div`
-  flex justify-between mt-4
+  flex justify-between mt-4 transition-all duration-500 ease-in-out
 `;
 
 const ActionButtonImage = tw.div`
-  h-3/5
-  mb-4
+  h-3/5 mb-4 transition-all duration-500 ease-in-out
 `;
 
 export default Index;
