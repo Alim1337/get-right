@@ -14,56 +14,60 @@ import { accessToken } from "../components/Map";
 import ListRides from "../components/ListRides";
 
 const Search = () => {
-    const [pickup, setPickup] = useState({
+  const [pickup, setPickup] = useState({
+    coordinates: [0, 0],
+    locationName: "Unknown Location",
+  });
+  const [dropoff, setDropoff] = useState(null);
+  const [map, setMap] = useState(null);
+  const [line, setLine] = useState(null);
+  const [searchTermPickup, setSearchTermPickup] = useState('');
+  const [searchTermDropoff, setSearchTermDropoff] = useState('');
+  const [userId, setUserId] = useState(null);
+
+  const [searchResults, setSearchResults] = useState(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => resolve(position),
+        (error) => reject(error)
+      );
+
+      setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
+    });
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+    setUserId(decodedToken.userId);
+    console.log('this is decodedToken', decodedToken);
+  }, []);
+
+  const setupMap = async () => {
+    mapboxgl.accessToken = accessToken;
+
+    try {
+      const position = await getCurrentLocation();
+      const currentLocation = {
+        coordinates: [position.coords.longitude, position.coords.latitude],
+        locationName: await reverseGeocode(
+          position.coords.latitude,
+          position.coords.longitude
+        ),
+      };
+      setPickup(currentLocation);
+      setupMapWithPickup(currentLocation);
+    } catch (error) {
+      console.error("Error getting current location:", error);
+      setupMapWithPickup({
         coordinates: [0, 0],
         locationName: "Unknown Location",
       });
-      const [dropoff, setDropoff] = useState(null);
-      const [map, setMap] = useState(null);
-      const [line, setLine] = useState(null);
-      const [searchTerm, setSearchTerm] = useState('');
-      const [userId, setUserId] = useState(null);
-
-      const [searchResults, setSearchResults] = useState(null);
-      const [showSearchResults, setShowSearchResults] = useState(false);
-    const getCurrentLocation = () => {
-      return new Promise((resolve, reject) => {
-        const watchId = navigator.geolocation.watchPosition(
-          (position) => resolve(position),
-          (error) => reject(error)
-        );
-  
-        setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
-      });
-    };
-    useEffect(() => {
-      const token = localStorage.getItem('token');
-      const decodedToken = JSON.parse(atob(token.split('.')[1]));
-      setUserId(decodedToken.userId);
-      console.log('this is decodedToken', decodedToken);
-  }, []);
-    const setupMap = async () => {
-      mapboxgl.accessToken = accessToken;
-  
-      try {
-        const position = await getCurrentLocation();
-        const currentLocation = {
-          coordinates: [position.coords.longitude, position.coords.latitude],
-          locationName: await reverseGeocode(
-            position.coords.latitude,
-            position.coords.longitude
-          ),
-        };
-        setPickup(currentLocation);
-        setupMapWithPickup(currentLocation);
-      } catch (error) {
-        console.error("Error getting current location:", error);
-        setupMapWithPickup({
-          coordinates: [0, 0],
-          locationName: "Unknown Location",
-        });
-      }
-    };
+    }
+  };
 
   const setupMapWithPickup = (pickupLocation) => {
     const newMap = new mapboxgl.Map({
@@ -112,66 +116,56 @@ const Search = () => {
       if (line) {
         line.remove();
       }
-  
-      const newLine = new mapboxgl.NavigationControl(); // Replace with the correct method for drawing lines
+
+      const newLine = new mapboxgl.NavigationControl();
       newLine.setLngLat(pickup.coordinates);
       newLine.addTo(map);
-  
+
       setLine(newLine);
     }
   };
-  
-  // Your existing handleSearch function
-// Your existing handleSearch function
-// Your existing handleSearch function
-const handleSearch = async () => {
-  try {
-    console.log('searchTerm', searchTerm);
-    const response = await fetch(`/api/apiSearchTrips?searchTerm=${searchTerm}`, {
-      method: 'GET', // Keep it as GET
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  const handleSearch = async () => {
+    try {
+      const response = await fetch(`/api/apiSearchTrips?searchTermPickup=${searchTermPickup}&searchTermDropoff=${searchTermDropoff}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Search results:', data);
-      setSearchResults(data);
-      setShowSearchResults(true);
-    } else {
-      console.error('Failed to fetch search results');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Search results:', data);
+        setSearchResults(data);
+        setShowSearchResults(true);
+      } else {
+        console.error('Failed to fetch search results');
+      }
+    } catch (error) {
+      console.error('Error during search:', error);
     }
-  } catch (error) {
-    console.error('Error during search:', error);
-  }
-};
-
-
+  };
 
   useEffect(() => {
     setupMap();
   }, []);
 
-  
   const handleRequestSeat = async (rideInfo) => {
     try {
-      // Send the ride information to the backend
       const response = await fetch('/api/requestSeat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: userId, // Replace with actual user ID
+          userId: userId,
           tripId: rideInfo.ride_id,
-          nbr_seat_req: rideInfo.requested_seats, // Include requested seats
-          // Include other relevant information if needed
+          nbr_seat_req: rideInfo.requested_seats,
         }),
       });
-  
+
       console.log('userId, rideInfo.ride_id', userId, rideInfo.ride_id);
-  
+
       if (response.ok) {
         const data = await response.json();
         console.log('Seat requested successfully:', data);
@@ -185,16 +179,13 @@ const handleSearch = async () => {
       window.alert('An error occurred while requesting the seat. Please try again.');
     }
   };
-  
-  
+
   const handleSeatCountChange = (tripId, newSeatCount) => {
-    // Do something with the new seat count
     console.log(`Trip ${tripId} has ${newSeatCount} requested seats.`);
   };
 
   return (
     <Wrapper>
-      {/* Button Container */}
       <ButtonContainer>
         <Link href="/" passHref>
           <BackButton>
@@ -203,15 +194,12 @@ const handleSearch = async () => {
         </Link>
       </ButtonContainer>
 
-      {/* Map Container */}
       <MapContainer id="map" />
 
-      {/* Current Pickup Location */}
       <LocationContainer>
         <span>Pickup Location: {pickup.locationName}</span>
       </LocationContainer>
 
-      {/* Input Container */}
       <InputContainer>
         <FromToIcons>
           <BsCircleFill size={12} opacity={0.5} />
@@ -224,12 +212,12 @@ const handleSearch = async () => {
             value={`(${pickup.locationName})`}
             readOnly
             placeholder="Enter pickup location"
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermPickup(e.target.value)}
           />
           <Input
             value={dropoff ? dropoff.locationName : "Where to?"}
             readOnly
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermDropoff(e.target.value)}
           />
         </InputBoxes>
 
@@ -238,19 +226,15 @@ const handleSearch = async () => {
         </PlusIcon>
       </InputContainer>
 
-      {/* Saved Places */}
       <SavedPlaces>
         <MdStars size={30} /> Saved Places
       </SavedPlaces>
-
-
       <ConfirmLocation onClick={handleSearch}>Confirm Location</ConfirmLocation>
       {showSearchResults && <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />}    
 
     </Wrapper>
   );
 };
-
 
 const Wrapper = tw.div`
     p-4 bg-gray-200 h-screen

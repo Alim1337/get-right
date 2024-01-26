@@ -8,48 +8,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { searchTerm } = req.query;
+  const { searchTermPickup, searchTermDropoff } = req.query;
+  console.log("searchTermPickup:", searchTermPickup);
+  console.log("searchTermDropoff:", searchTermDropoff);
 
   try {
-    const targetTrip = await prisma.trips.findFirst({
+    const targetTrips = await prisma.trips.findMany({
       where: {
-        OR: [
-          { destinationLocation: { contains: searchTerm } },
-          // You may need to adjust the following condition based on your data structure
-          {
-            destinationLocation: { contains: searchTerm },
-          },
+        AND: [
+          { departureLocation: { contains: searchTermPickup } },
+          { destinationLocation: { contains: searchTermDropoff } },
         ],
       },
     });
 
-    if (!targetTrip) {
+    if (targetTrips.length === 0) {
       return res.status(404).json({ message: 'No matching trips found' });
     }
 
-    const { destinationLatitude, destinationLongitude } = targetTrip;
-
-    // Now, you can find trips with the same destination or nearby locations
-    const trips = await prisma.trips.findMany({
-      where: {
-        OR: [
-          { destinationLocation: targetTrip.destinationLocation },
-          // You may need to adjust the following condition based on your data structure
-          {
-            destinationLatitude: {
-              gte: destinationLatitude - 0.045,
-              lte: destinationLatitude + 0.045,
-            },
-            destinationLongitude: {
-              gte: destinationLongitude - 0.045,
-              lte: destinationLongitude + 0.045,
-            },
-          },
-        ],
-      },
-    });
-
-    return res.status(200).json(trips);
+    console.log("searched trips", targetTrips);
+    return res.status(200).json(targetTrips);
   } catch (error) {
     console.error('Error searching trips:', error);
     return res.status(500).json({ message: 'Internal Server Error' });

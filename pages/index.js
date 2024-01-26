@@ -62,7 +62,6 @@ const Index = () => {
 
       <ActionItems>
         <Header>
-          <SiUber size={44} />
           <Profile>
             <Name>{user && user.name}</Name>
             <UserImage src={user && user.photoUrl} onClick={() => signOut(auth)} />
@@ -72,18 +71,18 @@ const Index = () => {
 
         <ActionButtons>
           <Link href="/search" passHref>
-            <ActionButton>
+            <ActionButton className="flex flex-col items-center justify-center mt-8">
               <ActionButtonImage>
-                <FaCar size={34} />
+                <FaCar size={50} />
               </ActionButtonImage>
               Serch Ride
             </ActionButton>
           </Link>
 
           <Link href="/createRide" passHref>
-            <ActionButton>
+          <ActionButton className="flex flex-col items-center justify-center mt-8">
               <ActionButtonImage>
-                <FaPlusCircle size={34} />
+                <FaPlusCircle size={50} />
               </ActionButtonImage>
               Create Trip
             </ActionButton>
@@ -91,9 +90,10 @@ const Index = () => {
 
 
           <Link href="/see_trips" passHref>
-          <ActionButton>
+          <ActionButton className="flex flex-col items-center justify-center mt-8">
+
             <ActionButtonImage>
-              <FaCalendarAlt size={34} />
+              <FaCalendarAlt size={50} />
             </ActionButtonImage>
             See Trips
           </ActionButton>
@@ -104,7 +104,8 @@ const Index = () => {
           {user && user.role === 'driver' ? (
             <Link href="/manageDrives" passHref>
               <div className="w-full">
-                <ActionButton className="w-full">Manage My Drives</ActionButton>
+                
+                <ActionButton className="">Manage My Drives</ActionButton>
               </div>
             </Link>
           ) : (
@@ -120,9 +121,13 @@ const Index = () => {
 };
 
 const DisconnectButton = tw.button`
-    h-8 w-auto bg-gray-200 text-xl p-2
-    flex items-center rounded
+  inline-block rounded-full bg-black text-white px-6 pb-2 pt-2.5 text-xl font-medium uppercase leading-normal text-center transition duration-300 ease-in-out hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50 active:bg-gray-900
 `;
+
+const ActionButton = tw.button`
+  inline-block w-full rounded-full bg-gray-200 text-black px-6 pb-2 pt-2.5 text-2xl font-serif uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition duration-150 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)]
+`;
+
 
 const Wrapper = tw.div`
   flex flex-col bg-red-300 h-screen
@@ -133,39 +138,28 @@ const ActionItems = tw.div`
 `;
 
 const Header = tw.div`
-    flex justify-between items-center
+  flex justify-between items-center
 `;
 
 const Profile = tw.div`
-    flex flex-row items-center
+  flex flex-row items-center
 `;
 
 const Name = tw.div`
-    mr-2 text-sm
+  mr-2 text-sm
 `;
 
 const UserImage = tw.img`
-    h-8 w-auto cursor-pointer rounded-full
+  h-8 w-auto cursor-pointer rounded-full
 `;
 
 const ActionButtons = tw.div`
-    flex justify-between mt-4
-`;
-
-const ActionButton = tw.button`
-    bg-gray-200 flex-1 m-1 flex flex-col 
-    p-4 justify-between items-center text-xl
-    rounded transform hover:scale-105 transition
+  flex justify-between mt-4
 `;
 
 const ActionButtonImage = tw.div`
-    h-3/5
-    mb-4
-`;
-
-const InputButton = tw.div`
-    h-20 bg-gray-200 text-2xl p-4
-    flex items-center mt-8 rounded
+  h-3/5
+  mb-4
 `;
 
 export default Index;
