@@ -46,7 +46,7 @@ const Index = () => {
         if (data.reservations) {
           setReservations(data.reservations);
         } else {
-         setReservations({}); // Set reservations to an empty object if not an array
+       setReservations({}); // Set reservations to an empty object if not an array
         }
 
         setHasReservations(data.hasReservations);
