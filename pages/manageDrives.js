@@ -1,8 +1,4 @@
-// pages/manageTrips.js
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import mapboxgl from 'mapbox-gl';
-import { accessToken } from '../components/Map';
 import tw from "tailwind-styled-components";
 import Link from "next/link";
 import { BsArrowLeft, BsTrashFill, BsCheck2, BsX } from "react-icons/bs";
@@ -10,6 +6,7 @@ import { BsArrowLeft, BsTrashFill, BsCheck2, BsX } from "react-icons/bs";
 const ManageDrives = () => {
   const [trips, setTrips] = useState([]);
   const [rideRequests, setRideRequests] = useState([]);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,6 +24,8 @@ const ManageDrives = () => {
           const data = await response.json();
           setTrips(data.trips || []);
           setRideRequests(data.rideRequests || []);
+
+          console.log('Fetched data:', data); // Log the fetched data
         } else {
           console.error('Failed to fetch data:', response.status, response.statusText);
         }
@@ -41,9 +40,8 @@ const ManageDrives = () => {
   const handleDelete = async ({ tripId, requestId }) => {
     // Display a confirmation prompt
     const confirmDelete = requestId
-    ? window.confirm('Are you sure you want to delete this Ride request?')
-    : window.confirm('Are you sure you want to delete this drive?');
-    
+      ? window.confirm('Are you sure you want to delete this Ride request?')
+      : window.confirm('Are you sure you want to delete this drive?');
 
     if (!confirmDelete) {
       return; // Do nothing if the user cancels the deletion
@@ -51,9 +49,9 @@ const ManageDrives = () => {
 
     try {
       const endpoint = requestId
-      ? `/api/apiManageDrives?requestId=${requestId}`
-      : `/api/apiManageDrives?tripId=${tripId}`;
-      
+        ? `/api/apiManageDrives?requestId=${requestId}`
+        : `/api/apiManageDrives?tripId=${tripId}`;
+
       // You need to implement your own API endpoint to handle trip deletion
       const response = await fetch(endpoint, {
         method: 'DELETE',
@@ -73,7 +71,76 @@ const ManageDrives = () => {
     }
   };
 
-
+  // Handler for accepting ride requests
+  const handleAccept = async (request) => {
+    if (!request || !request.requestId) {
+      console.error('No requestId selected for accept');
+      return;
+    }
+  
+    try {
+      const response = await fetch(`/api/apiManageDrives`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requestId: request.requestId, action: 'accept' }),
+      });
+  
+      if (response.ok) {
+        // Update the state to reflect the accepted request
+        setRideRequests((prevRequests) => 
+          prevRequests.map((r) =>
+            r.requestId === request.requestId
+              ? { ...r, status: 'approved' }
+              : r
+          )
+        );
+      } else {
+        console.error('Failed to accept ride request:', response.status, response.statusText);
+        // Display error notification
+        toast.error('Failed to accept ride request');
+      }
+    } catch (error) {
+      console.error('Error accepting ride request:', error);
+      // Display error notification
+      toast.error('Error accepting ride request');
+    } finally {
+      // Reset the selected request ID
+      setSelectedRequestId(null);
+    }
+  };
+  
+  
+  const handleDecline = async (requestId) => {
+    try {
+      const response = await fetch(`/api/apiManageDrives`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requestId, action: 'decline' }),
+      });
+      setRideRequests((prevRequests) => 
+      prevRequests.map((r) =>
+        r.requestId === requestId
+          ? { ...r, status: 'rejected' }
+          : r
+      )
+    );
+      console.log('Decline Request:', JSON.stringify({ requestId, action: 'decline' }));
+      console.log('Decline Response:', await response.json());
+  
+      // Rest of the code...
+    } catch (error) {
+      console.error('Error declining ride request:', error);
+    } finally {
+      // Reset the selected request ID
+      setSelectedRequestId(null);
+    }
+  };
+  
+  
   return (
     <Wrapper>
       <ButtonContainer>
@@ -139,26 +206,25 @@ const ManageDrives = () => {
                 <Seats>
                   Requested Seats: {request.nbr_seat_req}
                 </Seats>
-                <Status>
-                  Status: {request.status}
-                </Status>
+                <Status style={{ color: request.status === 'approved' ? 'green' : 'red' }}>
+  Status: {request.status}
+</Status>
 
                 <div className='flex gap-2 justify-end'>
-                  <ConfirmButton onClick={() => handle()}>
-                  <BsCheck2 size={20}/>
-                    Accept
-                  </ConfirmButton>
-                  <DeclineButton onClick={() => handleDelete({requestId: request.requestId})}>
-                  <BsX size={25}/>
+                <ConfirmButton onClick={() => handleAccept(request)}>
+  <BsCheck2 size={20}/>
+  Accept
+</ConfirmButton>
+
+                  <DeclineButton onClick={() => handleDecline(request.requestId)}>
+                    <BsX size={25}/>
                     Decline
                   </DeclineButton>
                 </div>
-                {/* ... Additional ride request details */}
               </div>
             ))}
           </div>
         </Section>
-
       </MainContainer>
     </Wrapper>
   );
@@ -186,8 +252,8 @@ const Seats = tw.div`
     text-sm
   `;
   const Status = tw.div`
-    text-sm text-red-500
-  `;
+  text-sm
+`;
 
 const MainContainer = tw.div`
   flex

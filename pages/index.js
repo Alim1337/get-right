@@ -8,22 +8,60 @@ import Map from "../components/Map";
 import { SiUber } from "react-icons/si";
 import { FaCar, FaPlusCircle, FaCalendarAlt } from "react-icons/fa";
 import Link from "next/link";
+import ReservedRidesModal from '../components/ReservedRidesModal';
+
 
 const Index = () => {
   const [user, setUser] = useState(null);
-  const [location, setLocation] = useState([44, 36.2]); // Default location
+  const [location, setLocation] = useState([44, 36.2]);
+  const [hasReservations, setHasReservations] = useState(false);
   const router = useRouter();
+  const [reservations, setReservations] = useState({});
+  const [showReservedRidesModal, setShowReservedRidesModal] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
+
     if (!token) {
-      router.push("/login");
+      router.push('/login');
     } else {
-      // Fetch user information including role
-      const userRole = localStorage.getItem("role");
-      setUser({ role: userRole });
+      try {
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        setUser({ role: localStorage.getItem('role'), id: decodedToken.userId });
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        router.push('/login');
+      }
     }
-  }, []);
+  }, [router]);
+
+  useEffect(() => {
+    const fetchReservations = async () => {
+      try {
+        const response = await fetch(`/api/apiReservation?userId=${user.id}`);
+        const data = await response.json();
+        console.log('API Response for reservations:', data); // Log the data received
+
+        // Check if data.reservations exists and is an array
+        if (data.reservations) {
+          setReservations(data.reservations);
+        } else {
+          setReservations({}); // Set reservations to an empty object if not an array
+        }
+
+        setHasReservations(data.hasReservations);
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+      }
+    };
+
+    if (user && user.id) {
+      fetchReservations();
+    }
+  }, [user]);
+
+
+ 
 
   useEffect(() => {
     const updateLocation = async () => {
@@ -37,7 +75,16 @@ const Index = () => {
     };
 
     updateLocation();
-  }, []); // Empty dependency array means this effect runs once after the initial render
+  }, []); 
+
+  const handleShowReservedRides = () => {
+    console.log('Showing reserved rides modal');
+    setShowReservedRidesModal(true);
+  };
+  
+  const handleCloseReservedRidesModal = () => {
+    setShowReservedRidesModal(false);
+  };
 
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
@@ -110,12 +157,27 @@ const Index = () => {
             </Link>
           ) : (
             <div className="w-full text-center justify-center">
-              <ActionButton className="w-full text-center">Where to?</ActionButton>
+             {hasReservations && (
+    <ActionButton className="w-full text-center" onClick={handleShowReservedRides}>
+      My reserved rides?
+    </ActionButton>
+  )}
+        
             </div>
           )}
+       
+
+
         </div>
 
       </ActionItems>
+      {showReservedRidesModal && (
+  <ReservedRidesModal
+    reservations={reservations}
+    onClose={handleCloseReservedRidesModal}
+  />
+)}
+
     </Wrapper>
   );
 };

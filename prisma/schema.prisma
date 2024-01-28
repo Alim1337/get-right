@@ -28,10 +28,11 @@ model reservations {
   tripId          Int
   passengerId     Int
   reservationTime DateTime @db.DateTime(0)
-  trips           trips    @relation(fields: [tripId], references: [tripId], onUpdate: Restrict, onDelete: Cascade, map: "reservations_ibfk_1")
+  driverId        Int
+  trips           trips    @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_1")
   users           users    @relation(fields: [passengerId], references: [userId], onUpdate: Restrict, map: "reservations_ibfk_2")
 
-  @@index([passengerId], map: "passengerId")
+  @@unique([passengerId, tripId], map: "unique_reservation")
   @@index([tripId], map: "tripId")
 }
 
@@ -75,7 +76,7 @@ model ride_requests {
   status       ride_requests_status? @default(pending)
   nbr_seat_req Int?
   users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
-  trips        trips                 @relation(fields: [tripId], references: [tripId], onUpdate: Restrict,onDelete: Cascade, map: "ride_requests_ibfk_2")
+  trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "ride_requests_ibfk_2")
 
   @@index([tripId], map: "tripId")
   @@index([userId], map: "userId")

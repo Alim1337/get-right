@@ -31,9 +31,20 @@ const SeeTrips = () => {
           ...prev,
           [tripId]: (prev[tripId] || 0) + 1
         }));
+
+        // Update the trips state to reflect the new number of available seats
+        setTrips(prevTrips =>
+          prevTrips.map(trip =>
+            trip.tripId === tripId
+              ? { ...trip, availableSeats: trip.availableSeats - 1 }
+              : trip
+          )
+        );
     };
   
     const handleSubmit = async (tripId) => {
+      // Define userId here or pass it as a prop
+
       try {
         const response = await fetch('/api/requestSeat', {
           method: 'POST',
@@ -41,7 +52,7 @@ const SeeTrips = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: userId, // Make sure to define userId
+            userId: userId,
             tripId: tripId,
             nbr_seat_req: selectedSeats[tripId] || 0,
             // Include other relevant information if needed
@@ -58,6 +69,10 @@ const SeeTrips = () => {
         console.error('Error requesting seat:', error);
       }
     };
+
+    // ... rest of your code ...
+};
+
     return (
       <Wrapper>
         <ButtonContainer>
@@ -95,7 +110,7 @@ const SeeTrips = () => {
         </div>
       </Wrapper>
     );
-  };
+  
 
 
   const Button = tw.button`
