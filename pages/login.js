@@ -135,9 +135,7 @@ const Login = () => {
 )}
 
             {!showLoginFields && !showInscriptionFields && <SignInButton onClick={handleSignInClick}>Sign in</SignInButton>}
-            <SignInButton onClick={() => signInWithPopup(auth, provider)}>
-                Sign in with Google
-            </SignInButton>
+        
            <InscriptionButton onClick={handleInscriptionClick}>inscription</InscriptionButton>
         </Wrapper>
     )

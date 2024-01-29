@@ -16,7 +16,10 @@ const ReservedRidesModal = ({ reservations, onClose }) => {
               Trip ID: {reservation.tripId} <br />
               Passenger ID: {reservation.passengerId} <br />
               Reservation Time: {reservation.reservationTime} <br />
-              Driver ID: {reservation.driverId}
+              Driver ID: {reservation.driverId} <br />
+              departureLocation: {reservation.departureLocation} <br />
+          destinationLocation : {reservation.destinationLocation} <br />
+
             </li>
           ))
         ) : (
