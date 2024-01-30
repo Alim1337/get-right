@@ -46,7 +46,7 @@ const Index = () => {
         if (data.reservations) {
           setReservations(data.reservations);
         } else {
-       setReservations({}); // Set reservations to an empty object if not an array
+          setReservations({}); // Set reservations to an empty object if not an array
         }
 
         setHasReservations(data.hasReservations);
@@ -61,7 +61,7 @@ const Index = () => {
   }, [user]);
 
 
- 
+
 
   useEffect(() => {
     const updateLocation = async () => {
@@ -75,13 +75,13 @@ const Index = () => {
     };
 
     updateLocation();
-  }, []); 
+  }, []);
 
   const handleShowReservedRides = () => {
     console.log('Showing reserved rides modal');
     setShowReservedRidesModal(true);
   };
-  
+
   const handleCloseReservedRidesModal = () => {
     setShowReservedRidesModal(false);
   };
@@ -127,7 +127,7 @@ const Index = () => {
           </Link>
 
           <Link href="/createRide" passHref>
-          <ActionButton className="flex flex-col items-center justify-center mt-8">
+            <ActionButton className="flex flex-col items-center justify-center mt-8">
               <ActionButtonImage>
                 <FaPlusCircle size={50} />
               </ActionButtonImage>
@@ -137,46 +137,61 @@ const Index = () => {
 
 
           <Link href="/see_trips" passHref>
-          <ActionButton className="flex flex-col items-center justify-center mt-8">
+            <ActionButton className="flex flex-col items-center justify-center mt-8">
 
-            <ActionButtonImage>
-              <FaCalendarAlt size={50} />
-            </ActionButtonImage>
-            See Trips
-          </ActionButton>
-        </Link>
-      </ActionButtons>
+              <ActionButtonImage>
+                <FaCalendarAlt size={50} />
+              </ActionButtonImage>
+              See Trips
+            </ActionButton>
+          </Link>
+        </ActionButtons>
+
 
         <div className="flex flex-col items-center justify-center mt-8">
           {user && user.role === 'driver' ? (
             <Link href="/manageDrives" passHref>
+              <div className="w-1/2 text-center justify-center">
+                <ActionButton className="">Trajets proposé</ActionButton>
+              </div>
+            </Link>
+          ) : (
+            <div className=" w-1/2 text-center justify-center">
+              {hasReservations && (
+                <ActionButton className="w-full text-center" onClick={handleShowReservedRides}>
+                  Proposer un trajet
+                </ActionButton>
+              )}
+
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col items-center justify-center mt-3">
+          {user && user.role === 'driver' ? (
+            <Link href="/manageDrives" passHref>
               <div className="w-full">
-                
                 <ActionButton className="">Manage My Drives</ActionButton>
               </div>
             </Link>
           ) : (
             <div className="w-full text-center justify-center">
-             {hasReservations && (
-    <ActionButton className="w-full text-center" onClick={handleShowReservedRides}>
-      My reserved rides?
-    </ActionButton>
-  )}
-        
+              {hasReservations && (
+                <ActionButton className="w-full text-center" onClick={handleShowReservedRides}>
+                  My reserved rides?
+                </ActionButton>
+              )}
+
             </div>
           )}
-       
-
-
         </div>
 
       </ActionItems>
       {showReservedRidesModal && (
-  <ReservedRidesModal
-    reservations={reservations}
-    onClose={handleCloseReservedRidesModal}
-  />
-)}
+        <ReservedRidesModal
+          reservations={reservations}
+          onClose={handleCloseReservedRidesModal}
+        />
+      )}
 
     </Wrapper>
   );
