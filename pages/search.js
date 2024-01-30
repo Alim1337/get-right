@@ -45,6 +45,11 @@ const Search = () => {
     setUserId(decodedToken.userId);
     console.log('this is decodedToken', decodedToken);
   }, []);
+  useEffect(() => {
+    setSearchTermPickup(`(${pickup.locationName})`);
+    setSearchTermDropoff(dropoff ? dropoff.locationName : "");
+  }, [pickup, dropoff]);
+  
 
   const setupMap = async () => {
     mapboxgl.accessToken = accessToken;
@@ -202,16 +207,32 @@ const Search = () => {
     });
   };
   
+  const handleSearchInputChange = (pickupValue, dropoffValue) => {
+    console.log("pickupValue:", pickupValue);
+    console.log("dropoffValue:", dropoffValue);
+    setSearchTermPickup(`(${pickupValue})`);
+    setSearchTermDropoff(dropoffValue);
   
+    // Trigger the search directly when input values change
+    handleSearch();
+  };
   const handleSearch = async () => {
     try {
-      const response = await fetch(`/api/apiSearchTrips?searchTermPickup=${searchTermPickup}&searchTermDropoff=${searchTermDropoff}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const encodedPickup = encodeURIComponent(searchTermPickup);
+      const encodedDropoff = encodeURIComponent(searchTermDropoff);
+  
+      console.log("Encoded Pickup:", encodeURIComponent(searchTermPickup));
+      console.log("Encoded Dropoff:", encodeURIComponent(searchTermDropoff));
+      
+      const response = await fetch(`/api/apiSearchTrips?searchTermPickup=${encodeURIComponent(searchTermPickup)}&searchTermDropoff=${encodeURIComponent(searchTermDropoff)}`, {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+          },
       });
-
+      
+      
+  
       if (response.ok) {
         const data = await response.json();
         console.log('Search results:', data);
@@ -224,7 +245,7 @@ const Search = () => {
       console.error('Error during search:', error);
     }
   };
-
+  
   useEffect(() => {
     setupMap();
   }, []);
@@ -287,22 +308,22 @@ const Search = () => {
         </FromToIcons>
 
         <InputBoxes>
-          <Input
-            value={`(${pickup.locationName})`}
-            readOnly
-            placeholder="Enter pickup location"
-            onChange={(e) => setSearchTermPickup(e.target.value)}
-          />
-          <Input
-            value={dropoff ? dropoff.locationName : "Where to?"}
-            readOnly
-            onChange={(e) => setSearchTermDropoff(e.target.value)}
-          />
+        <Input
+  value={`(${pickup.locationName})`}
+  readOnly
+  placeholder="Enter pickup location"
+  onChange={(e) => handleSearchInputChange(e.target.value, dropoff ? dropoff.locationName : "")}
+/>
+<Input
+  value={dropoff ? dropoff.locationName : "Where to?"}
+  readOnly
+  onChange={(e) => handleSearchInputChange(pickup.locationName, e.target.value)}
+/>
         </InputBoxes>
 
         <PlusIcon>
-          <BsPlusLg size={22} />
-        </PlusIcon>
+  <BsPlusLg size={22}  />
+</PlusIcon>
       </InputContainer>
 
       <SavedPlaces>

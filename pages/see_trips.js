@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
 import tw from "tailwind-styled-components";
 import Link from "next/link";
-
 import { BsArrowLeft } from "react-icons/bs";
 
 const SeeTrips = () => {
   const [trips, setTrips] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState({});
-
+  const [userId, setUserId] = useState(null); 
+  const [notification, setNotification] = useState(null);
+  
   useEffect(() => {
-    // Fetch your trips data from the API or wherever it comes from
+    const token = localStorage.getItem('token');
+    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+    setUserId(decodedToken.userId);
+    console.log('this is decodedToken', decodedToken);
+  }, []);
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/getTrips"); // Replace with your API endpoint
+        const response = await fetch("/api/getTrips"); 
         if (response.ok) {
           const data = await response.json();
           setTrips(data);
@@ -26,6 +32,13 @@ const SeeTrips = () => {
 
     fetchData();
   }, []);
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000); 
+  };
 
   const handleRequestSeat = (tripId) => {
     setSelectedSeats((prev) => ({
@@ -41,10 +54,12 @@ const SeeTrips = () => {
           : trip
       )
     );
+
+    showNotification("Seat requested successfully", "success");
   };
 
+
   const handleSubmit = async (tripId) => {
-    // Define userId here or pass it as a prop
 
     try {
       const response = await fetch("/api/requestSeat", {
@@ -63,16 +78,17 @@ const SeeTrips = () => {
       if (response.ok) {
         const data = await response.json();
         console.log("Seat requested successfully:", data);
+        showNotification("Seat requested successfully", "success");
       } else {
         console.error("Failed to request seat");
+        showNotification("Failed to request seat. Please try again.", "error");
       }
     } catch (error) {
       console.error("Error requesting seat:", error);
+      showNotification("An error occurred while requesting the seat. Please try again.", "error");
     }
   };
 
-  // ... rest of your code ...
-  
   return (
     <Wrapper>
       <ButtonContainer>
@@ -112,6 +128,11 @@ const SeeTrips = () => {
           </div>
         ))}
       </div>
+      {notification && (
+        <NotificationContainer type={notification.type}>
+          {notification.message}
+        </NotificationContainer>
+      )}
     </Wrapper>
   );
 };
@@ -128,5 +149,9 @@ const ButtonContainer = tw.div`
 `;
 
 const BackButton = tw.button``;
+
+const NotificationContainer = tw.div`
+  fixed bottom-0 right-0 p-4 mb-4 mr-4 bg-green-500 text-white rounded-md
+`;
 
 export default SeeTrips;
