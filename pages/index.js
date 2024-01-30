@@ -151,22 +151,24 @@ const Index = () => {
 
         <div className="flex flex-col items-center justify-center mt-8">
           {user && user.role === 'driver' ? (
-            <Link href="/manageDrives" passHref>
+            <Link href="/manageProposedDrives" passHref>
               <div className="w-1/2 text-center justify-center">
                 <ActionButton className="">Trajets proposé</ActionButton>
               </div>
             </Link>
           ) : (
-            <div className=" w-1/2 text-center justify-center">
-              {hasReservations && (
-                <ActionButton className="w-full text-center" onClick={handleShowReservedRides}>
+            <Link href="/proposeDrive" passHref>
+              <div className=" w-1/2 text-center justify-center">
+                <ActionButton className="w-full text-center">
                   Proposer un trajet
                 </ActionButton>
-              )}
-
-            </div>
+              </div>
+            </Link>
           )}
         </div>
+
+
+        
         <div className="flex flex-col items-center justify-center mt-3">
           {user && user.role === 'driver' ? (
             <Link href="/manageDrives" passHref>
