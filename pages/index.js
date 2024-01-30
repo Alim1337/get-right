@@ -6,19 +6,39 @@ import { auth } from "../firebase";
 import tw from "tailwind-styled-components";
 import Map from "../components/Map";
 import { SiUber } from "react-icons/si";
-import { FaCar, FaPlusCircle, FaCalendarAlt } from "react-icons/fa";
+import { FaCar, FaPlusCircle, FaCalendarAlt, FaBell } from "react-icons/fa";
 import Link from "next/link";
 import ReservedRidesModal from '../components/ReservedRidesModal';
 
 
 const Index = () => {
-  
+
   const [user, setUser] = useState(null);
   const [location, setLocation] = useState([44, 36.2]);
   const [hasReservations, setHasReservations] = useState(false);
   const router = useRouter();
   const [reservations, setReservations] = useState({});
   const [showReservedRidesModal, setShowReservedRidesModal] = useState(false);
+  const [counter, setCounter] = useState(0);
+
+  const fetchReservations = async () => {
+    try {
+      const response = await fetch(`/api/apiReservation?userId=${user.id}`);
+      const data = await response.json();
+      console.log('API Response for reservations:', data);
+
+      if (data.reservations) {
+        setReservations(data.reservations);
+      } else {
+        setReservations({});
+      }
+
+      setHasReservations(data.hasReservations);
+      setCounter(data.numberOfReservations);
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -37,28 +57,32 @@ const Index = () => {
   }, [router]);
 
   useEffect(() => {
-    const fetchReservations = async () => {
-      try {
-        const response = await fetch(`/api/apiReservation?userId=${user.id}`);
-        const data = await response.json();
-        console.log('API Response for reservations:', data); // Log the data received
-
-        // Check if data.reservations exists and is an array
-        if (data.reservations) {
-          setReservations(data.reservations);
-        } else {
-          setReservations({}); // Set reservations to an empty object if not an array
-        }
-
-        setHasReservations(data.hasReservations);
-      } catch (error) {
-        console.error('Error fetching reservations:', error);
-      }
-    };
-
+    // Fetch initial reservations
     if (user && user.id) {
       fetchReservations();
     }
+  }, [user]);
+
+  const fetchReservationsPeriodically = () => {
+    const intervalId = setInterval(async () => {
+      try {
+        await fetchReservations();
+      } catch (error) {
+        console.error('Error fetching reservations:', error);
+      }
+    }, 5000); // Fetch every 10 seconds (adjust as needed)
+
+    return () => clearInterval(intervalId);
+  };
+
+  useEffect(() => {
+    // Fetch reservations periodically
+    const intervalCleanup = fetchReservationsPeriodically();
+
+    // Cleanup interval on component unmount
+    return () => {
+      clearInterval(intervalCleanup);
+    };
   }, [user]);
 
 
@@ -168,7 +192,7 @@ const Index = () => {
         </div>
 
 
-        
+
         <div className="flex flex-col items-center justify-center mt-3">
           {user && user.role === 'driver' ? (
             <Link href="/manageDrives" passHref>
@@ -179,12 +203,23 @@ const Index = () => {
           ) : (
             <div className="w-full text-center justify-center">
               {hasReservations && (
-                <ActionButton className="w-full text-center" onClick={handleShowReservedRides}>
-                  My reserved rides?
-                </ActionButton>
+                <div className="flex items-center">
+                  <FaBell className="-mr-5" size={40}/>
+                  <div className="bg-red-500 text-white text-center p-1 mb-6 h-9 w-9 font-bold rounded-full mr-1">
+                    {counter}
+                  </div>
+                   
+                  <ActionButton
+                    className="flex items-center w-full justify-center"
+                    onClick={handleShowReservedRides}
+                  >
+                    
+                    <div className="text-center">My reserved rides</div>
+                  </ActionButton>
+                </div>
               )}
-
             </div>
+
           )}
         </div>
 

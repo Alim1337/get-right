@@ -77,7 +77,7 @@ const ManageDrives = () => {
       console.error('No requestId selected for accept');
       return;
     }
-  
+
     try {
       const response = await fetch(`/api/apiManageDrives`, {
         method: 'POST',
@@ -86,10 +86,10 @@ const ManageDrives = () => {
         },
         body: JSON.stringify({ requestId: request.requestId, action: 'accept' }),
       });
-  
+
       if (response.ok) {
         // Update the state to reflect the accepted request
-        setRideRequests((prevRequests) => 
+        setRideRequests((prevRequests) =>
           prevRequests.map((r) =>
             r.requestId === request.requestId
               ? { ...r, status: 'approved' }
@@ -110,8 +110,8 @@ const ManageDrives = () => {
       setSelectedRequestId(null);
     }
   };
-  
-  
+
+
   const handleDecline = async (requestId) => {
     try {
       const response = await fetch(`/api/apiManageDrives`, {
@@ -121,16 +121,16 @@ const ManageDrives = () => {
         },
         body: JSON.stringify({ requestId, action: 'decline' }),
       });
-      setRideRequests((prevRequests) => 
-      prevRequests.map((r) =>
-        r.requestId === requestId
-          ? { ...r, status: 'rejected' }
-          : r
-      )
-    );
+      setRideRequests((prevRequests) =>
+        prevRequests.map((r) =>
+          r.requestId === requestId
+            ? { ...r, status: 'rejected' }
+            : r
+        )
+      );
       console.log('Decline Request:', JSON.stringify({ requestId, action: 'decline' }));
       console.log('Decline Response:', await response.json());
-  
+
       // Rest of the code...
     } catch (error) {
       console.error('Error declining ride request:', error);
@@ -139,8 +139,8 @@ const ManageDrives = () => {
       setSelectedRequestId(null);
     }
   };
-  
-  
+
+
   return (
     <Wrapper>
       <ButtonContainer>
@@ -207,17 +207,17 @@ const ManageDrives = () => {
                   Requested Seats: {request.nbr_seat_req}
                 </Seats>
                 <Status style={{ color: request.status === 'approved' ? 'green' : 'red' }}>
-  Status: {request.status}
-</Status>
+                  Status: {request.status}
+                </Status>
 
                 <div className='flex gap-2 justify-end'>
-                <ConfirmButton onClick={() => handleAccept(request)}>
-  <BsCheck2 size={20}/>
-  Accept
-</ConfirmButton>
+                  <ConfirmButton onClick={() => handleAccept(request)}>
+                    <BsCheck2 size={20} />
+                    Accept
+                  </ConfirmButton>
 
                   <DeclineButton onClick={() => handleDecline(request.requestId)}>
-                    <BsX size={25}/>
+                    <BsX size={25} />
                     Decline
                   </DeclineButton>
                 </div>
@@ -251,7 +251,7 @@ const Time = tw.div`
 const Seats = tw.div`
     text-sm
   `;
-  const Status = tw.div`
+const Status = tw.div`
   text-sm
 `;
 
