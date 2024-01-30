@@ -80,7 +80,13 @@ useEffect(() => {
       center: pickupLocation.coordinates,
       zoom: 12,
     });
-
+  
+    // Add a marker for the current position
+    new mapboxgl.Marker({ color: "green" })
+      .setLngLat(pickupLocation.coordinates)
+      .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
+      .addTo(newMap);
+  
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
@@ -88,9 +94,10 @@ useEffect(() => {
       addDropoffMarker(lngLat, locationName);
       drawLine();
     });
-
+  
     setMap(newMap);
   };
+  
 
   const reverseGeocode = async (latitude, longitude) => {
     try {
@@ -114,20 +121,51 @@ useEffect(() => {
         .addTo(map);
     }
   };
-
   const drawLine = () => {
     if (map && pickup && dropoff) {
-      if (line) {
-        line.remove();
+      // Create a line between pickup and destination
+      const newLine = {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [pickup.coordinates, dropoff.coordinates],
+        },
+      };
+  
+      const sourceId = 'line-source';
+  
+      // Check if the source already exists, remove it if it does
+      if (map.getSource(sourceId)) {
+        map.removeSource(sourceId);
+        map.removeLayer('line-layer');
       }
-
-      const newLine = new mapboxgl.NavigationControl()
-        .setLngLat(pickup.coordinates)
-        .addTo(map);
-
-      setLine(newLine);
+  
+      // Add the line to the map
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: newLine,
+      });
+  
+      map.addLayer({
+        id: 'line-layer',
+        type: 'line',
+        source: sourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': 'red',
+          'line-width': 2,
+        },
+      });
+  
+      // Fit the map to the new line
+      map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
     }
   };
+  
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
   

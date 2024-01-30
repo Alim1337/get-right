@@ -77,17 +77,36 @@ const Search = () => {
       zoom: 12,
     });
 
-    newMap.on("dblclick", async (event) => {
-      const lngLat = event.lngLat.toArray();
-      const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
-      setDropoff({ coordinates: lngLat, locationName });
-      addDropoffMarker(lngLat, locationName);
-      drawLine();
-    });
+    // Add marker for current position
+    new mapboxgl.Marker({ color: "green" })
+      .setLngLat(pickupLocation.coordinates)
+      .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
+      .addTo(newMap);
+
+      newMap.on("dblclick", async (event) => {
+        const lngLat = event.lngLat.toArray();
+        const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
+        setDropoff({ coordinates: lngLat, locationName });
+      
+        // Add marker for destination location
+        addDropoffMarker(lngLat, locationName);
+      
+        drawLine();
+      });
+      
 
     setMap(newMap);
   };
 
+  const addDropoffMarker = (lngLat, locationName) => {
+    if (map) {
+      new mapboxgl.Marker({ color: "blue" })
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(map);
+    }
+  };
+  
   const reverseGeocode = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -102,28 +121,88 @@ const Search = () => {
     }
   };
 
-  const addDropoffMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "blue" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
+
 
   const drawLine = () => {
     if (map && pickup && dropoff) {
-      if (line) {
-        line.remove();
-      }
-
-      const newLine = new mapboxgl.NavigationControl();
-      newLine.setLngLat(pickup.coordinates);
-      newLine.addTo(map);
-
-      setLine(newLine);
+      // Create a marker for the destination
+      const destinationMarker = new mapboxgl.Marker({ color: "red" })
+        .setLngLat(dropoff.coordinates)
+        .setPopup(new mapboxgl.Popup().setHTML(dropoff.locationName))
+        .addTo(map);
+  
+      // Create a line between pickup and destination
+      const newLine = [pickup.coordinates, dropoff.coordinates];
+  
+      // Calculate the bounds of the line
+      const bounds = new mapboxgl.LngLatBounds();
+      newLine.forEach(point => bounds.extend(point));
+  
+      // Set the map's center and zoom level to fit the bounds
+      map.setCenter(bounds.getCenter());
+      map.setZoom(getZoomLevel(bounds, map));
+  
+      // Note: If you want to draw a line on the map, you can use a GeoJSON source and layer
+      // Uncomment and customize the code block below if needed
+      // addLineToMap(newLine);
     }
   };
+  
+  
+  // Helper function to calculate zoom level based on bounds
+  const getZoomLevel = (bounds, map) => {
+    const WORLD_DIM = { height: 256, width: 256 };
+    const ZOOM_MAX = 21;
+  
+    const ne = map.project(bounds.getNorthEast());
+    const sw = map.project(bounds.getSouthWest());
+  
+    const dx = ne.x - sw.x;
+    const dy = ne.y - sw.y;
+  
+    for (let zoom = ZOOM_MAX; zoom >= 0; --zoom) {
+      if (dx <= WORLD_DIM.width && dy <= WORLD_DIM.height) {
+        return zoom;
+      }
+      dx /= 2;
+      dy /= 2;
+    }
+  
+    return 0;
+  };
+  
+  
+  
+  // Example function to add a line to the map using GeoJSON source and layer
+  const addLineToMap = (coordinates) => {
+    map.addSource('line-source', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates,
+        },
+      },
+    });
+  
+    map.addLayer({
+      id: 'line-layer',
+      type: 'line',
+      source: 'line-source',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': 'red',
+        'line-width': 2,
+      },
+    });
+  };
+  
+  
   const handleSearch = async () => {
     try {
       const response = await fetch(`/api/apiSearchTrips?searchTermPickup=${searchTermPickup}&searchTermDropoff=${searchTermDropoff}`, {
