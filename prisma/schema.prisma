@@ -64,6 +64,7 @@ model users {
   password      String          @db.VarChar(255)
   role          users_role?     @default(client)
   admins        admins[]
+  proposition   proposition[]
   reservations  reservations[]
   ride_requests ride_requests[]
   trips         trips[]
@@ -79,6 +80,22 @@ model ride_requests {
   trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "ride_requests_ibfk_2")
 
   @@index([tripId], map: "tripId")
+  @@index([userId], map: "userId")
+}
+
+model proposition {
+  propositionId        Int      @id @default(autoincrement())
+  userId               Int
+  departureLocation    String   @db.VarChar(100)
+  destinationLocation  String   @db.VarChar(100)
+  departureTime        DateTime @db.DateTime(0)
+  availableSeats       Int
+  departureLatitude    Float?   @db.Float
+  departureLongitude   Float?   @db.Float
+  destinationLatitude  Float?   @db.Float
+  destinationLongitude Float?   @db.Float
+  users                users    @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "proposition_ibfk_1")
+
   @@index([userId], map: "userId")
 }
 
