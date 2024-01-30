@@ -12,7 +12,7 @@ const SeeTrips = () => {
     // Fetch your trips data from the API or wherever it comes from
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/getTrips"); // Replace with your API endpoint
+        const response = await fetch("/api/apiManageProposedDrives"); // Replace with your API endpoint
         if (response.ok) {
           const data = await response.json();
           setTrips(data);

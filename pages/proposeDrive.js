@@ -15,7 +15,7 @@ import { MdStars } from "react-icons/md";
 
 const ProposeDrive = () => {
   const router = useRouter();
-  const [driverId, setDriverId] = useState('');
+  const [userId, setUserId] = useState('');
 
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
@@ -39,13 +39,13 @@ const ProposeDrive = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
-    setDriverId(decodedToken.userId);
+    setUserId(decodedToken.userId);
     console.log('this is decodedToken', decodedToken);
 }, []);
 
 useEffect(() => {
-    console.log('this is driver id ', driverId);
-}, [driverId]); // This useEffect runs whenever driverId changes
+    console.log('this is driver id ', userId);
+}, [userId]); // This useEffect runs whenever driverId changes
 
 
   const setupMap = () => {
@@ -136,7 +136,7 @@ useEffect(() => {
       const pickupCoordinates = await reverseGeocodeCoordinates(pickup.locationName);
       const dropoffCoordinates = await reverseGeocodeCoordinates(dropoff.locationName);
   
-      const response = await fetch('/api/apiCreateRide', {
+      const response = await fetch('/api/apiProposeDrive', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ useEffect(() => {
           date: rideDetails.date,
           time: rideDetails.time,
           seatsAvailable: rideDetails.seatsAvailable,
-          driverId: driverId,
+          userId: userId,
           departureLatitude: pickupCoordinates.latitude,
           departureLongitude: pickupCoordinates.longitude,
           destinationLatitude: dropoffCoordinates.latitude,
@@ -156,10 +156,9 @@ useEffect(() => {
       });
   
       if (response.ok) {
-        console.log('Ride created successfully');
-        localStorage.setItem('role', 'driver');
+        console.log('Drive proposed successfully');
         // Show a notification before redirecting
-        window.alert('Ride created successfully');
+        window.alert('Drive proposed successfully');
         // Redirect or perform any other actions after successful ride creation
         router.push('/'); // Redirect to the home page
       } else {
