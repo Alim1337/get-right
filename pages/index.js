@@ -204,8 +204,8 @@ const Index = () => {
             <div className="w-full text-center justify-center">
               {hasReservations && (
                 <div className="flex items-center">
-                  <FaBell className="-mr-5" size={40}/>
-                  <div className="bg-red-500 text-white text-center p-1 mb-6 h-9 w-9 font-bold rounded-full mr-1">
+                  <FaBell className="-mr-5" size={30}/>
+                  <div className="bg-red-500 text-white text-center  mb-6 h-6 w-6 font-bold rounded-full mr-1">
                     {counter}
                   </div>
                    
