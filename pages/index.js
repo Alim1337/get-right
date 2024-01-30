@@ -12,6 +12,7 @@ import ReservedRidesModal from '../components/ReservedRidesModal';
 
 
 const Index = () => {
+  
   const [user, setUser] = useState(null);
   const [location, setLocation] = useState([44, 36.2]);
   const [hasReservations, setHasReservations] = useState(false);

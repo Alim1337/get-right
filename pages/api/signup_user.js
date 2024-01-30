@@ -7,7 +7,7 @@ const SECRET_KEY = 'HAXER';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { firstName, lastName, phoneNumber, email, password } = req.body;
+    const { firstName, lastName, phoneNumber, email, password,studentId } = req.body;
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
           firstName :firstName,
           lastName:lastName,
           phoneNumber:phoneNumber,
-          studentId:phoneNumber,
+          studentId:studentId,
           email:email,
           password: hashedPassword, // Store the hashed password
           role: 'client',
