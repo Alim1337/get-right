@@ -64,6 +64,10 @@ const Index = () => {
   }, [user]);
 
   const fetchReservationsPeriodically = () => {
+    if (user && user.role === 'driver') {
+      // If the user is a driver, do not fetch data periodically
+      return;
+    }
     const intervalId = setInterval(async () => {
       try {
         await fetchReservations();
