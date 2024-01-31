@@ -42,11 +42,11 @@ const CreateRide = () => {
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
     setDriverId(decodedToken.userId);
     console.log('this is decodedToken', decodedToken);
-}, []);
+  }, []);
 
-useEffect(() => {
+  useEffect(() => {
     console.log('this is driver id ', driverId);
-}, [driverId]); // This useEffect runs whenever driverId changes
+  }, [driverId]); // This useEffect runs whenever driverId changes
 
 
   const setupMap = () => {
@@ -81,13 +81,13 @@ useEffect(() => {
       center: pickupLocation.coordinates,
       zoom: 12,
     });
-  
+
     // Add a marker for the current position
     new mapboxgl.Marker({ color: "green" })
       .setLngLat(pickupLocation.coordinates)
       .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
       .addTo(newMap);
-  
+
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
@@ -95,10 +95,10 @@ useEffect(() => {
       addDropoffMarker(lngLat, locationName);
       drawLine();
     });
-  
+
     setMap(newMap);
   };
-  
+
 
   const reverseGeocode = async (latitude, longitude) => {
     try {
@@ -132,21 +132,21 @@ useEffect(() => {
           coordinates: [pickup.coordinates, dropoff.coordinates],
         },
       };
-  
+
       const sourceId = 'line-source';
-  
+
       // Check if the source already exists, remove it if it does
       if (map.getSource(sourceId)) {
         map.removeSource(sourceId);
         map.removeLayer('line-layer');
       }
-  
+
       // Add the line to the map
       map.addSource(sourceId, {
         type: 'geojson',
         data: newLine,
       });
-  
+
       map.addLayer({
         id: 'line-layer',
         type: 'line',
@@ -160,21 +160,21 @@ useEffect(() => {
           'line-width': 2,
         },
       });
-  
+
       // Fit the map to the new line
       map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
     }
   };
-  
-  
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       // Reverse geocode to get coordinates for departure and destination
       const pickupCoordinates = await reverseGeocodeCoordinates(pickup.locationName);
       const dropoffCoordinates = await reverseGeocodeCoordinates(dropoff.locationName);
-  
+
       const response = await fetch('/api/apiCreateRide', {
         method: 'POST',
         headers: {
@@ -193,7 +193,7 @@ useEffect(() => {
           destinationLongitude: dropoffCoordinates.longitude,
         }),
       });
-  
+
       if (response.ok) {
         console.log('Ride created successfully');
         localStorage.setItem('role', 'driver');
@@ -211,7 +211,7 @@ useEffect(() => {
       console.error('Error during ride creation:', error);
     }
   };
-  
+
   // Function to get coordinates from location name using reverse geocoding
   const reverseGeocodeCoordinates = async (locationName) => {
     try {
@@ -226,8 +226,8 @@ useEffect(() => {
       return { latitude: 0, longitude: 0 }; // Return default coordinates on error
     }
   };
-  
-  
+
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -269,101 +269,113 @@ useEffect(() => {
         </Link>
       </ButtonContainer>
 
-      <MapContainer id="map" />
+      <SecondWrapper>
 
-      <ContentContainer>
-        <FormContainer>
-          <h1 className="text-4xl mb-8 text-center font-serif text-blue-990">Create a Ride</h1>
-          <form
-            onSubmit={handleSubmit}
-            className="border-2 border-blue-500 rounded-xl px-8 pt-6 pb-8 mb-4"
-          >
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="departure">
-                Pickup Location:
-                <input
-                  type="text"
-                  name="departure"
-                  value={pickup.locationName}
-                  onChange={handleChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </label>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destination">
-                Destination:
-                <input
-                  type="text"
-                  name="destination"
-                  value={dropoff.locationName}
-                  onChange={handleChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </label>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="date">
-                Date:
-                <input
-                  type="date"
-                  name="date"
-                  value={rideDetails.date}
-                  onChange={handleDateChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </label>
-              {dateError && (
-                <p className="text-red-500 text-s text-center">{dateError}</p>
-              )}
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="time">
-                Time:
-                <input
-                  type="time"
-                  name="time"
-                  value={rideDetails.time}
-                  onChange={handleTimeChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </label>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
-                Seats Available:
-                <input
-                  type="number"
-                  name="seatsAvailable"
-                  value={rideDetails.seatsAvailable}
-                  onChange={handleChange}
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                />
-              </label>
-              {seatError && (
-                <p className="text-red-500 text-s text-center">{seatError}</p>
-              )}
-            </div>
-            <div className='mt-10 text-center'>
-              <button
-                disabled={dateError || seatError}
-                type="submit"
-                className="left-1/2 bg-blue-500 hover:bg-blue-700
+        <ContentContainer>
+          <FormContainer>
+            <h1 className="text-4xl mb-8 text-center font-serif text-blue-990">Create a Ride</h1>
+            <form
+              onSubmit={handleSubmit}
+              className="border-2 border-blue-500 rounded-xl px-8 pt-6 pb-8 mb-4"
+            >
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="departure">
+                  Pickup Location:
+                  <input
+                    type="text"
+                    name="departure"
+                    value={pickup.locationName}
+                    onChange={handleChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </label>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destination">
+                  Destination:
+                  <input
+                    type="text"
+                    name="destination"
+                    value={dropoff.locationName}
+                    onChange={handleChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </label>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="date">
+                  Date:
+                  <input
+                    type="date"
+                    name="date"
+                    value={rideDetails.date}
+                    onChange={handleDateChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </label>
+                {dateError && (
+                  <p className="text-red-500 text-s text-center">{dateError}</p>
+                )}
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="time">
+                  Time:
+                  <input
+                    type="time"
+                    name="time"
+                    value={rideDetails.time}
+                    onChange={handleTimeChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </label>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
+                  Seats Available:
+                  <input
+                    type="number"
+                    name="seatsAvailable"
+                    value={rideDetails.seatsAvailable}
+                    onChange={handleChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </label>
+                {seatError && (
+                  <p className="text-red-500 text-s text-center">{seatError}</p>
+                )}
+              </div>
+              <div className='mt-10 text-center'>
+                <button
+                  disabled={dateError || seatError}
+                  type="submit"
+                  className="left-1/2 bg-blue-500 hover:bg-blue-700
                  text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              >
-                Publish Ride
-              </button>
-            </div>
-          </form>
-        </FormContainer>
+                >
+                  Publish Ride
+                </button>
+              </div>
+            </form>
+          </FormContainer>
 
-  
-      </ContentContainer>
+
+        </ContentContainer>
+
+        <MapContainer id="map" />
+
+      </SecondWrapper>
+
+
+
+
     </Wrapper>
   );
 }
 const Wrapper = tw.div`
-  p-4 bg-gray-200 h-screen
+  pt-1 bg-gray-200 h-screen 
+`;
+
+const SecondWrapper = tw.div`
+  flex h-screen mt-2
 `;
 
 const ButtonContainer = tw.div`
@@ -373,15 +385,15 @@ const ButtonContainer = tw.div`
 const BackButton = tw.button``;
 
 const MapContainer = tw.div`
-  flex-1 h-96
+  flex-1 w-full rounded-xl
 `;
 
 const ContentContainer = tw.div`
-  flex-1 flex flex-col
+   flex flex-row mr-2 h-full
 `;
 
 const FormContainer = tw.div`
-  max-w-2xl mb-8 p-8 bg-white shadow-2xl rounded-xl
+   max-w-2xl mb-1 p-8 bg-white shadow-2xl rounded-xl
 `;
 
 
