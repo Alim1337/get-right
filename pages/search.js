@@ -12,7 +12,7 @@ import { MdStars } from "react-icons/md";
 import Link from "next/link";
 import { accessToken } from "../components/Map";
 import ListRides from "../components/ListRides";
-const NEARBY_RANGE = 10;
+const NEARBY_RANGE = 20;
 const Search = () => {
   const [pickup, setPickup] = useState({
     coordinates: [0, 0],

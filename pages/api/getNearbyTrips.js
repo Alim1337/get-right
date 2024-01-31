@@ -11,23 +11,25 @@ export default async function handler(req, res) {
   const { latitude, longitude, range } = req.query;
   console.log('latitude, longitude, range ', latitude, longitude, range);
 
+  // Convert range from kilometers to degrees
+  const rangeInDegrees = range/ 111.32; // 1 degree is approximately 111.32 kilometers
+  console.log('rangeInDegrees  ',rangeInDegrees );
+
   try {
     const nearbyTrips = await prisma.trips.findMany({
       where: {
         departureLatitude: {
-          gte: parseFloat(latitude) - parseFloat(range),
-          lte: parseFloat(latitude) + parseFloat(range),
+          gte: parseFloat(latitude) - rangeInDegrees,
+          lte: parseFloat(latitude) + rangeInDegrees,
         },
         departureLongitude: {
-          gte: parseFloat(longitude) - parseFloat(range),
-          lte: parseFloat(longitude) + parseFloat(range),
+          gte: parseFloat(longitude) - rangeInDegrees,
+          lte: parseFloat(longitude) + rangeInDegrees,
         },
-        departureTime: {
-          gte: new Date(),
-        },
+      
       },
     });
-
+    console.log('nearbyTrips', { nearbyTrips });
     return res.status(200).json({ nearbyTrips });
   } catch (error) {
     console.error('Error fetching nearby trips:', error);
