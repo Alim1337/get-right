@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import tw from "tailwind-styled-components";
 import Link from "next/link";
 import { BsArrowLeft, BsCheck2 } from "react-icons/bs";
+import { Toaster, toast } from 'sonner'
 
 const SeePropositions = () => {
   const [propositions, setPropositions] = useState([]);
@@ -58,7 +59,10 @@ const SeePropositions = () => {
         setPropositions((prevPropositions) =>
           prevPropositions.filter((prop) => prop.propositionId !== propositionId)
         );
-        window.alert(`Ride accepted successfully for propositionId: ${propositionId}`);
+        toast.success('Drive proposition accepted successfully', {
+          position: 'top-center',
+          duration: 3000,
+        });
         router.push('/');
       } else {
         console.error("Failed to request seat");

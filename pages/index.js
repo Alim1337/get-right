@@ -21,11 +21,11 @@ const Index = () => {
   const [reservations, setReservations] = useState({});
   const [showReservedRidesModal, setShowReservedRidesModal] = useState(false);
   const [counter, setCounter] = useState(0);
-  
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-  
+
     if (!token) {
       router.push('/login');
     } else {
@@ -36,6 +36,7 @@ const Index = () => {
           id: decodedToken.userId,
           firstName: decodedToken.firstName,
           lastName: decodedToken.lastName,
+          photoUrl: 'userImage/userProfile.jpg'
         });
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -43,8 +44,8 @@ const Index = () => {
       }
     }
   }, [router]);
-  
-  
+
+
 
   useEffect(() => {
     // Fetch reservations periodically
@@ -67,7 +68,7 @@ const Index = () => {
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
-    }, 5000); // Fetch every 10 seconds (adjust as needed)
+    }, 3000); // Fetch every 10 seconds (adjust as needed)
 
     return () => clearInterval(intervalId);
   };
@@ -88,12 +89,12 @@ const Index = () => {
 
       setCounter((prevCounter) => {
         const newCounter = data.numberOfReservations;
-  
+
         // Check for the condition and display toast if necessary
         if (newCounter > prevCounter) {
           toast.success('You have a new reservation!');
         }
-  
+
         return newCounter;
       });
     } catch (error) {
@@ -150,17 +151,16 @@ const Index = () => {
 
       <ActionItems>
         <Header>
-        <Profile className="flex items-center space-x-4 border-4 border-blue-600 p-4 rounded-lg shadow-lg">
-  <div className="text-2xl font-bold text-blue-700">
-    User Connected: {user && `${user.firstName} ${user.lastName}`}
-  </div>
-  <UserImage
-    src={user && user.photoUrl}
-    alt="User Photo"
-    className="h-16 w-16 cursor-pointer rounded-full border-4 border-blue-800"
-    onClick={() => signOut(auth)}
-  />
-</Profile>
+          <Profile className="flex items-center space-x-4 border-4 border-blue-600 p-4 rounded-lg shadow-lg">
+            <div className="text-2xl font-bold text-blue-700">
+              User Connected: {user && `${user.firstName} ${user.lastName}`}
+            </div>
+            <UserImage
+              src={user && user.photoUrl}
+              alt="User Photo"
+              className="h-16 w-16 cursor-pointer rounded-full border-4 border-blue-800"
+            />
+          </Profile>
 
 
 
@@ -230,16 +230,16 @@ const Index = () => {
             <div className="w-full text-center justify-center">
               {hasReservations && (
                 <div className="flex items-center">
-                  <FaBell className="-mr-5" size={30}/>
+                  <FaBell className="-mr-5" size={30} />
                   <div className="bg-red-500 text-white text-center  mb-6 h-6 w-6 font-bold rounded-full mr-1">
                     {counter}
                   </div>
-                   
+
                   <ActionButton
                     className="flex items-center w-full justify-center"
                     onClick={handleShowReservedRides}
                   >
-                    
+
                     <div className="text-center">My reserved rides</div>
                   </ActionButton>
                 </div>
