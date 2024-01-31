@@ -1,4 +1,3 @@
-// apiSearchTrips.js
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -8,9 +7,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { searchTermPickup, searchTermDropoff } = req.query;
-  console.log("searchTermPickup:", searchTermPickup);
-  console.log("searchTermDropoff:", searchTermDropoff);
+  let { searchTermPickup, searchTermDropoff } = req.query;
+  console.log("searchTermPickup (before):", searchTermPickup);
+  console.log("searchTermDropoff (before):", searchTermDropoff);
+
+  // Remove parentheses from search terms
+  searchTermPickup = searchTermPickup.replace(/[\(\)]/g, '');
+  searchTermDropoff = searchTermDropoff.replace(/[\(\)]/g, '');
+
+  console.log("searchTermPickup (after):", searchTermPickup);
+  console.log("searchTermDropoff (after):", searchTermDropoff);
 
   try {
     const targetTrips = await prisma.trips.findMany({
@@ -24,7 +30,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: 'No matching trips found' });
     }
 
-    console.log("searched trips", targetTrips);
+   // console.log("searched trips", targetTrips);
     return res.status(200).json(targetTrips);
   } catch (error) {
     console.error('Error searching trips:', error);

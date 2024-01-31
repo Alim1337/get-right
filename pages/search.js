@@ -12,7 +12,7 @@ import { MdStars } from "react-icons/md";
 import Link from "next/link";
 import { accessToken } from "../components/Map";
 import ListRides from "../components/ListRides";
-
+const NEARBY_RANGE = 10;
 const Search = () => {
   const [pickup, setPickup] = useState({
     coordinates: [0, 0],
@@ -27,6 +27,8 @@ const Search = () => {
 
   const [searchResults, setSearchResults] = useState(null);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [nearbyResults, setNearbyResults] = useState(null);
+  const [showNearbyResults, setShowNearbyResults] = useState(false);
 
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
@@ -256,6 +258,34 @@ const Search = () => {
   useEffect(() => {
     setupMap();
   }, []);
+  
+  // Your component file
+  const handleSearchNearby = async () => {
+    try {
+      // Fetch nearby trips
+      const response = await fetch(`/api/getNearbyTrips?latitude=${pickup.coordinates[1]}&longitude=${pickup.coordinates[0]}&range=${NEARBY_RANGE}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Nearby results:', data.nearbyTrips);
+        setNearbyResults(data.nearbyTrips);
+        setShowNearbyResults(true);
+      } else {
+        console.error('Failed to fetch nearby results');
+      }
+    } catch (error) {
+      console.error('Error during nearby search:', error);
+    }
+    
+    return null;
+  };
+  
+  
 
   const handleRequestSeat = async (rideInfo) => {
     try {
@@ -290,7 +320,11 @@ const Search = () => {
   const handleSeatCountChange = (tripId, newSeatCount) => {
     console.log(`Trip ${tripId} has ${newSeatCount} requested seats.`);
   };
-
+  
+  
+  
+  
+  
   return (
     <Wrapper>
       <ButtonContainer>
@@ -338,13 +372,29 @@ const Search = () => {
       <SavedPlaces>
         <MdStars size={30} /> Saved Places
       </SavedPlaces>
-      <ConfirmLocation onClick={handleSearch}>Confirm Location</ConfirmLocation>
-      {showSearchResults && <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />}    
+      <ConfirmLocation onClick={() => { handleSearch(); handleSearchNearby(); }}>Confirm Location</ConfirmLocation>
 
-    </Wrapper>
-  );
+    {showSearchResults && (
+      <div>
+        <SectionTitle>Rides disponible</SectionTitle>
+        <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />
+      </div>
+    )}
+
+{showNearbyResults && (
+        <div>
+          <SectionTitle>Nearby rides</SectionTitle>
+          {nearbyResults ? (
+            <ListRides rides={nearbyResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />
+          ) : (
+            <p>No nearby rides found.</p>
+          )}
+        </div>
+      )}
+
+  </Wrapper>
+);
 };
-
 const Wrapper = tw.div`
     p-4 bg-gray-200 h-screen
 `;
@@ -357,6 +407,9 @@ const BackButton = tw.button``;
 
 const InputContainer = tw.div`
     bg-white flex items-center py-4 my-4
+`;
+const SectionTitle = tw.h2`
+  text-2xl font-bold mt-4
 `;
 
 const FromToIcons = tw.div`

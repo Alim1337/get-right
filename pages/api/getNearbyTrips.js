@@ -1,3 +1,4 @@
+// api/getNearbyTrips.js
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -8,19 +9,18 @@ export default async function handler(req, res) {
   }
 
   const { latitude, longitude, range } = req.query;
+  console.log('latitude, longitude, range ', latitude, longitude, range);
 
   try {
     const nearbyTrips = await prisma.trips.findMany({
       where: {
-        destinationLocation: {
-          latitude: {
-            gte: parseFloat(latitude) - parseFloat(range),
-            lte: parseFloat(latitude) + parseFloat(range),
-          },
-          longitude: {
-            gte: parseFloat(longitude) - parseFloat(range),
-            lte: parseFloat(longitude) + parseFloat(range),
-          },
+        departureLatitude: {
+          gte: parseFloat(latitude) - parseFloat(range),
+          lte: parseFloat(latitude) + parseFloat(range),
+        },
+        departureLongitude: {
+          gte: parseFloat(longitude) - parseFloat(range),
+          lte: parseFloat(longitude) + parseFloat(range),
         },
         departureTime: {
           gte: new Date(),

@@ -7,7 +7,9 @@ const Dashboard = () => {
   const [deleteUserId, setDeleteUserId] = useState(null);
   const [rides, setRides] = useState([]);
   const [deleteRideId, setDeleteRideId] = useState(null);
-
+  const [showConfigTable, setShowConfigTable] = useState(false);
+  const [maxSeats, setMaxSeats] = useState(5); // Initial value, change as needed
+  const [maxRidesPerDay, setMaxRidesPerDay] = useState(4); // Initial value, change as needed
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
     if (!showUserMenu) {
@@ -17,6 +19,28 @@ const Dashboard = () => {
 
   const toggleRideMenu = () => {
     setShowRideMenu(!showRideMenu);
+  };
+  const handleConfigButtonClick = () => {
+    setShowConfigTable(!showConfigTable);
+  };
+
+  const handleMaxSeatsChange = (event) => {
+    setMaxSeats(parseInt(event.target.value, 10));
+  };
+
+  const handleMaxRidesPerDayChange = (event) => {
+    setMaxRidesPerDay(parseInt(event.target.value, 10));
+  };
+
+  const handleDoneButtonClick = () => {
+    // Implement logic to save the changes, e.g., send to server
+    // You can use the maxSeats and maxRidesPerDay values for this
+
+    // For demonstration purposes, you can log the values to the console
+    console.log('Max Seats:', maxSeats);
+    console.log('Max Rides Per Day:', maxRidesPerDay);
+
+    // Add any additional logic you need for finalizing the changes
   };
 
   const handleUserAction = (action) => {
@@ -154,6 +178,81 @@ const Dashboard = () => {
                 </svg>
                 Manage Users
               </button>
+              <button
+        type="button"
+        onClick={handleConfigButtonClick}
+        className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700
+         focus:text-purple-700 hover:bg-purple-100 focus:bg-purple-100 border
+          border-purple-600 rounded-md mb-3"
+      >
+        <svg
+          aria-hidden="true"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          className="flex-shrink-0 h-5 w-5 -ml-1 mt-0.5 mr-2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 
+            3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
+        </svg>
+        Configure application rules
+      </button>
+
+      {showConfigTable && (
+        <div className="p-4 bg-white shadow rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Configuration Setting
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Value
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap">Max Seats</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={maxSeats}
+                    onChange={handleMaxSeatsChange}
+                    className="w-16 border-gray-300 rounded-md"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 whitespace-nowrap">Max Rides Per Day</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={maxRidesPerDay}
+                    onChange={handleMaxRidesPerDayChange}
+                    className="w-16 border-gray-300 rounded-md"
+                  />
+                </td>
+              </tr>
+              {/* Add more rows for additional configuration settings */}
+            </tbody>
+          </table>
+          <button
+            type="button"
+            onClick={handleDoneButtonClick}
+            className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4
+              rounded-md"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
               {showUserMenu && (
                 <div className="origin-top-right absolute right-0 mt-2 w-56
                  rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
@@ -341,6 +440,7 @@ const Dashboard = () => {
             </div>
           </div>
           {/* Add more sections for other functionalities */}
+          
           <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
           <div className="flex items-center p-8 bg-white shadow rounded-lg">
             <div className="inline-flex flex-shrink-0 items-center justify-center
