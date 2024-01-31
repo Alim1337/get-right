@@ -1,6 +1,6 @@
-# Application de covoiturage Next.js, JavaScript, MySQL, and Prisma
+# Get Right - Application de Covoiturage
 
-Bienvenue sur l'application de covoiturage Get Right basée sur Next.js, JavaScript, MySQL et Prisma. Cette application permet aux utilisateurs de proposer et de réserver des trajets en covoiturage.
+Bienvenue sur Get Right, une application de covoiturage basée sur Next.js, JavaScript, MySQL et Prisma. Permet aux utilisateurs de proposer et de réserver des trajets en covoiturage, offrant une solution pratique pour partager vos voyages avec d'autres.
 
 ## Prérequis
 
@@ -26,8 +26,8 @@ L'application sera accessible à l'adresse http://localhost:3000.
 
 ## Configuration de l'application
 ```
-git clone https://github.com/votre-utilisateur/votre-repo.git
-cd votre-repo
+git clone https://github.com/Alim1337/get-right.git
+cd get-right
 yarn
 yarn dev
 ```
@@ -46,5 +46,5 @@ yarn dev
 - Fethallah Mohamed Racim
 - Yaici Aya
 - Laraba Yamina Nesrine
--
+- Nessrine 
 
