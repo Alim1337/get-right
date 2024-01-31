@@ -68,7 +68,7 @@ const Index = () => {
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
-    }, 5000); // Fetch every 10 seconds (adjust as needed)
+    }, 3000); // Fetch every 10 seconds (adjust as needed)
 
     return () => clearInterval(intervalId);
   };

@@ -5,6 +5,11 @@ const ReservedRidesModal = ({ reservations, onClose }) => {
     console.log('Received reservations from comp:', reservations);
   }, [reservations]);
 
+  const handleShowInMap = (reservation) => {
+    // Add logic to handle showing the reservation in the map
+    console.log('Show in map clicked for reservation:', reservation);
+  };
+
   return (
     <div className="bg-white rounded-lg p-6 shadow-lg transform transition-all duration-500 ease-in-out border-4 border-green-500">
       <h2 className="text-3xl font-sans mb-4 text-green-700">Your Reserved Rides</h2>
@@ -20,6 +25,7 @@ const ReservedRidesModal = ({ reservations, onClose }) => {
               Driver's phone: {reservation.driver.phoneNumber} <br />
               departureLocation: {reservation.departureLocation} <br />
               destinationLocation: {reservation.destinationLocation} <br />
+              <button onClick={() => handleShowInMap(reservation)} className="bg-blue-500 text-white px-4 py-2 rounded-full text-lg font-sans my-3 leading-normal transition-all duration-300 ease-in-out hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 active:bg-blue-700">Show in Map</button>
             </li>
           ))
         ) : (
