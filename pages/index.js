@@ -36,6 +36,7 @@ const Index = () => {
           id: decodedToken.userId,
           firstName: decodedToken.firstName,
           lastName: decodedToken.lastName,
+          photoUrl: 'userImage/userProfile.jpg'
         });
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -158,7 +159,6 @@ const Index = () => {
               src={user && user.photoUrl}
               alt="User Photo"
               className="h-16 w-16 cursor-pointer rounded-full border-4 border-blue-800"
-              onClick={() => signOut(auth)}
             />
           </Profile>
 
