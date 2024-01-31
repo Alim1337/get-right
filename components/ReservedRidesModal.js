@@ -12,14 +12,14 @@ const ReservedRidesModal = ({ reservations, onClose }) => {
         {reservations && reservations.length > 0 ? (
           reservations.map((reservation) => (
             <li key={reservation.reservationId} className="mb-2 text-green-600 hover:text-green-800 transition-all duration-300 ease-in-out border-b-2 border-green-500">
-              Reservation ID: {reservation.reservationId} <br />
-              Trip ID: {reservation.tripId} <br />
-              Passenger ID: {reservation.passengerId} <br />
+              {/* Reservation ID: {reservation.reservationId} <br /> */}
+              {/* Trip ID: {reservation.tripId} <br />
+              Passenger ID: {reservation.passengerId} <br /> */}
               Reservation Time: {reservation.reservationTime} <br />
-              Driver ID: {reservation.driverId} <br />
+              Driver: {reservation.driver.firstName} {reservation.driver.lastName} <br />
+              Driver's phone: {reservation.driver.phoneNumber} <br />
               departureLocation: {reservation.departureLocation} <br />
-          destinationLocation : {reservation.destinationLocation} <br />
-
+              destinationLocation: {reservation.destinationLocation} <br />
             </li>
           ))
         ) : (

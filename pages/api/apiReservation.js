@@ -15,35 +15,41 @@ export default async function handler(req, res) {
         where: {
           passengerId: userId,
         },
-      });
-
-      const reservationsWithDestinations = await Promise.all(
-        reservations.map(async (reservation) => {
-          const trip = await prisma.trips.findUnique({
-            where: {
-              tripId: reservation.tripId,
-            },
+        include: {
+          trips: {
             select: {
               destinationLocation: true,
-              departureLocation:true,
+              departureLocation: true,
+              driverId: true,
+              users: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  phoneNumber: true,
+                },
+              },
             },
-          });
+          },
+        },
+      });
 
-          return {
-            reservationId: reservation.reservationId,
-            tripId: reservation.tripId,
-            passengerId: reservation.passengerId,
-            reservationTime: reservation.reservationTime,
-            driverId: reservation.driverId,
-            destinationLocation: trip?.destinationLocation,
-            departureLocation : trip?.departureLocation,
-          };
-        })
-      );
+      const reservationsWithDestinations = reservations.map((reservation) => {
+        return {
+          reservationId: reservation.reservationId,
+          tripId: reservation.tripId,
+          passengerId: reservation.passengerId,
+          reservationTime: reservation.reservationTime,
+          driver: {
+            firstName: reservation.trips?.users?.firstName,
+            lastName: reservation.trips?.users?.lastName,
+            phoneNumber: reservation.trips?.users?.phoneNumber,
+          },
+          destinationLocation: reservation.trips?.destinationLocation,
+          departureLocation: reservation.trips?.departureLocation,
+        };
+      });
 
       const numberOfReservations = reservations.length;
-
-    //  console.log('reservations', reservationsWithDestinations);
 
       return res.status(200).json({
         hasReservations: reservations.length > 0,
