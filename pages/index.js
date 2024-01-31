@@ -45,6 +45,13 @@ const Index = () => {
     }
   }, [router]);
 
+  // useEffect(() => {
+  //   // Fetch initial reservations
+  //   if (user && user.id) {
+  //     fetchReservations();
+  //   }
+  // }, [user]);
+
 
 
   useEffect(() => {
@@ -68,7 +75,7 @@ const Index = () => {
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
-    }, 3000); // Fetch every 10 seconds (adjust as needed)
+    }, 1000); // Fetch every 10 seconds (adjust as needed)
 
     return () => clearInterval(intervalId);
   };
