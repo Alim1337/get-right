@@ -4,6 +4,8 @@ import tw from "tailwind-styled-components";
 const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
   const [seatRequests, setSeatRequests] = useState(0);
 
+  console.log("ride", ride);
+
   const handleRequestSeat = () => {
     if (seatRequests < ride.availableSeats) {
       setSeatRequests((prev) => prev + 1);
@@ -20,6 +22,10 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
     });
   };
 
+  const handleShowOnMap = () => {
+
+  };
+
   return (
     <Ride>
       <RideDetails>
@@ -28,9 +34,10 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
         <Time>{new Date(ride.departureTime).toLocaleString()}</Time>
         <Seats>Available Seats: {ride.availableSeats - seatRequests}</Seats>
         <Seats>Requested Seats: {seatRequests}</Seats>
-        <DriverID>Driver ID: {ride.driverId}</DriverID>
+        <DriverID>Driver: {ride.driverName}</DriverID>
         <Button onClick={handleRequestSeat}>Request Seat</Button>
         <Button onClick={handleSubmit}>Submit</Button>
+        <ButtonMap onClick={handleShowOnMap}>Show on map</ButtonMap>
       </RideDetails>
     </Ride>
   );
@@ -73,7 +80,11 @@ const DriverID = tw.div`
 `;
 
 const Button = tw.button`
-  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2
+  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 ml-2
+`;
+
+const ButtonMap = tw.button`
+  bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-2 ml-2
 `;
 
 export default ListRides;

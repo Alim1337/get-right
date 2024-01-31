@@ -24,14 +24,31 @@ export default async function handler(req, res) {
         departureLocation: { contains: searchTermPickup },
         destinationLocation: { contains: searchTermDropoff },
       },
+      include: {
+        users: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
 
     if (targetTrips.length === 0) {
       return res.status(404).json({ message: 'No matching trips found' });
     }
 
+    const formattedTrips = targetTrips.map((trip) => ({
+      tripId: trip.tripId,
+      departureLocation: trip.departureLocation,
+      destinationLocation: trip.destinationLocation,
+      departureTime: trip.departureTime,
+      availableSeats: trip.availableSeats,
+      driverName: `${trip.users.firstName} ${trip.users.lastName}`,
+    }));
+
    // console.log("searched trips", targetTrips);
-    return res.status(200).json(targetTrips);
+    return res.status(200).json(formattedTrips);
   } catch (error) {
     console.error('Error searching trips:', error);
     return res.status(500).json({ message: 'Internal Server Error' });

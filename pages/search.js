@@ -51,7 +51,7 @@ const Search = () => {
     setSearchTermPickup(`(${pickup.locationName})`);
     setSearchTermDropoff(dropoff ? dropoff.locationName : "");
   }, [pickup, dropoff]);
-  
+
 
   const setupMap = async () => {
     mapboxgl.accessToken = accessToken;
@@ -90,17 +90,17 @@ const Search = () => {
       .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
       .addTo(newMap);
 
-      newMap.on("dblclick", async (event) => {
-        const lngLat = event.lngLat.toArray();
-        const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
-        setDropoff({ coordinates: lngLat, locationName });
-      
-        // Add marker for destination location
-        addDropoffMarker(lngLat, locationName);
-      
-        drawLine();
-      });
-      
+    newMap.on("dblclick", async (event) => {
+      const lngLat = event.lngLat.toArray();
+      const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
+      setDropoff({ coordinates: lngLat, locationName });
+
+      // Add marker for destination location
+      addDropoffMarker(lngLat, locationName);
+
+      drawLine();
+    });
+
 
     setMap(newMap);
   };
@@ -113,7 +113,7 @@ const Search = () => {
         .addTo(map);
     }
   };
-  
+
   const reverseGeocode = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -137,36 +137,36 @@ const Search = () => {
         .setLngLat(dropoff.coordinates)
         .setPopup(new mapboxgl.Popup().setHTML(dropoff.locationName))
         .addTo(map);
-  
+
       // Create a line between pickup and destination
       const newLine = [pickup.coordinates, dropoff.coordinates];
-  
+
       // Calculate the bounds of the line
       const bounds = new mapboxgl.LngLatBounds();
       newLine.forEach(point => bounds.extend(point));
-  
+
       // Set the map's center and zoom level to fit the bounds
       map.setCenter(bounds.getCenter());
       map.setZoom(getZoomLevel(bounds, map));
-  
+
       // Note: If you want to draw a line on the map, you can use a GeoJSON source and layer
       // Uncomment and customize the code block below if needed
       // addLineToMap(newLine);
     }
   };
-  
-  
+
+
   // Helper function to calculate zoom level based on bounds
   const getZoomLevel = (bounds, map) => {
     const WORLD_DIM = { height: 256, width: 256 };
     const ZOOM_MAX = 21;
-  
+
     const ne = map.project(bounds.getNorthEast());
     const sw = map.project(bounds.getSouthWest());
-  
+
     const dx = ne.x - sw.x;
     const dy = ne.y - sw.y;
-  
+
     for (let zoom = ZOOM_MAX; zoom >= 0; --zoom) {
       if (dx <= WORLD_DIM.width && dy <= WORLD_DIM.height) {
         return zoom;
@@ -174,12 +174,12 @@ const Search = () => {
       dx /= 2;
       dy /= 2;
     }
-  
+
     return 0;
   };
-  
-  
-  
+
+
+
   // Example function to add a line to the map using GeoJSON source and layer
   const addLineToMap = (coordinates) => {
     map.addSource('line-source', {
@@ -193,7 +193,7 @@ const Search = () => {
         },
       },
     });
-  
+
     map.addLayer({
       id: 'line-layer',
       type: 'line',
@@ -224,24 +224,24 @@ const Search = () => {
     // Trigger the search directly when input values change
     handleSearch();
   };
-  
-  
+
+
   const handleSearch = async () => {
     try {
 
-  
+
       console.log("Encoded Pickup:", encodeURIComponent(searchTermPickup));
       console.log("Encoded Dropoff:", encodeURIComponent(searchTermDropoff));
-      
+
       const response = await fetch(`/api/apiSearchTrips?searchTermPickup=${encodeURIComponent(searchTermPickup)}&searchTermDropoff=${encodeURIComponent(searchTermDropoff)}`, {
-          method: 'GET',
-          headers: {
-              'Content-Type': 'application/json',
-          },
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      
-      
-  
+
+
+
       if (response.ok) {
         const data = await response.json();
         console.log('Search results:', data);
@@ -254,11 +254,11 @@ const Search = () => {
       console.error('Error during search:', error);
     }
   };
-  
+
   useEffect(() => {
     setupMap();
   }, []);
-  
+
   // Your component file
   const handleSearchNearby = async () => {
     try {
@@ -281,11 +281,11 @@ const Search = () => {
     } catch (error) {
       console.error('Error during nearby search:', error);
     }
-    
+
     return null;
   };
-  
-  
+
+
 
   const handleRequestSeat = async (rideInfo) => {
     try {
@@ -320,11 +320,11 @@ const Search = () => {
   const handleSeatCountChange = (tripId, newSeatCount) => {
     console.log(`Trip ${tripId} has ${newSeatCount} requested seats.`);
   };
-  
-  
-  
-  
-  
+
+
+
+
+
   return (
     <Wrapper>
       <ButtonContainer>
@@ -349,24 +349,24 @@ const Search = () => {
         </FromToIcons>
 
         <InputBoxes>
-        <Input
-  value={`(${pickup.locationName})`}
-  readOnly
-  placeholder="Enter pickup location"
-  onChange={(e) => handleSearchInputChange(e.target.value, dropoff ? dropoff.locationName : "")}
-/>
-<Input
-  value={dropoff ? dropoff.locationName : ""}
-  readOnly
-  placeholder="Enter dropoff location"
-  onChange={(e) => handleSearchInputChange(pickup.locationName, e.target.value)}
-/>
+          <Input
+            value={`(${pickup.locationName})`}
+            readOnly
+            placeholder="Enter pickup location"
+            onChange={(e) => handleSearchInputChange(e.target.value, dropoff ? dropoff.locationName : "")}
+          />
+          <Input
+            value={dropoff ? dropoff.locationName : ""}
+            readOnly
+            placeholder="Enter dropoff location"
+            onChange={(e) => handleSearchInputChange(pickup.locationName, e.target.value)}
+          />
 
         </InputBoxes>
 
         <PlusIcon>
-  <BsPlusLg size={22}  />
-</PlusIcon>
+          <BsPlusLg size={22} />
+        </PlusIcon>
       </InputContainer>
 
       <SavedPlaces>
@@ -374,14 +374,14 @@ const Search = () => {
       </SavedPlaces>
       <ConfirmLocation onClick={() => { handleSearch(); handleSearchNearby(); }}>Confirm Location</ConfirmLocation>
 
-    {showSearchResults && (
-      <div>
-        <SectionTitle>Rides disponible</SectionTitle>
-        <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />
-      </div>
-    )}
+      {showSearchResults && (
+        <div>
+          <SectionTitle>Rides disponible</SectionTitle>
+          <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />
+        </div>
+      )}
 
-{showNearbyResults && (
+      {showNearbyResults && (
         <div>
           <SectionTitle>Nearby rides</SectionTitle>
           {nearbyResults ? (
@@ -392,8 +392,8 @@ const Search = () => {
         </div>
       )}
 
-  </Wrapper>
-);
+    </Wrapper>
+  );
 };
 const Wrapper = tw.div`
     p-4 bg-gray-200 h-screen
