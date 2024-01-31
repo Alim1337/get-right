@@ -36,7 +36,7 @@ const Map = ({ location }) => {
 };
 
 const Wrapper = tw.div`
-    flex-1 h-1/2
+    flex-1 h-1/2 ml-2 mt-2
 `;
 
 export default Map;
