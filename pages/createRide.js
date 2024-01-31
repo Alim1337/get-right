@@ -12,6 +12,7 @@ import {
 } from "react-icons/bs";
 import { FaSquareFull } from "react-icons/fa";
 import { MdStars } from "react-icons/md";
+import { Toaster, toast } from 'sonner'
 
 const CreateRide = () => {
   const router = useRouter();
@@ -197,7 +198,10 @@ useEffect(() => {
         console.log('Ride created successfully');
         localStorage.setItem('role', 'driver');
         // Show a notification before redirecting
-        window.alert('Ride created successfully');
+        toast.success('Drive created successfully', {
+          position: 'top-center',
+          duration: 3000,
+        });
         // Redirect or perform any other actions after successful ride creation
         router.push('/'); // Redirect to the home page
       } else {

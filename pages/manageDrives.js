@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import tw from "tailwind-styled-components";
 import Link from "next/link";
 import { BsArrowLeft, BsTrashFill, BsCheck2, BsX } from "react-icons/bs";
+import { Toaster, toast } from 'sonner'
 
 const ManageDrives = () => {
   const [trips, setTrips] = useState([]);
@@ -88,6 +89,10 @@ const ManageDrives = () => {
       });
 
       if (response.ok) {
+        toast.success('Drive proposed successfully', {
+          position: 'top-center',
+          duration: 3000,
+        });
         // Update the state to reflect the accepted request
         setRideRequests((prevRequests) =>
           prevRequests.map((r) =>
