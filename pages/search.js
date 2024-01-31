@@ -130,7 +130,7 @@ const Search = () => {
 
 
 
-  const drawLine = () => {
+  const drawLine = (zoomLevel = 12) => {
     if (map && pickup && dropoff) {
       // Create a marker for the destination
       const destinationMarker = new mapboxgl.Marker({ color: "red" })
@@ -147,7 +147,7 @@ const Search = () => {
 
       // Set the map's center and zoom level to fit the bounds
       map.setCenter(bounds.getCenter());
-      map.setZoom(getZoomLevel(bounds, map));
+    map.setZoom(zoomLevel);
 
       // Note: If you want to draw a line on the map, you can use a GeoJSON source and layer
       // Uncomment and customize the code block below if needed
@@ -375,12 +375,17 @@ const Search = () => {
       <ConfirmLocation onClick={() => { handleSearch(); handleSearchNearby(); }}>Confirm Location</ConfirmLocation>
 
       {showSearchResults && (
-        <div>
-          <SectionTitle>Rides disponible</SectionTitle>
-          <ListRides rides={searchResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />
-        </div>
-      )}
-
+  <div>
+    <SectionTitle>Rides disponible</SectionTitle>
+    <ListRides
+      rides={searchResults}
+      onRequestSeat={handleRequestSeat}
+      onSeatCountChange={handleSeatCountChange}
+      drawLine={drawLine}
+      setDropoff={setDropoff} // Pass setDropoff function
+    />
+  </div>
+)}
       {showNearbyResults && (
         <div>
           <SectionTitle>Nearby rides</SectionTitle>

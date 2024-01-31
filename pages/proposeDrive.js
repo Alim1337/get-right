@@ -48,6 +48,9 @@ const ProposeDrive = () => {
     console.log('this is driver id ', userId);
   }, [userId]); // This useEffect runs whenever driverId changes
 
+  useEffect(() => {
+    setupMap();
+  }, []); // Run this effect once after the initial render
 
   const setupMap = () => {
     mapboxgl.accessToken = accessToken;
@@ -82,15 +85,37 @@ const ProposeDrive = () => {
       zoom: 12,
     });
 
+    // Add marker for Pickup Location
+    addPickupMarker(pickupLocation.coordinates, pickupLocation.locationName);
+
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
-      addDropoffMarker(lngLat, locationName);
-      drawLine();
+
+      // Add marker for Destination
+      addDestinationMarker(lngLat, locationName);
     });
 
     setMap(newMap);
+  };
+
+  const addPickupMarker = (lngLat, locationName) => {
+    if (map) {
+      new mapboxgl.Marker({ color: "green" })
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(map);
+    }
+  };
+
+  const addDestinationMarker = (lngLat, locationName) => {
+    if (map) {
+      new mapboxgl.Marker({ color: "blue" })
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(map);
+    }
   };
 
   const reverseGeocode = async (latitude, longitude) => {
@@ -121,14 +146,19 @@ const ProposeDrive = () => {
       if (line) {
         line.remove();
       }
-
-      const newLine = new mapboxgl.NavigationControl()
+  
+      const newLine = new mapboxgl.Marker({ color: "red" })
         .setLngLat(pickup.coordinates)
+        .setPopup(new mapboxgl.Popup().setHTML("Pickup Location"))
         .addTo(map);
-
+  
+      newLine.setLngLat(dropoff.coordinates);
+      newLine.setPopup(new mapboxgl.Popup().setHTML("Destination"));
+  
       setLine(newLine);
     }
   };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -136,6 +166,7 @@ const ProposeDrive = () => {
       // Reverse geocode to get coordinates for departure and destination
       const pickupCoordinates = await reverseGeocodeCoordinates(pickup.locationName);
       const dropoffCoordinates = await reverseGeocodeCoordinates(dropoff.locationName);
+
 
       const response = await fetch('/api/apiProposeDrive', {
         method: 'POST',

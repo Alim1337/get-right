@@ -1,14 +1,17 @@
 import React, { useEffect } from 'react';
 
-const ReservedRidesModal = ({ reservations, onClose }) => {
+const ReservedRidesModal = ({ reservations, onClose, location }) => {
   useEffect(() => {
     console.log('Received reservations from comp:', reservations);
   }, [reservations]);
 
-  const handleShowInMap = (reservation) => {
-    // Add logic to handle showing the reservation in the map
-    console.log('Show in map clicked for reservation:', reservation);
-  };
+// In ReservedRidesModal.js
+const handleShowInMap = (reservation) => {
+  // Pass the reservation's destination location to the map component
+  // Assume that `map` is a ref to the Map component (useRef)
+  //map.current.showPin(reservation.destinationLocation);
+};
+
 
   return (
     <div className="fixed left-0 top-0 h-full overflow-y-auto bg-white rounded-lg p-6 shadow-lg transition-all duration-300 ease-in-out border-4 border-green-500 flex flex-col opacity-100">

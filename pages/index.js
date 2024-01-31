@@ -227,9 +227,10 @@ const Index = () => {
 
       {showReservedRidesModal && (
         <ReservedRidesModal
-          reservations={reservations}
-          onClose={handleCloseReservedRidesModal}
-        />
+        reservations={reservations}
+        onClose={handleCloseReservedRidesModal}
+        location={location}
+      />
       )}
 
 

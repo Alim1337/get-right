@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import tw from "tailwind-styled-components";
 
-const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
+const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine ,setDropoff}) => {
   const [seatRequests, setSeatRequests] = useState(0);
 
   console.log("ride", ride);
@@ -23,9 +23,17 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
   };
 
   const handleShowOnMap = () => {
-
+    // Set the destination location as the dropoff state
+    const destinationLocation = {
+      coordinates: [ride.destinationLongitude, ride.destinationLatitude],
+      locationName: ride.destinationLocation,
+    };
+    setDropoff(destinationLocation);
+  
+    // Call the drawLine function with a lower zoom level (e.g., 10)
+    drawLine(10);
   };
-
+  
   return (
     <Ride>
       <RideDetails>
@@ -43,14 +51,20 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange }) => {
   );
 };
 
-const ListRides = ({ rides, onRequestSeat, onSeatCountChange }) => (
+const ListRides = ({ rides, onRequestSeat, onSeatCountChange, drawLine, setDropoff }) => (
   <Wrapper>
     {rides.map((ride) => (
-      <RideItem key={ride.tripId} ride={ride} onRequestSeat={onRequestSeat} onSeatCountChange={onSeatCountChange} />
+      <RideItem
+        key={ride.tripId}
+        ride={ride}
+        onRequestSeat={onRequestSeat}
+        onSeatCountChange={onSeatCountChange}
+        drawLine={drawLine}
+        setDropoff={setDropoff}
+      />
     ))}
   </Wrapper>
 );
-
 const Wrapper = tw.div`
   mt-4
 `;
