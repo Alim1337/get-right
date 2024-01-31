@@ -25,7 +25,7 @@ const Index = () => {
     try {
       const response = await fetch(`/api/apiReservation?userId=${user.id}`);
       const data = await response.json();
-      console.log('API Response for reservations:', data);
+     // console.log('API Response for reservations:', data);
 
       if (data.reservations) {
         setReservations(data.reservations);
@@ -42,19 +42,26 @@ const Index = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-
+  
     if (!token) {
       router.push('/login');
     } else {
       try {
         const decodedToken = JSON.parse(atob(token.split('.')[1]));
-        setUser({ role: localStorage.getItem('role'), id: decodedToken.userId });
+        setUser({
+          role: decodedToken.role,
+          id: decodedToken.userId,
+          firstName: decodedToken.firstName,
+          lastName: decodedToken.lastName,
+        });
       } catch (error) {
         console.error('Error decoding token:', error);
         router.push('/login');
       }
     }
   }, [router]);
+  
+  
 
   useEffect(() => {
     // Fetch initial reservations
@@ -134,10 +141,20 @@ const Index = () => {
 
       <ActionItems>
         <Header>
-          <Profile>
-            <Name>{user && user.name}</Name>
-            <UserImage src={user && user.photoUrl} onClick={() => signOut(auth)} />
-          </Profile>
+        <Profile className="flex items-center space-x-4 border-4 border-blue-600 p-4 rounded-lg shadow-lg">
+  <div className="text-2xl font-bold text-blue-700">
+    User Connected: {user && `${user.firstName} ${user.lastName}`}
+  </div>
+  <UserImage
+    src={user && user.photoUrl}
+    alt="User Photo"
+    className="h-16 w-16 cursor-pointer rounded-full border-4 border-blue-800"
+    onClick={() => signOut(auth)}
+  />
+</Profile>
+
+
+
           <DisconnectButton onClick={handleDisconnect}>Disconnect</DisconnectButton>
         </Header>
 

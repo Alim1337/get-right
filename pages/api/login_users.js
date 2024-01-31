@@ -22,7 +22,11 @@ export default async function handler(req, res) {
         if (user && await bcrypt.compare(password, user.password)) {
             // Passwords match, login successful
             const token_login = jwt.sign(
-                { userId: user.userId, email: user.email, role: user.role },
+                { userId: user.userId, 
+                    email: user.email,
+                     role: user.role ,
+                     firstName:user.firstName,
+                     lastName:user.lastName,},
                 SECRET_KEY,
                 { expiresIn: '1h' }
             );

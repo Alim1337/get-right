@@ -14,7 +14,10 @@ export default async function handler(req, res) {
 
   try {
     const targetTrips = await prisma.trips.findMany({
-      
+      where: {
+        departureLocation: { contains: searchTermPickup },
+        destinationLocation: { contains: searchTermDropoff },
+      },
     });
 
     if (targetTrips.length === 0) {

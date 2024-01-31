@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
       const numberOfReservations = reservations.length;
 
-      console.log('reservations', reservationsWithDestinations);
+    //  console.log('reservations', reservationsWithDestinations);
 
       return res.status(200).json({
         hasReservations: reservations.length > 0,

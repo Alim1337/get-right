@@ -206,20 +206,27 @@ const Search = () => {
       },
     });
   };
-  
+
   const handleSearchInputChange = (pickupValue, dropoffValue) => {
     console.log("pickupValue:", pickupValue);
     console.log("dropoffValue:", dropoffValue);
-    setSearchTermPickup(`(${pickupValue})`);
-    setSearchTermDropoff(dropoffValue);
-  
+
+    // Remove parentheses from pickup location
+    const cleanedPickupValue = pickupValue.replace(/[\(\)]/g, '');
+    setSearchTermPickup(cleanedPickupValue);
+
+    // Remove parentheses from dropoff location
+    const cleanedDropoffValue = dropoffValue.replace(/[\(\)]/g, '');
+    setSearchTermDropoff(cleanedDropoffValue);
+
     // Trigger the search directly when input values change
     handleSearch();
   };
+  
+  
   const handleSearch = async () => {
     try {
-      const encodedPickup = encodeURIComponent(searchTermPickup);
-      const encodedDropoff = encodeURIComponent(searchTermDropoff);
+
   
       console.log("Encoded Pickup:", encodeURIComponent(searchTermPickup));
       console.log("Encoded Dropoff:", encodeURIComponent(searchTermDropoff));
@@ -315,10 +322,12 @@ const Search = () => {
   onChange={(e) => handleSearchInputChange(e.target.value, dropoff ? dropoff.locationName : "")}
 />
 <Input
-  value={dropoff ? dropoff.locationName : "Where to?"}
+  value={dropoff ? dropoff.locationName : ""}
   readOnly
+  placeholder="Enter dropoff location"
   onChange={(e) => handleSearchInputChange(pickup.locationName, e.target.value)}
 />
+
         </InputBoxes>
 
         <PlusIcon>
