@@ -12,6 +12,7 @@ import {
 } from "react-icons/bs";
 import { FaSquareFull } from "react-icons/fa";
 import { MdStars } from "react-icons/md";
+import { Toaster, toast } from 'sonner'
 
 const ProposeDrive = () => {
   const router = useRouter();
@@ -158,7 +159,10 @@ useEffect(() => {
       if (response.ok) {
         console.log('Drive proposed successfully');
         // Show a notification before redirecting
-        window.alert('Drive proposed successfully');
+        toast.success('Drive proposed successfully', {
+          position: 'top-center',
+          duration: 3000,
+        });
         // Redirect or perform any other actions after successful ride creation
         router.push('/'); // Redirect to the home page
       } else {
