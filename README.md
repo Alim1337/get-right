@@ -1,4 +1,4 @@
-# Carpooling App with Next.js, JavaScript, MySQL, and Prisma
+# Application de covoiturage Next.js, JavaScript, MySQL, and Prisma
 
 Bienvenue sur l'application de covoiturage Get Right basée sur Next.js, JavaScript, MySQL et Prisma. Cette application permet aux utilisateurs de proposer et de réserver des trajets en covoiturage.
 
@@ -21,12 +21,16 @@ Assurez-vous d'avoir les éléments suivants installés localement avant de comm
 
    ```bash
    yarn prisma migrate dev
-    git clone https://github.com/votre-utilisateur/votre-repo.git
-    cd votre-repo
-    yarn
-    yarn dev
     ```
 L'application sera accessible à l'adresse http://localhost:3000.
+
+## Configuration de l'application
+```
+git clone https://github.com/votre-utilisateur/votre-repo.git
+cd votre-repo
+yarn
+yarn dev
+```
 
 ## Utilisation de l'Application
 
