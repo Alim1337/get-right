@@ -414,7 +414,7 @@ const InputContainer = tw.div`
     bg-white flex items-center py-4 my-4
 `;
 const SectionTitle = tw.h2`
-  text-2xl font-bold mt-4
+  text-4xl font-bold mt-4 text-blue-900 
 `;
 
 const FromToIcons = tw.div`

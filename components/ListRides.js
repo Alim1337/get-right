@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import tw from "tailwind-styled-components";
 
-const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine ,setDropoff}) => {
+const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine, setDropoff }) => {
   const [seatRequests, setSeatRequests] = useState(0);
-
-  console.log("ride", ride);
 
   const handleRequestSeat = () => {
     if (seatRequests < ride.availableSeats) {
@@ -23,29 +21,39 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine ,setDropoff
   };
 
   const handleShowOnMap = () => {
-    // Set the destination location as the dropoff state
     const destinationLocation = {
       coordinates: [ride.destinationLongitude, ride.destinationLatitude],
       locationName: ride.destinationLocation,
     };
     setDropoff(destinationLocation);
-  
-    // Call the drawLine function with a lower zoom level (e.g., 10)
+
     drawLine(10);
   };
-  
+
   return (
     <Ride>
       <RideDetails>
-        <Location>{ride.departureLocation}</Location>
-        <Location>{ride.destinationLocation}</Location>
-        <Time>{new Date(ride.departureTime).toLocaleString()}</Time>
-        <Seats>Available Seats: {ride.availableSeats - seatRequests}</Seats>
-        <Seats>Requested Seats: {seatRequests}</Seats>
-        <DriverID>Driver: {ride.driverName}</DriverID>
+        <Location>
+          <Title>Departure Location:</Title> {ride.departureLocation}
+        </Location>
+        <Location>
+          <Title>Destination Location:</Title> {ride.destinationLocation}
+        </Location>
+        <Time>
+          <Title>Departure Time:</Title> {new Date(ride.departureTime).toLocaleString()}
+        </Time>
+        <Seats>
+          <Title>Available Seats:</Title> {ride.availableSeats - seatRequests}
+        </Seats>
+        <Seats>
+          <Title>Requested Seats:</Title> {seatRequests}
+        </Seats>
+        <DriverID>
+          <Title>Driver:</Title> {ride.driverName}
+        </DriverID>
         <Button onClick={handleRequestSeat}>Request Seat</Button>
         <Button onClick={handleSubmit}>Submit</Button>
-        <ButtonMap onClick={handleShowOnMap}>Show on map</ButtonMap>
+        <ButtonMap onClick={handleShowOnMap}>Show on Map</ButtonMap>
       </RideDetails>
     </Ride>
   );
@@ -65,6 +73,7 @@ const ListRides = ({ rides, onRequestSeat, onSeatCountChange, drawLine, setDropo
     ))}
   </Wrapper>
 );
+
 const Wrapper = tw.div`
   mt-4
 `;
@@ -78,7 +87,7 @@ const RideDetails = tw.div`
 `;
 
 const Location = tw.div`
-  font-bold text-lg
+  text-lg text-gray-800
 `;
 
 const Time = tw.div`
@@ -86,19 +95,23 @@ const Time = tw.div`
 `;
 
 const Seats = tw.div`
-  text-sm
+  text-sm text-gray-600
 `;
 
 const DriverID = tw.div`
-  text-sm
+  text-sm text-gray-600
+`;
+
+const Title = tw.span`
+  font-bold
 `;
 
 const Button = tw.button`
-  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 ml-2
+  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 ml-2 transition-all duration-300 ease-in-out
 `;
 
 const ButtonMap = tw.button`
-  bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-2 ml-2
+  bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-2 ml-2 transition-all duration-300 ease-in-out
 `;
 
 export default ListRides;

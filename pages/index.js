@@ -287,9 +287,19 @@ const Wrapper = tw.div`
 
 
 const Title = tw.h1`
-  text-4xl text-center text-indigo-600 font-bold tracking-wide mt-6 mb-4
+  text-4xl
+  font-serif
+  font-extrabold
+  text-center
+  text-black
+  tracking-wide
+  mt-6
+  mb-4
+  transition-all duration-500 ease-in-out
+  hover:text-blue-500
+  hover:scale-110
+  font-family: 'Roboto', sans-serif;
 `;
-
 
 const SectionMain = tw.div`
   flex-1 flex flex-col

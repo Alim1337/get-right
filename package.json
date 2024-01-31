@@ -8,6 +8,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
     "@heroicons/react": "^2.1.1",
     "@prisma/client": "^5.7.1",
     "axios": "^1.6.5",
@@ -24,7 +26,8 @@
     "react-js-pagination": "^3.0.3",
     "react-toast-notifications": "^2.5.1",
     "react-toastify": "^10.0.4",
-    "sonner": "^1.4.0"
+    "sonner": "^1.4.0",
+    "twin.macro": "^3.4.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.0",
