@@ -9,6 +9,7 @@ import { SiUber } from "react-icons/si";
 import { FaCar, FaPlusCircle, FaCalendarAlt, FaBell } from "react-icons/fa";
 import Link from "next/link";
 import ReservedRidesModal from '../components/ReservedRidesModal';
+import { Toaster, toast } from 'sonner'
 
 
 const Index = () => {
@@ -20,25 +21,7 @@ const Index = () => {
   const [reservations, setReservations] = useState({});
   const [showReservedRidesModal, setShowReservedRidesModal] = useState(false);
   const [counter, setCounter] = useState(0);
-
-  const fetchReservations = async () => {
-    try {
-      const response = await fetch(`/api/apiReservation?userId=${user.id}`);
-      const data = await response.json();
-     // console.log('API Response for reservations:', data);
-
-      if (data.reservations) {
-        setReservations(data.reservations);
-      } else {
-        setReservations({});
-      }
-
-      setHasReservations(data.hasReservations);
-      setCounter(data.numberOfReservations);
-    } catch (error) {
-      console.error('Error fetching reservations:', error);
-    }
-  };
+  
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -64,13 +47,20 @@ const Index = () => {
   
 
   useEffect(() => {
-    // Fetch initial reservations
-    if (user && user.id) {
-      fetchReservations();
-    }
+    // Fetch reservations periodically
+    const intervalCleanup = fetchReservationsPeriodically();
+
+    // Cleanup interval on component unmount
+    return () => {
+      clearInterval(intervalCleanup);
+    };
   }, [user]);
 
   const fetchReservationsPeriodically = () => {
+    if (user && user.role === 'driver') {
+      // If the user is a driver, do not fetch data periodically
+      return;
+    }
     const intervalId = setInterval(async () => {
       try {
         await fetchReservations();
@@ -82,15 +72,34 @@ const Index = () => {
     return () => clearInterval(intervalId);
   };
 
-  useEffect(() => {
-    // Fetch reservations periodically
-    const intervalCleanup = fetchReservationsPeriodically();
+  const fetchReservations = async () => {
+    try {
+      const response = await fetch(`/api/apiReservation?userId=${user.id}`);
+      const data = await response.json();
+      // console.log('API Response for reservations:', data);
 
-    // Cleanup interval on component unmount
-    return () => {
-      clearInterval(intervalCleanup);
-    };
-  }, [user]);
+      if (data.reservations) {
+        setReservations(data.reservations);
+      } else {
+        setReservations({});
+      }
+
+      setHasReservations(data.hasReservations);
+
+      setCounter((prevCounter) => {
+        const newCounter = data.numberOfReservations;
+  
+        // Check for the condition and display toast if necessary
+        if (newCounter > prevCounter) {
+          toast.success('You have a new reservation!');
+        }
+  
+        return newCounter;
+      });
+    } catch (error) {
+      console.error('Error fetching reservations:', error);
+    }
+  };
 
 
 
@@ -221,8 +230,8 @@ const Index = () => {
             <div className="w-full text-center justify-center">
               {hasReservations && (
                 <div className="flex items-center">
-                  <FaBell className="-mr-5" size={40}/>
-                  <div className="bg-red-500 text-white text-center p-1 mb-6 h-9 w-9 font-bold rounded-full mr-1">
+                  <FaBell className="-mr-5" size={30}/>
+                  <div className="bg-red-500 text-white text-center  mb-6 h-6 w-6 font-bold rounded-full mr-1">
                     {counter}
                   </div>
                    
