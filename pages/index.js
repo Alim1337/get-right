@@ -164,7 +164,7 @@ const Index = () => {
                 <ActionButtonImage>
                   <FaCar size={50} />
                 </ActionButtonImage>
-                Serch Ride
+                Search Ride
               </ActionButton>
             </Link>
 
