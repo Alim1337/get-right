@@ -89,7 +89,7 @@ const ManageDrives = () => {
       });
 
       if (response.ok) {
-        toast.success('Drive proposed successfully', {
+        toast.success('Drive accepted successfully', {
           position: 'top-center',
           duration: 3000,
         });
@@ -216,10 +216,12 @@ const ManageDrives = () => {
                 </Status>
 
                 <div className='flex gap-2 justify-end'>
-                  <ConfirmButton onClick={() => handleAccept(request)}>
-                    <BsCheck2 size={20} />
-                    Accept
-                  </ConfirmButton>
+                  {request.status !== 'approved' && (
+                    <ConfirmButton onClick={() => handleAccept(request)} className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2">
+                      <BsCheck2 size={20} />
+                      Accept
+                    </ConfirmButton>
+                  )}
 
                   <DeclineButton onClick={() => handleDecline(request.requestId)}>
                     <BsX size={25} />
