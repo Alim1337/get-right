@@ -29,7 +29,8 @@ const ReservedRidesModal = ({ reservations, onClose, location }) => {
               key={reservation.reservationId}
               className="mb-6 text-green-600 hover:text-green-800 transition-all duration-300 ease-in-out border-b-2 border-green-500"
             >
-              <span className="font-bold">Reservation Time:</span> {reservation.reservationTime} <br />
+              <span className="font-bold">Reservation Time:</span> {new Date(reservation.reservationTime).toLocaleString()} <br />
+              <span className="font-bold">Departure Time:</span> {new Date(reservation.departureTime).toLocaleString()} <br />
               <span className="font-bold">Driver:</span> {reservation.driver.firstName} {reservation.driver.lastName} <br />
               <span className="font-bold">Driver's phone:</span> {reservation.driver.phoneNumber} <br />
               <span className="font-bold">Departure Location:</span> {reservation.departureLocation} <br />
