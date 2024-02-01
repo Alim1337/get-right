@@ -12,7 +12,7 @@ const ReservedRidesModal = ({ reservations, onClose, location }) => {
   };
 
   return (
-    <div className="fixed left-0 top-0 h-full overflow-y-auto bg-white rounded-lg p-6 shadow-lg transition-all duration-300 ease-in-out border-4 border-green-500 flex flex-col opacity-100 transform transition-transform duration-500 ease-in-out hover:scale-105">
+    <div className="fixed left-0 top-0 h-full overflow-y-auto bg-white rounded-lg p-6 shadow-lg transition-all duration-300 ease-in-out border-4 border-green-500 flex flex-col opacity-100 transform  hover:scale-105">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-4xl font-roboto font-bold text-green-700 transition-colors duration-500 ease-in-out hover:text-green-800">Your Reserved Rides</h2>
         <button
