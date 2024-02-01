@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import tw from "tailwind-styled-components";
 import mapboxgl from "mapbox-gl";
 
@@ -8,13 +8,15 @@ export const accessToken =
 mapboxgl.accessToken = accessToken;
 
 const Map = ({ location }) => {
+  const mapRef = useRef(null); // Create a ref for the Map instance
+
   useEffect(() => {
     console.log("Received Coordinates:", location);
 
     const map = new mapboxgl.Map({
       container: "map",
       style: "mapbox://styles/mapbox/streets-v11",
-      center: location, // Modify this line
+      center: location,
       zoom: 3,
     });
 
@@ -26,10 +28,20 @@ const Map = ({ location }) => {
     map.fitBounds(bounds, {
       padding: 50,
     });
+
+    // Attach the map instance to the ref
+    mapRef.current = map;
   }, [location]);
 
   const addToMap = (map, latLon) =>
     new mapboxgl.Marker().setLngLat(latLon).addTo(map);
+
+  // Function to show a pin on the map
+  const showPin = (destinationLocation) => {
+    new mapboxgl.Marker({ color: "red" })
+      .setLngLat(destinationLocation)
+      .addTo(mapRef.current);
+  };
 
   return <Wrapper id="map"></Wrapper>;
 };
