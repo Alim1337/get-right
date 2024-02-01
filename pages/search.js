@@ -305,7 +305,7 @@ const Search = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Seat requested successfully:', data);
+        localStorage.setItem('role', 'client');
         window.alert('Seat requested successfully!');
       } else {
         console.error('Failed to request seat');

@@ -8,6 +8,12 @@ export default async function handler(req, res) {
     console.log('userid ,tripid , nbr_seat_req', userId, tripId, nbr_seat_req);
 
     try {
+
+      await prisma.users.update({
+        where: { userId: userId },
+        data: { role: 'client' },
+      });
+
       const rideRequest = await prisma.ride_requests.create({
         data: {
           userId: userId,
