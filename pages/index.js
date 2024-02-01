@@ -21,6 +21,12 @@ const Index = () => {
   const [reservations, setReservations] = useState({});
   const [showReservedRidesModal, setShowReservedRidesModal] = useState(false);
   const [counter, setCounter] = useState(0);
+  const [role, setRole] = useState('');
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem('role');
+    setRole(storedRole);
+  }, []);
 
 
   useEffect(() => {
@@ -32,7 +38,7 @@ const Index = () => {
       try {
         const decodedToken = JSON.parse(atob(token.split('.')[1]));
         setUser({
-          role: decodedToken.role,
+          role: role,
           id: decodedToken.userId,
           firstName: decodedToken.firstName,
           lastName: decodedToken.lastName,
@@ -65,7 +71,7 @@ const Index = () => {
   }, [user]);
 
   const fetchReservationsPeriodically = () => {
-    if (user && user.role === 'driver') {
+    if (user && role === 'driver') {
       // If the user is a driver, do not fetch data periodically
       return;
     }
@@ -82,6 +88,14 @@ const Index = () => {
 
   const fetchReservations = async () => {
     try {
+
+      if (!user || !user.id) {
+        // Check if user or user.id is null or undefined
+        // console.error('User or user id is null or undefined');
+        return;
+      }
+
+
       const response = await fetch(`/api/apiReservation?userId=${user.id}`);
       const data = await response.json();
       // console.log('API Response for reservations:', data);
@@ -188,7 +202,7 @@ const Index = () => {
           </ActionButtons>
 
           <div className="flex flex-col items-center mt-auto w-full">
-            {user && user.role === 'driver' ? (
+            {user && role === 'driver' ? (
               <Link href="/manageProposedDrives" passHref>
                 <div className="text-center justify-center">
                   <ActionButtonBottom className="">Trajets proposé</ActionButtonBottom>
@@ -215,6 +229,7 @@ const Index = () => {
         <NavBar>
           <UserProfileSection
             user={user}
+            role={role}
             counter={counter}
             handleShowReservedRides={handleShowReservedRides}
             handleDisconnect={handleDisconnect}
@@ -227,10 +242,10 @@ const Index = () => {
 
       {showReservedRidesModal && (
         <ReservedRidesModal
-        reservations={reservations}
-        onClose={handleCloseReservedRidesModal}
-        location={location}
-      />
+          reservations={reservations}
+          onClose={handleCloseReservedRidesModal}
+          location={location}
+        />
       )}
 
 
@@ -239,15 +254,15 @@ const Index = () => {
   );
 };
 
-const UserProfileSection = ({ user, counter, handleShowReservedRides, handleDisconnect }) => (
+const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect }) => (
   <div className="flex items-center space-x-4 justify-between w-full">
-    {user && user.role === 'driver' ? (
+    {user && role === 'driver' ? (
       <Link href="/manageDrives" passHref>
         <ActionButtonReservedDrives>Manage My Drives</ActionButtonReservedDrives>
       </Link>
     ) : (
       <div className="flex items-center space-x-2">
-        {counter > 0 && (
+        
           <div className="flex items-center">
             <div className="bg-red-500 text-white text-center mb-8 -ml-2 absolute h-6 w-6 font-bold rounded-full">
               {counter}
@@ -256,7 +271,7 @@ const UserProfileSection = ({ user, counter, handleShowReservedRides, handleDisc
               My reserved rides
             </ActionButtonReservedDrives>
           </div>
-        )}
+        
       </div>
     )}
 
