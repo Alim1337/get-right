@@ -8,28 +8,33 @@ export default async function handler(req, res) {
     console.log('userid ,tripid , nbr_seat_req', userId, tripId, nbr_seat_req);
 
     try {
+      await prisma.$transaction(async (tx) => { // Renamed to `tx`
+        // Update user role within the transaction
+        await tx.users.update({
+          where: { userId: userId },
+          data: { role: 'client' },
+        });
 
-      await prisma.users.update({
-        where: { userId: userId },
-        data: { role: 'client' },
+        // Create ride request within the transaction
+        const rideRequest = await tx.ride_requests.create({
+          data: {
+            userId: userId,
+            tripId: tripId,
+            nbr_seat_req: nbr_seat_req,
+            status: 'pending',
+            // Include other relevant fields here
+          },
+        });
+
+        return rideRequest; // Return the created ride request
       });
 
-      const rideRequest = await prisma.ride_requests.create({
-        data: {
-          userId: userId,
-          tripId: tripId,
-          nbr_seat_req: nbr_seat_req,
-          status: 'pending',
-          // Include other relevant fields here
-        },
-      });
-
-      return res.status(201).json({ message: 'Seat requested successfully', rideRequest });
+      res.status(201).json({ message: 'Seat requested successfully', rideRequest });
     } catch (error) {
       console.error('Error requesting seat:', error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+      res.status(500).json({ message: 'Internal Server Error' });
     }
   } else {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
 }

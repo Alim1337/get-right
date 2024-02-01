@@ -27,31 +27,35 @@ export default async function handler(req, res) {
   const departureTime = new Date(combinedDateTimeString);
 
   try {
-    const createdRide = await prisma.trips.create({
-      data: {
-        departureLocation: departure,
-        destinationLocation: destination,
-        departureTime: departureTime,
-        availableSeats: seats,
-        driverId: driver,
-        departureLatitude: departureLatitude,
-        departureLongitude: departureLongitude,
-        destinationLatitude: destinationLatitude,
-        destinationLongitude: destinationLongitude,
-      },
+    await prisma.$transaction(async (tx) => {
+      // Create the trip within the transaction
+      const createdRide = await tx.trips.create({
+        data: {
+          departureLocation: departure,
+          destinationLocation: destination,
+          departureTime: departureTime,
+          availableSeats: seats,
+          driverId: driver,
+          departureLatitude: departureLatitude,
+          departureLongitude: departureLongitude,
+          destinationLatitude: destinationLatitude,
+          destinationLongitude: destinationLongitude,
+        },
+      });
+
+      // Update the user's role within the transaction
+      await tx.users.update({
+        where: { userId: driver },
+        data: { role: 'driver' },
+      });
+
+      return createdRide; // Return the created ride
     });
 
-    console.log('Ride created successfully:', createdRide);
-
-    await prisma.users.update({
-      where: { userId: driver },
-      data: { role: 'driver' },
-    });
-
-    return res.status(200).json({ message: 'Ride created successfully' });
+    res.status(200).json({ message: 'Ride created successfully' });
   } catch (error) {
     console.error('Error creating ride:', error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Internal Server Error' });
   } finally {
     await prisma.$disconnect();
   }

@@ -20,6 +20,7 @@ export default async function handler(req, res) {
             select: {
               destinationLocation: true,
               departureLocation: true,
+              departureTime: true,
               driverId: true,
               users: {
                 select: {
@@ -46,6 +47,7 @@ export default async function handler(req, res) {
           },
           destinationLocation: reservation.trips?.destinationLocation,
           departureLocation: reservation.trips?.departureLocation,
+          departureTime: reservation.trips?.departureTime,
         };
       });
 
