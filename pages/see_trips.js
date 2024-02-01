@@ -6,19 +6,20 @@ import { BsArrowLeft } from "react-icons/bs";
 const SeeTrips = () => {
   const [trips, setTrips] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState({});
-  const [userId, setUserId] = useState(null); 
+  const [userId, setUserId] = useState(null);
   const [notification, setNotification] = useState(null);
-  
+  const [mapDestination, setMapDestination] = useState(null);
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+    const token = localStorage.getItem("token");
+    const decodedToken = JSON.parse(atob(token.split(".")[1]));
     setUserId(decodedToken.userId);
-    console.log('this is decodedToken', decodedToken);
   }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/getTrips"); 
+        const response = await fetch("/api/getTrips");
         if (response.ok) {
           const data = await response.json();
           setTrips(data);
@@ -37,7 +38,7 @@ const SeeTrips = () => {
     setNotification({ message, type });
     setTimeout(() => {
       setNotification(null);
-    }, 3000); 
+    }, 3000);
   };
 
   const handleRequestSeat = (tripId) => {
@@ -46,7 +47,6 @@ const SeeTrips = () => {
       [tripId]: (prev[tripId] || 0) + 1,
     }));
 
-    // Update the trips state to reflect the new number of available seats
     setTrips((prevTrips) =>
       prevTrips.map((trip) =>
         trip.tripId === tripId
@@ -58,9 +58,7 @@ const SeeTrips = () => {
     showNotification("Seat requested successfully", "success");
   };
 
-
   const handleSubmit = async (tripId) => {
-
     try {
       const response = await fetch("/api/requestSeat", {
         method: "POST",
@@ -71,7 +69,6 @@ const SeeTrips = () => {
           userId: userId,
           tripId: tripId,
           nbr_seat_req: selectedSeats[tripId] || 0,
-          // Include other relevant information if needed
         }),
       });
 
@@ -81,12 +78,22 @@ const SeeTrips = () => {
         showNotification("Seat requested successfully", "success");
       } else {
         console.error("Failed to request seat");
-        showNotification("Failed to request seat. Please try again.", "error");
+        showNotification(
+          "Failed to request seat. Please try again.",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Error requesting seat:", error);
-      showNotification("An error occurred while requesting the seat. Please try again.", "error");
+      showNotification(
+        "An error occurred while requesting the seat. Please try again.",
+        "error"
+      );
     }
+  };
+
+  const handleShowOnMap = (destinationLocation) => {
+    setMapDestination(destinationLocation);
   };
 
   return (
@@ -101,6 +108,19 @@ const SeeTrips = () => {
       <h1 className="text-4xl font-bold text-center text-blue-600">
         All the trips
       </h1>
+      {mapDestination && (
+        <MapContainer>
+          <iframe
+            width="100%"
+            height="300"
+            frameBorder="0"
+            scrolling="no"
+            marginHeight="0"
+            marginWidth="0"
+            src={`https://www.google.com/maps/embed/v1/place?q=${mapDestination}&key=YOUR_GOOGLE_MAPS_API_KEY`}
+          ></iframe>
+        </MapContainer>
+      )}
       <div className="grid grid-cols-3 gap-4 mt-8">
         {trips.map((trip) => (
           <div
@@ -124,6 +144,11 @@ const SeeTrips = () => {
                 Request Seat
               </Button>
               <Button onClick={() => handleSubmit(trip.tripId)}>Submit</Button>
+              <ButtonMap
+                onClick={() => handleShowOnMap(trip.destinationLocation)}
+              >
+                Show in Map
+              </ButtonMap>
             </div>
           </div>
         ))}
@@ -137,6 +162,10 @@ const SeeTrips = () => {
   );
 };
 
+const ButtonMap = tw.button`
+  bg-green-500 text-white px-4 py-2 rounded-md cursor-pointer
+`;
+
 const Button = tw.button`
   bg-blue-500 text-white px-4 py-2 rounded-md cursor-pointer
 `;
@@ -144,6 +173,7 @@ const Button = tw.button`
 const Wrapper = tw.div`
   p-4 bg-gray-200 h-screen
 `;
+
 const ButtonContainer = tw.div`
   bg-white p-2 h-12
 `;
@@ -152,6 +182,10 @@ const BackButton = tw.button``;
 
 const NotificationContainer = tw.div`
   fixed bottom-0 right-0 p-4 mb-4 mr-4 bg-green-500 text-white rounded-md
+`;
+
+const MapContainer = tw.div`
+  mb-4
 `;
 
 export default SeeTrips;
