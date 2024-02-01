@@ -28,6 +28,13 @@ const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
+const isPhoneNumberValid = (phoneNumber) => {
+  return !isNaN(phoneNumber) && phoneNumber.length === 10;
+};
+
+const isValidStudentId = (studentId) => {
+  return !isNaN(studentId) && studentId.length === 12;
+};
 
 const Login = () => {
   const router = useRouter();
@@ -101,6 +108,16 @@ const Login = () => {
   const handleRegister = async () => {
     if (!validateEmail(username)) {
       showNotification('Invalid email format. Please enter a valid email.', 'error');
+      return;
+    }
+
+    if (!isPhoneNumberValid(phoneNumber)) {
+      showNotification('Invalid phone number format. Please enter a valid phone number.', 'error');
+      return;
+    }
+
+    if (!isValidStudentId(studentId)) {
+      showNotification('Invalid student ID format. Please enter a valid student ID.', 'error');
       return;
     }
 
