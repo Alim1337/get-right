@@ -11,6 +11,14 @@ Assurez-vous d'avoir les éléments suivants installés localement avant de comm
 - MySQL Server
 - Prisma 
 
+## Configuration de l'application
+```
+git clone https://github.com/Alim1337/get-right.git
+cd get-right
+yarn
+yarn dev
+```
+
 ## Configuration de la base de données
 
 1. Créez une base de données MySQL pour l'application.
@@ -52,14 +60,6 @@ END; //
 DELIMITER ;)
     
 L'application sera accessible à l'adresse http://localhost:3000.
-
-## Configuration de l'application
-```
-git clone https://github.com/Alim1337/get-right.git
-cd get-right
-yarn
-yarn dev
-```
 
 ## Utilisation de l'Application
 

@@ -47,6 +47,7 @@ model trips {
   departureLongitude   Float?          @db.Float
   destinationLatitude  Float?          @db.Float
   destinationLongitude Float?          @db.Float
+  maxSeatsPerTrip      Int
   reservations         reservations[]
   ride_requests        ride_requests[]
   users                users           @relation(fields: [driverId], references: [userId], onUpdate: Restrict, map: "trips_ibfk_1")
