@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import tw from "tailwind-styled-components";
 import Link from "next/link";
 import { BsArrowLeft } from "react-icons/bs";
-
+import Map from "../components/Map";
 const SeeTrips = () => {
   const [trips, setTrips] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState({});
@@ -110,15 +110,7 @@ const SeeTrips = () => {
       </h1>
       {mapDestination && (
         <MapContainer>
-          <iframe
-            width="100%"
-            height="300"
-            frameBorder="0"
-            scrolling="no"
-            marginHeight="0"
-            marginWidth="0"
-            src={`https://www.google.com/maps/embed/v1/place?q=${mapDestination}&key=YOUR_GOOGLE_MAPS_API_KEY`}
-          ></iframe>
+          <Map location={mapDestination} />
         </MapContainer>
       )}
       <div className="grid grid-cols-3 gap-4 mt-8">

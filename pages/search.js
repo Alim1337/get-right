@@ -325,6 +325,7 @@ const Search = () => {
 
 
 
+
   return (
     <Wrapper>
       <ButtonContainer>
@@ -378,19 +379,25 @@ const Search = () => {
   <div>
     <SectionTitle>Rides disponible</SectionTitle>
     <ListRides
-      rides={searchResults}
-      onRequestSeat={handleRequestSeat}
-      onSeatCountChange={handleSeatCountChange}
-      drawLine={drawLine}
-      setDropoff={setDropoff} // Pass setDropoff function
-    />
-  </div>
+            rides={searchResults}
+            onRequestSeat={handleRequestSeat}
+            onSeatCountChange={handleSeatCountChange}
+            drawLine={drawLine}
+            setDropoff={setDropoff} // Pass setDropoff function
+          />
+        </div>
 )}
       {showNearbyResults && (
         <div>
           <SectionTitle>Nearby rides</SectionTitle>
           {nearbyResults ? (
-            <ListRides rides={nearbyResults} onRequestSeat={handleRequestSeat} onSeatCountChange={handleSeatCountChange} />
+            <ListRides
+              rides={nearbyResults}
+              onRequestSeat={handleRequestSeat}
+              onSeatCountChange={handleSeatCountChange}
+              drawLine={drawLine}
+              setDropoff={setDropoff} // Pass setDropoff function
+            />
           ) : (
             <p>No nearby rides found.</p>
           )}
