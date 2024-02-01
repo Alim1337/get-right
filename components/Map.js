@@ -1,4 +1,3 @@
-// components/Map.js
 import { useEffect } from "react";
 import tw from "tailwind-styled-components";
 import mapboxgl from "mapbox-gl";
@@ -15,7 +14,7 @@ const Map = ({ location }) => {
     const map = new mapboxgl.Map({
       container: "map",
       style: "mapbox://styles/mapbox/streets-v11",
-      center: location,
+      center: location, // Modify this line
       zoom: 3,
     });
 
@@ -36,7 +35,7 @@ const Map = ({ location }) => {
 };
 
 const Wrapper = tw.div`
-    flex-1 h-1/2 ml-2 mt-2
+  flex-1 h-1/2 ml-2 mt-2
 `;
 
 export default Map;

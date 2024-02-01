@@ -26,6 +26,7 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine, setDropoff
       locationName: ride.destinationLocation,
     };
     setDropoff(destinationLocation);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     drawLine(10);
   };
@@ -38,6 +39,9 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine, setDropoff
         </Location>
         <Location>
           <Title>Destination Location:</Title> {ride.destinationLocation}
+        </Location>
+        <Location>
+          <Title>Distance:</Title> {ride.distance.toFixed(2)} km
         </Location>
         <Time>
           <Title>Departure Time:</Title> {new Date(ride.departureTime).toLocaleString()}
@@ -79,7 +83,7 @@ const Wrapper = tw.div`
 `;
 
 const Ride = tw.div`
-  flex flex-row py-4 items-center cursor-pointer bg-white shadow-lg rounded-lg mb-4
+  flex flex-row py-4 items-center cursor-pointer bg-white shadow-lg rounded-lg mb-4 border-2 border-blue-500
 `;
 
 const RideDetails = tw.div`
@@ -87,31 +91,31 @@ const RideDetails = tw.div`
 `;
 
 const Location = tw.div`
-  text-lg text-gray-800
+  text-xl text-blue-800 font-semibold
 `;
 
 const Time = tw.div`
-  text-sm text-blue-500
+  text-lg text-blue-500 font-medium
 `;
 
 const Seats = tw.div`
-  text-sm text-gray-600
+  text-lg text-gray-600 font-medium
 `;
 
 const DriverID = tw.div`
-  text-sm text-gray-600
+  text-lg text-gray-600 font-medium
 `;
 
 const Title = tw.span`
-  font-bold
+  font-bold text-2xl
 `;
 
 const Button = tw.button`
-  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 ml-2 transition-all duration-300 ease-in-out
+  bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2 ml-2 transition-all duration-300 ease-in-out shadow-md
 `;
 
 const ButtonMap = tw.button`
-  bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-2 ml-2 transition-all duration-300 ease-in-out
+  bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-2 ml-2 transition-all duration-300 ease-in-out shadow-md
 `;
 
 export default ListRides;
