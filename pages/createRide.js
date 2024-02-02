@@ -38,6 +38,7 @@ const CreateRide = () => {
   });
   const [map, setMap] = useState(null);
   const [line, setLine] = useState(null);
+  const myPosition = [0, 0];
   useEffect(() => {
     const token = localStorage.getItem('token');
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
@@ -64,6 +65,7 @@ const CreateRide = () => {
         };
         setPickup(currentLocation);
         setupMapWithPickup(currentLocation);
+        myPosition = currentLocation.coordinates;
       },
       (error) => {
         console.error("Error getting current location:", error);
@@ -89,25 +91,74 @@ const CreateRide = () => {
       .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
       .addTo(newMap);
 
+      let previousMarker = null;
+
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
-      addDropoffMarker(lngLat, locationName);
+
+      if (previousMarker) {
+        previousMarker.remove();
+      }
   
       // Add a marker for the destination location
       const destinationMarker = new mapboxgl.Marker({ color: "orange" })
         .setLngLat(lngLat)
         .setPopup(new mapboxgl.Popup().setHTML(locationName))
         .addTo(newMap);
+
+        previousMarker = destinationMarker;
   
       setDestinationMarker(destinationMarker);
+
+      drawOrUpdateLine(myPosition, lngLat, newMap);
   
-      drawLine();
+      // drawLine();
     });
   
     setMap(newMap);
   };
+
+  const drawOrUpdateLine = (startCoords, endCoords, map) => {
+    const lineCoordinates = [startCoords, endCoords];
+    console.log('lineCoordinates', lineCoordinates);
+
+    if (map.getSource('route')) {
+      map.getSource('route').setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: lineCoordinates,
+        },
+      });
+    } else {
+      // Create a new source and layer
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoordinates,
+          },
+        },
+      });
+
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': 'orange',  // Customize line color
+          'line-width': 2,       // Customize line width
+        },
+      });
+    }
+  };
+
   const reverseGeocode = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -122,14 +173,6 @@ const CreateRide = () => {
     }
   };
 
-  const addDropoffMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "blue" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
   const drawLine = () => {
     if (map && pickup && dropoff) {
       // Create a line between pickup and destination
