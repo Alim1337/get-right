@@ -162,20 +162,26 @@ const Index = () => {
       setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
     });
   };
+  
 
   const handleDisconnect = () => {
     localStorage.removeItem("token");
     router.push("/login");
   };
-  const showInMap = (reservations) => {
-    // Implement the logic to show a red pin on the map at destinationLocation
-    // Assuming that the mapRef is a reference to your Map component
-    if (mapRef.current) {
-      console.log('showInMap log ', reservations.destinationLocation);
-      const destinationLocationString = `${reservations.destinationLatitude},${reservations.destinationLongitude}`;
-      mapRef.current.showPin(destinationLocationString);
-    }else{
-      console.log('mapRef.current is null', mapRef.current);
+  const showInMap = async (reservations) => {
+    try {
+      const position = await getCurrentLocation();
+      console.log("Current Location:", position.coords);
+  
+      if (mapRef.current) {
+        const destinationLocationString = `${reservations.destinationLongitude},${reservations.destinationLatitude}`;
+        mapRef.current.showPin(destinationLocationString);
+        mapRef.current.showRoad([position.coords.longitude, position.coords.latitude], destinationLocationString);
+      } else {
+        console.log('mapRef.current is null', mapRef.current);
+      }
+    } catch (error) {
+      console.error("Error getting current location:", error);
     }
   };
   return (

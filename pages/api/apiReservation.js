@@ -20,6 +20,8 @@ export default async function handler(req, res) {
             select: {
               destinationLocation: true,
               departureLocation: true,
+              departureLatitude: true,
+              departureLongitude: true,
               destinationLatitude: true,
               destinationLongitude: true,
               departureTime: true,
@@ -49,6 +51,8 @@ export default async function handler(req, res) {
           },
           destinationLocation: reservation.trips?.destinationLocation,
           departureLocation: reservation.trips?.departureLocation,
+          departureLatitude: reservation.trips?.departureLatitude,
+          departureLongitude: reservation.trips?.departureLongitude,
           destinationLatitude: reservation.trips?.destinationLatitude,
           destinationLongitude: reservation.trips?.destinationLongitude,
           departureTime: reservation.trips?.departureTime,

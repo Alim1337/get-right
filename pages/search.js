@@ -115,6 +115,7 @@ const Search = () => {
 
   const drawOrUpdateLine = (startCoords, endCoords, map) => {
     const lineCoordinates = [startCoords, endCoords];
+    console.log('lineCoordinates', lineCoordinates);
 
     if (map.getSource('route')) {
       map.getSource('route').setData({
