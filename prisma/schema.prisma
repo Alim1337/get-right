@@ -12,9 +12,9 @@ model admins {
   userId   Int
   username String? @db.VarChar(255)
   password String? @db.VarChar(255)
-  users    users   @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "admins_ibfk_1")
+  users    users   @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "admins_ibfk_1")
 
-  @@index([userId], map: "userId")
+  @@index([userId], map: "fk_admins_users")
 }
 
 model appconfig {
@@ -29,8 +29,8 @@ model reservations {
   passengerId     Int
   reservationTime DateTime @db.DateTime(0)
   driverId        Int
+  users           users    @relation(fields: [passengerId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_2")
   trips           trips    @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_1")
-  users           users    @relation(fields: [passengerId], references: [userId], onUpdate: Restrict, map: "reservations_ibfk_2")
 
   @@unique([passengerId, tripId], map: "unique_reservation")
   @@index([tripId], map: "tripId")
@@ -52,7 +52,7 @@ model trips {
   ride_requests        ride_requests[]
   users                users           @relation(fields: [driverId], references: [userId], onUpdate: Restrict, map: "trips_ibfk_1")
 
-  @@index([driverId], map: "driverId")
+  @@index([driverId], map: "fk_trips_users")
 }
 
 model users {
@@ -77,8 +77,8 @@ model ride_requests {
   tripId       Int
   status       ride_requests_status? @default(pending)
   nbr_seat_req Int?
-  users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
   trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "ride_requests_ibfk_2")
+  users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
 
   @@index([tripId], map: "tripId")
   @@index([userId], map: "userId")

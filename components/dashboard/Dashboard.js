@@ -89,17 +89,18 @@ const Dashboard = () => {
         console.error('Invalid userId for deletion');
         return;
       }
-
+  
       const response = await fetch('/api/admin_functions', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: userId,
+          type: 'user', // Specify the type as 'user'
+          id: userId, // Pass the userId for deletion
         }),
       });
-
+  
       if (response.ok) {
         console.log('User deleted successfully');
         fetchUsers(); // Fetch users again to update the list
@@ -111,6 +112,37 @@ const Dashboard = () => {
       console.error('Error during user deletion:', error);
     }
   };
+  
+  const handleDeleteRide = async (rideId) => {
+    try {
+      if (!rideId) {
+        console.error('Invalid rideId for deletion');
+        return;
+      }
+  
+      const response = await fetch('/api/admin_functions', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'ride', // Specify the type as 'ride'
+          id: rideId, // Pass the rideId for deletion
+        }),
+      });
+  
+      if (response.ok) {
+        console.log('Ride deleted successfully');
+        fetchRides(); // Fetch rides again to update the list
+        setDeleteRideId(null); // Reset deleteRideId after successful deletion
+      } else {
+        console.error('Failed to delete ride');
+      }
+    } catch (error) {
+      console.error('Error during ride deletion:', error);
+    }
+  };
+  
   const fetchRides = async () => {
     try {
       const response = await fetch('/api/admin_functions');
@@ -126,36 +158,6 @@ const Dashboard = () => {
     // Fetch rides when the component mounts
     fetchRides();
   }, []);
-
-  const handleDeleteRide = async (rideId) => {
-    try {
-      if (!rideId) {
-        console.error('Invalid rideId for deletion');
-        return;
-      }
-
-      const response = await fetch('/api/admin_functions', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'ride',
-          id: rideId,
-        }),
-      });
-
-      if (response.ok) {
-        console.log('Ride deleted successfully');
-        fetchRides(); // Fetch rides again to update the list
-        setDeleteRideId(null); // Reset deleteRideId after successful deletion
-      } else {
-        console.error('Failed to delete ride');
-      }
-    } catch (error) {
-      console.error('Error during ride deletion:', error);
-    }
-  };
 
   
   return (
@@ -435,15 +437,16 @@ const Dashboard = () => {
                 Modify
               </button>
               <button
-                onClick={() => {
-                  setDeleteUserId(user.userId); // Set deleteUserId when the button is clicked
-                  handleDeleteUser(user.userId); // Pass user.userId to handleDeleteUser
-                }}
-                className="text-white bg-gradient-to-r from-red-400 via-red-500
-                 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-              >
-                Delete
-              </button>
+  onClick={() => {
+    setDeleteUserId(user.userId);  // Set the state first
+    handleDeleteUser(user.userId); // Pass user.userId to handleDeleteUser
+}}
+className="text-white bg-gradient-to-r from-red-400 via-red-500
+  to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg 
+  dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+>
+  Delete
+</button>
             </td>
           </tr>
         ))}
@@ -530,15 +533,16 @@ const Dashboard = () => {
                     Modify
                   </button>
                   <button
-                    onClick={() => {
-                      setDeleteRideId(ride.tripId); // Set deleteRideId when the button is clicked
-                      handleDeleteRide(ride.tripId); // Pass ride.tripId to handleDeleteRide
-                    }}
-                    className="text-white bg-gradient-to-r from-red-400 via-red-500
-                      to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-                  >
-                    Delete
-                  </button>
+  onClick={() => {
+    setDeleteRideId(ride.tripId);  // Set the state first
+    handleDeleteRide(ride.tripId); // Pass ride.tripId to handleDeleteRide
+}}
+className="text-white bg-gradient-to-r from-red-400 via-red-500
+  to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg 
+  dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+>
+  Delete
+</button>
                 </td>
               </tr>
             ))}
