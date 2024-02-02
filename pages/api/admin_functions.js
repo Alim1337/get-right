@@ -60,7 +60,7 @@ export default async function handler(req, res) {
   } else if (req.method === 'DELETE') {
     // Handle deleting users or rides based on the request
     const { type, id } = req.body;
-
+    console.log('type, id',type, id);
     if (type === 'user') {
       try {
         const deletedUser = await prisma.users.delete({

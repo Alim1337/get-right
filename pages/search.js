@@ -12,6 +12,9 @@ import { MdStars } from "react-icons/md";
 import Link from "next/link";
 import { accessToken } from "../components/Map";
 import ListRides from "../components/ListRides";
+import { useRouter } from "next/router";
+
+
 const NEARBY_RANGE = 20;
 const Search = () => {
   const [pickup, setPickup] = useState({
@@ -29,6 +32,7 @@ const Search = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [nearbyResults, setNearbyResults] = useState(null);
   const [showNearbyResults, setShowNearbyResults] = useState(false);
+  const router = useRouter();
   const myPosition = [0, 0];
 
   const getCurrentLocation = () => {
@@ -44,6 +48,9 @@ const Search = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+    }
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
     setUserId(decodedToken.userId);
     console.log('this is decodedToken', decodedToken);

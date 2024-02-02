@@ -82,29 +82,38 @@ const SeePropositions = () => {
           </BackButton>
         </Link>
       </ButtonContainer>
-      <h1 className="text-4xl font-bold text-center text-blue-600">
+      <h1 className="text-5xl font-extrabold text-center text-indigo-800 mb-10">
         Propositions
       </h1>
-      <div className="grid grid-cols-3 gap-4 mt-8">
+      <div className="grid grid-cols-3 gap-8">
         {propositions.map((proposition) => (
           <div
             key={proposition.propositionId}
-            className="p-4 border-2 border-blue-600 rounded-lg shadow-lg bg-white"
+            className="p-8 border-4 border-indigo-600 rounded-2xl shadow-2xl bg-white transform hover:scale-110 transition-transform duration-200"
           >
-            <p className="text-xl font-semibold text-blue-800">
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+              User name: {proposition.users.firstName}
+            </p>
+  
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+              Last Name: {proposition.users.lastName}
+            </p>
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Departure: {proposition.departureLocation}
             </p>
-            <p className="text-xl font-semibold text-blue-800">
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Destination: {proposition.destinationLocation}
             </p>
-            <p className="text-lg text-gray-700">
+            <p className="text-2xl text-gray-800 mb-3">
               Departure Time: {proposition.departureTime.toString()}
             </p>
-            <p className="text-lg text-gray-700">
+            <p className="text-2xl text-gray-800 mb-6">
               Available Seats: {proposition.availableSeats}
             </p>
-            <div className="flex mt-4 gap-2 justify-center">
-              <Button onClick={() => handleSubmit(proposition.propositionId)}><BsCheck2 size={20} />Accept</Button>
+            <div className="flex justify-center">
+              <Button onClick={() => handleSubmit(proposition.propositionId)}>
+                <BsCheck2 size={25} /> Accept
+              </Button>
             </div>
           </div>
         ))}
@@ -112,18 +121,22 @@ const SeePropositions = () => {
     </Wrapper>
   );
 };
-
-const Button = tw.button`
-mt-2 self-end bg-blue-500 text-white p-2 gap-2 rounded-lg flex justify-center items-center
-`;
-
-const Wrapper = tw.div`
-  p-4 bg-gray-200 h-screen
-`;
-const ButtonContainer = tw.div`
-  bg-white p-2 h-12
-`;
-
-const BackButton = tw.button``;
-
-export default SeePropositions;
+  const Button = tw.button`
+    mt-2 self-end bg-indigo-500 text-white py-3 px-6 gap-2 rounded-full flex justify-center items-center hover:bg-indigo-700 transition-colors duration-200
+  `;
+  
+  const Wrapper = tw.div`
+    p-6 bg-gray-300 min-h-screen
+  `;
+  
+  const ButtonContainer = tw.div`
+    bg-white p-4 h-16
+  `;
+  
+  const BackButton = tw.button`
+    hover:bg-gray-300 transition-colors duration-200
+  `;
+  
+  export default SeePropositions;
+  
+  

@@ -5,12 +5,15 @@ import { BsArrowLeft } from "react-icons/bs";
 import Map from "../components/Map";
 import mapboxgl from 'mapbox-gl';
 import { accessToken } from '../components/Map';
+import { useRouter } from "next/router";
+
 const SeeTrips = () => {
   const [trips, setTrips] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState({});
   const [userId, setUserId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [mapDestination, setMapDestination] = useState(null);
+  const router = useRouter();
 
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
@@ -34,6 +37,9 @@ const SeeTrips = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    if (!token) {
+      router.push('/login');
+    }
     const decodedToken = JSON.parse(atob(token.split(".")[1]));
     setUserId(decodedToken.userId);
   }, []);
