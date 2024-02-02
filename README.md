@@ -5,60 +5,63 @@ Bienvenue sur Get Right, une application de covoiturage basée sur Next.js, Java
 ## Prérequis
 
 Assurez-vous d'avoir les éléments suivants installés localement avant de commencer :
-
 - Node.js (version recommandée)
 - Yarn
 - MySQL Server
-- Prisma 
+- Prisma
+  
+# Get Right App
+Ce dépôt contient le code source de l'application Get Right. Suivez les instructions ci-dessous pour cloner, configurer et exécuter l'application localement.
 
-## Configuration de l'application
-```
-git clone https://github.com/Alim1337/get-right.git
-cd get-right
-yarn
-yarn dev
-```
+## Clonage du dépôt
+
+Vous pouvez cloner ce dépôt directement depuis VSCode ou en utilisant le terminal. Exécutez les commandes suivantes :
+
+- git clone https://github.com/Alim1337/get-right.git
+- cd get-right
+
+## Installation des dépendances
+npm install -g yarn
+yarn install
+npm install -g prisma
 
 ## Configuration de la base de données
 
-1. Créez une base de données MySQL pour l'application.
-
-2. Créez un fichier `.env`. Remplissez les informations de connexion à la base de données dans ce fichier sous cette forme: "
-3.      DATABASE_URL=mysql://root@localhost:3306/get_right
+1.Créez un fichier .env à la racine du projet.
+2.Remplissez les informations de connexion à la base de données dans le fichier .env selon le format suivant :
+        DATABASE_URL=mysql://root@localhost:3306/get_right
         JWT_SECRET="A#9_çç^:872012P<+2"
         "
-4. Exécutez les migrations pour créer les tables de la base de données :
+3.Assurez-vous de ne pas utiliser le port 3306 ailleurs, puis connectez-vous au serveur MySQL.
 
-   les commandes :
- npm install -g prisma
- # Installer Yarn Prisma CLI globalement (si ce n'est pas déjà fait) :
-yarn global add prisma
-
-# Créer et initialiser le projet Prisma dans le répertoire actuel :
-yarn prisma init
-
+## Création de la base de données
 # Appliquer les migrations pour créer la base de données :
 yarn prisma migrate dev
 # Cette commande génère et exécute les scripts SQL nécessaires à la création de la base de données
 # en utilisant le schéma défini dans le fichier 'schema.prisma' du dossier 'prisma'.
+Lorsqu'on vous demande un nom pour la migration, par exemple, saisissez migrate1.
 
-# Générer les clients Prisma pour faciliter l'interaction avec la base de données :
-prisma generate
-# Cette commande génère le code client Prisma à partir des modèles définis dans le schéma,
-# facilitant ainsi l'accès et la manipulation des données dans votre application.
+Ensuite, remplissez les tables users et admins avec les données nécessaires en exécutant les commandes SQL 
 
-#ajouter ce trigger : (
+Ajoutez également le trigger SQL fourni pour mettre à jour les sièges après une réservation.
+
+# ajouter ce trigger : 
 DELIMITER //
 CREATE TRIGGER update_seats_after_reservation
 AFTER INSERT ON reservations
 FOR EACH ROW
 BEGIN
-DECLARE seats_needed INT;
-SELECT nbr_seat_req INTO seats_needed FROM ride_requests WHERE tripId = NEW.tripId;
-UPDATE trips SET availableSeats = availableSeats - seats_needed WHERE tripId = NEW.tripId;
-END; //
-DELIMITER ;)
-    
+    DECLARE seats_needed INT;
+    SELECT nbr_seat_req INTO seats_needed FROM ride_requests WHERE tripId = NEW.tripId;
+    UPDATE trips SET availableSeats = availableSeats - seats_needed WHERE tripId = NEW.tripId;
+END;
+//
+DELIMITER ;
+
+## Démarrage de l'application
+La configuration étant terminée, lancez l'exécution avec la commande suivante :
+yarn dev
+
 L'application sera accessible à l'adresse http://localhost:3000.
 
 ## Utilisation de l'Application
