@@ -428,7 +428,7 @@ const SectionLeft = tw.section`
 flex flex-col items-center h-screen w-1/2 
 `;
 const SectionRight = tw.section`
-flex flex-col h-screen w-1/2 bg-white rounded-l-3xl shadow-2xl
+flex flex-col h-screen w-1/2 bg-gray-50 rounded-l-3xl shadow-2xl
 `;
 
 const Title = tw.h1`
