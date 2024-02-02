@@ -61,7 +61,7 @@ model users {
   lastName      String          @db.VarChar(50)
   phoneNumber   String          @db.VarChar(15)
   email         String          @unique(map: "email") @db.VarChar(100)
-  studentId     String          @db.VarChar(20)
+  studentId     String          @unique @db.VarChar(20)
   password      String          @db.VarChar(255)
   role          users_role?     @default(client)
   admins        admins[]
