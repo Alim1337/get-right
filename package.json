@@ -30,6 +30,7 @@
     "twin.macro": "^3.4.1"
   },
   "devDependencies": {
+    "@types/mapbox-gl": "^2.7.20",
     "autoprefixer": "^10.4.0",
     "eslint": "7",
     "eslint-config-next": "12.0.3",
