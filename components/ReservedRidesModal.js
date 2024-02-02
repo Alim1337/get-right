@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 
 const ReservedRidesModal = ({ reservations, onClose, showInMap, location }) => {
-  console.log('Received reservations in ReservedRidesModal:', reservations);
+  // console.log('Received reservations in ReservedRidesModal:', reservations);
 
   useEffect(() => {
-    console.log('Received reservations from comp:', reservations);
+    // console.log('Received reservations from comp:', reservations);
   }, [reservations]);
   
 

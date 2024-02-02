@@ -14,7 +14,7 @@ import { useRef } from "react";
 
 
 const Index = () => {
-  const mapRef = useRef(); // Create a ref for the Map component
+  const mapRef = useRef(null); // Create a ref for the Map component
 
   const [user, setUser] = useState(null);
   const [location, setLocation] = useState([44, 36.2]);
@@ -171,7 +171,11 @@ const Index = () => {
     // Implement the logic to show a red pin on the map at destinationLocation
     // Assuming that the mapRef is a reference to your Map component
     if (mapRef.current) {
-      mapRef.current.showPin(reservations.destinationLocation);
+      console.log('showInMap log ', reservations.destinationLocation);
+      const destinationLocationString = `${reservations.destinationLatitude},${reservations.destinationLongitude}`;
+      mapRef.current.showPin(destinationLocationString);
+    }else{
+      console.log('mapRef.current is null', mapRef.current);
     }
   };
   return (

@@ -29,6 +29,7 @@ const Search = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [nearbyResults, setNearbyResults] = useState(null);
   const [showNearbyResults, setShowNearbyResults] = useState(false);
+  const myPosition = [0, 0];
 
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
@@ -67,6 +68,7 @@ const Search = () => {
       };
       setPickup(currentLocation);
       setupMapWithPickup(currentLocation);
+      myPosition = currentLocation.coordinates;
     } catch (error) {
       console.error("Error getting current location:", error);
       setupMapWithPickup({
@@ -90,28 +92,78 @@ const Search = () => {
       .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
       .addTo(newMap);
 
+    let previousMarker = null;
+
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
 
-      // Add marker for destination location
-      addDropoffMarker(lngLat, locationName);
+      // Draw or update the line between pickup and dropoff
+      drawOrUpdateLine(myPosition, lngLat, newMap);
 
-      drawLine();
+      // Create marker at the clicked location
+      previousMarker = createMarker(lngLat, newMap, locationName, previousMarker);
+
+
+
     });
 
 
     setMap(newMap);
   };
 
-  const addDropoffMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "blue" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
+  const drawOrUpdateLine = (startCoords, endCoords, map) => {
+    const lineCoordinates = [startCoords, endCoords];
+
+    if (map.getSource('route')) {
+      map.getSource('route').setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: lineCoordinates,
+        },
+      });
+    } else {
+      // Create a new source and layer
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoordinates,
+          },
+        },
+      });
+
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': 'blue',  // Customize line color
+          'line-width': 2,       // Customize line width
+        },
+      });
     }
+  };
+
+  const createMarker = (lngLat, map, popupContent, previousMarker) => {
+    // Remove previous marker
+    if (previousMarker) {
+      previousMarker.remove();
+    }
+
+    // Add new marker
+    const marker = new mapboxgl.Marker({ color: "blue" })
+      .setLngLat(lngLat)
+      .setPopup(new mapboxgl.Popup().setHTML(popupContent))
+      .addTo(map);
+
+      return marker;
   };
 
   const reverseGeocode = async (latitude, longitude) => {
@@ -138,6 +190,9 @@ const Search = () => {
         .setPopup(new mapboxgl.Popup().setHTML(dropoff.locationName))
         .addTo(map);
 
+
+      drawOrUpdateLine(pickup.coordinates, dropoff.coordinates, map);
+
       // Create a line between pickup and destination
       const newLine = [pickup.coordinates, dropoff.coordinates];
 
@@ -147,7 +202,7 @@ const Search = () => {
 
       // Set the map's center and zoom level to fit the bounds
       map.setCenter(bounds.getCenter());
-    map.setZoom(zoomLevel);
+      map.setZoom(zoomLevel);
 
       // Note: If you want to draw a line on the map, you can use a GeoJSON source and layer
       // Uncomment and customize the code block below if needed
@@ -376,9 +431,9 @@ const Search = () => {
       <ConfirmLocation onClick={() => { handleSearch(); handleSearchNearby(); }}>Confirm Location</ConfirmLocation>
 
       {showSearchResults && (
-  <div>
-    <SectionTitle>Rides disponible</SectionTitle>
-    <ListRides
+        <div>
+          <SectionTitle>Rides disponible</SectionTitle>
+          <ListRides
             rides={searchResults}
             onRequestSeat={handleRequestSeat}
             onSeatCountChange={handleSeatCountChange}
@@ -386,7 +441,7 @@ const Search = () => {
             setDropoff={setDropoff} // Pass setDropoff function
           />
         </div>
-)}
+      )}
       {showNearbyResults && (
         <div>
           <SectionTitle>Nearby rides</SectionTitle>

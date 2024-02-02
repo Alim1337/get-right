@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useRef } from "react";
 import tw from "tailwind-styled-components";
 import mapboxgl from "mapbox-gl";
 
@@ -7,8 +7,8 @@ export const accessToken =
 
 mapboxgl.accessToken = accessToken;
 
-const Map = ({ location }) => {
-  const mapRef = useRef(null); // Create a ref for the Map instance
+const Map = forwardRef(({ location }, ref) => {
+  const mapRef = useRef(null);
 
   useEffect(() => {
     console.log("Received Coordinates:", location);
@@ -22,7 +22,6 @@ const Map = ({ location }) => {
 
     addToMap(map, location);
 
-    // Create a bounding box around the single point
     const bounds = new mapboxgl.LngLatBounds(location, location);
 
     map.fitBounds(bounds, {
@@ -31,20 +30,31 @@ const Map = ({ location }) => {
 
     // Attach the map instance to the ref
     mapRef.current = map;
-  }, [location]);
+
+    // Attach the ref to the map component
+    if (ref) {
+      ref.current = {
+        ...mapRef.current,
+        showPin: showPin, // Add showPin to the ref
+      };
+    }
+  }, [location, ref]);
 
   const addToMap = (map, latLon) =>
     new mapboxgl.Marker().setLngLat(latLon).addTo(map);
 
-  // Function to show a pin on the map
-  const showPin = (destinationLocation) => {
-    new mapboxgl.Marker({ color: "red" })
-      .setLngLat(destinationLocation)
-      .addTo(mapRef.current);
-  };
+    const showPin = (destinationLocation) => {
+      const [lat, lng] = destinationLocation.split(',').map(parseFloat);
+      console.log('showPin log ', [lat, lng]);
+      new mapboxgl.Marker({ color: "red" })
+        .setLngLat([lng, lat])
+        .addTo(mapRef.current);
+    };
+    
+    
 
   return <Wrapper id="map"></Wrapper>;
-};
+});
 
 const Wrapper = tw.div`
   flex-1 h-1/2 ml-2 mt-2

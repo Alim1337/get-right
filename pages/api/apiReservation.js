@@ -20,6 +20,8 @@ export default async function handler(req, res) {
             select: {
               destinationLocation: true,
               departureLocation: true,
+              destinationLatitude: true,
+              destinationLongitude: true,
               departureTime: true,
               driverId: true,
               users: {
@@ -47,6 +49,8 @@ export default async function handler(req, res) {
           },
           destinationLocation: reservation.trips?.destinationLocation,
           departureLocation: reservation.trips?.departureLocation,
+          destinationLatitude: reservation.trips?.destinationLatitude,
+          destinationLongitude: reservation.trips?.destinationLongitude,
           departureTime: reservation.trips?.departureTime,
         };
       });

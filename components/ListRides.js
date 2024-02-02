@@ -28,7 +28,7 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine, setDropoff
     setDropoff(destinationLocation);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    drawLine(10);
+    // drawLine(10);
   };
 
   return (
