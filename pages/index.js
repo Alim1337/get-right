@@ -168,22 +168,22 @@ const Index = () => {
     localStorage.removeItem("token");
     router.push("/login");
   };
-  const showInMap = async (reservations) => {
-    try {
-      const position = await getCurrentLocation();
-      console.log("Current Location:", position.coords);
 
-      if (mapRef.current) {
-        const destinationLocationString = `${reservations.destinationLongitude},${reservations.destinationLatitude}`;
-        mapRef.current.showPin(destinationLocationString);
-        mapRef.current.showRoad([position.coords.longitude, position.coords.latitude], destinationLocationString);
-      } else {
-        console.log('mapRef.current is null', mapRef.current);
-      }
-    } catch (error) {
-      console.error("Error getting current location:", error);
+  
+
+  
+
+  function showInMap(reservations) {
+    if (!mapRef.current) {
+      console.log('mapRef.current is null', mapRef.current);
+      return;
     }
-  };
+  
+    const destinationLocationString = `${reservations.destinationLongitude},${reservations.destinationLatitude}`;
+    mapRef.current.showPin(destinationLocationString);
+    console.log(location)
+    mapRef.current.showRoad(location, destinationLocationString);
+  }
   return (
     <Wrapper>
 
