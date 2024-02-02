@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
       // Check if a user with the given student ID already exists
       const existingUserWithStudentId = await prisma.users.findUnique({
-        where: { studentId },
+        where: { email },
       });
 
 
