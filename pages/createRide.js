@@ -266,6 +266,10 @@ const CreateRide = () => {
         // Redirect or perform any other actions after successful ride creation
         router.push('/'); // Redirect to the home page
       } else {
+        toast.error('Error during ride creation', {
+          position: 'top-center',
+          duration: 3000,
+        });
         console.error('Failed to create ride');
       }
     } catch (error) {
