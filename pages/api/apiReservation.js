@@ -64,6 +64,41 @@ export default async function handler(req, res) {
     } finally {
       await prisma.$disconnect();
     }
+  } else if (req.method === 'DELETE') {
+    // Handle reservation deletion based on reservationId
+    try {
+      const { reservationId } = req.body;
+
+
+      if (!reservationId) {
+        return res.status(400).json({ message: 'Bad Request' });
+      }
+
+      // Check if the reservation exists
+      const existingReservation = await prisma.reservations.findUnique({
+        where: {
+          reservationId: parseInt(reservationId, 10),
+        },
+      });
+
+      if (!existingReservation) {
+        return res.status(404).json({ message: 'Reservation not found' });
+      }
+
+        // If more than 12 hours have passed, delete the reservation
+        await prisma.reservations.delete({
+          where: {
+            reservationId: parseInt(reservationId, 10),
+          },
+        });
+
+        return res.status(200).json({ message: 'Reservation deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      return res.status(500).json({ message: 'Internal Server Error' });
+    } finally {
+      await prisma.$disconnect();
+    }
   } else {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
