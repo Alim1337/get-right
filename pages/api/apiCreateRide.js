@@ -40,6 +40,7 @@ export default async function handler(req, res) {
           departureLongitude: departureLongitude,
           destinationLatitude: destinationLatitude,
           destinationLongitude: destinationLongitude,
+          maxSeatsPerTrip:5,
         },
       });
 
