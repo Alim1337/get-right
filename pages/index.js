@@ -159,7 +159,7 @@ const Index = () => {
       );
 
       // Stopping the watch after 5 seconds for simplicity. Adjust as needed.
-      setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
+      setTimeout(() => navigator.geolocation.clearWatch(watchId), 3000);
     });
   };
   
