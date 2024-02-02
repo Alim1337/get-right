@@ -6,14 +6,19 @@ import Map from "../components/Map";
 import mapboxgl from 'mapbox-gl';
 import { accessToken } from '../components/Map';
 import { useRouter } from "next/router";
+import { useRef } from "react";
 
 const SeeTrips = () => {
+  const mapRef = useRef(null); // Create a ref for the Map component
+  const [location, setLocation] = useState([44, 36.2]);
+
   const [trips, setTrips] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState({});
   const [userId, setUserId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [mapDestination, setMapDestination] = useState(null);
   const router = useRouter();
+  const myPosition = [0, 0];
 
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
@@ -43,7 +48,23 @@ const SeeTrips = () => {
     const decodedToken = JSON.parse(atob(token.split(".")[1]));
     setUserId(decodedToken.userId);
   }, []);
+  useEffect(() => {
+    setPickup(`(${pickup.locationName})`);
+    setDropoff(dropoff ? dropoff.locationName : "");
+  }, [pickup, dropoff]);
+  useEffect(() => {
+    const updateLocation = async () => {
+      try {
+        const position = await getCurrentLocation();
+        console.log("Updated Location:", position.coords);
+        setLocation([position.coords.longitude, position.coords.latitude]);
+      } catch (error) {
+        console.error("Error getting location:", error);
+      }
+    };
 
+    updateLocation();
+  }, []);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -71,8 +92,14 @@ const SeeTrips = () => {
       setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
     });
   };
+
   const setupMap = async () => {
+    if (!mapboxgl) {
+      console.error('Mapbox GL JS library not loaded.');
+      return;
+    }
     mapboxgl.accessToken = accessToken;
+    console.log("Setting up map...");
 
     try {
       const position = await getCurrentLocation();
@@ -85,6 +112,7 @@ const SeeTrips = () => {
       };
       setPickup(currentLocation);
       setupMapWithPickup(currentLocation);
+      myPosition = currentLocation.coordinates;
     } catch (error) {
       console.error("Error getting current location:", error);
       setupMapWithPickup({
@@ -93,16 +121,8 @@ const SeeTrips = () => {
       });
     }
   };
-  const setupMapWithPickup = (pickupLocation) => {
-    const addPickupMarker = (lngLat, locationName) => {
-      if (map) {
-        new mapboxgl.Marker({ color: "green" })
-          .setLngLat(lngLat)
-          .setPopup(new mapboxgl.Popup().setHTML(locationName))
-          .addTo(map);
-      }
-    };
 
+  const setupMapWithPickup = (pickupLocation) => {
     const newMap = new mapboxgl.Map({
       container: "map",
       style: "mapbox://styles/mapbox/streets-v11",
@@ -116,23 +136,26 @@ const SeeTrips = () => {
       .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
       .addTo(newMap);
 
-    // Add marker for Pickup Location
-    addPickupMarker(pickupLocation.coordinates, pickupLocation.locationName);
+    let previousMarker = null;
 
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
 
-      // Add marker for destination location
-      addDropoffMarker(lngLat, locationName);
+      // Draw or update the line between pickup and dropoff
+      drawOrUpdateLine(myPosition, lngLat, newMap);
 
-      drawLine();
+      // Create marker at the clicked location
+      previousMarker = createMarker(lngLat, newMap, locationName, previousMarker);
+
+
+
     });
+
 
     setMap(newMap);
   };
-
 
  
   const reverseGeocode = async (latitude, longitude) => {
@@ -217,7 +240,70 @@ const SeeTrips = () => {
       setLine(newLine);
     }
   };
+  const drawOrUpdateLine = (startCoords, endCoords, map) => {
+    const lineCoordinates = [startCoords, endCoords];
+    console.log('lineCoordinates', lineCoordinates);
 
+    if (map.getSource('route')) {
+      map.getSource('route').setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: lineCoordinates,
+        },
+      });
+    } else {
+      // Create a new source and layer
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoordinates,
+          },
+        },
+      });
+
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': 'blue',  // Customize line color
+          'line-width': 2,       // Customize line width
+        },
+      });
+    }
+  };
+
+  const createMarker = (lngLat, map, popupContent, previousMarker) => {
+    // Remove previous marker
+    if (previousMarker) {
+      previousMarker.remove();
+    }
+
+    // Add new marker
+    const marker = new mapboxgl.Marker({ color: "blue" })
+      .setLngLat(lngLat)
+      .addTo(map);
+
+      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
+        .setHTML(popupContent)
+        .addTo(map);
+
+        marker.setPopup(popup); // Associate popup with marker
+
+      // Open the popup immediately after creating the marker
+      popup.addTo(map);
+
+      return marker;
+  };
+  useEffect(() => {
+    setupMap();
+  }, []);
   // Helper function to calculate zoom level based on bounds
   const getZoomLevel = (bounds, map) => {
     const WORLD_DIM = { height: 256, width: 256 };
@@ -331,7 +417,6 @@ const SeeTrips = () => {
   const handleShowOnMap = (destinationLocation) => {
     setMapDestination(destinationLocation);
   };
-
   return (
     <Wrapper>
       <ButtonContainer>
@@ -341,15 +426,12 @@ const SeeTrips = () => {
           </BackButton>
         </Link>
       </ButtonContainer>
+      <Map ref={mapRef} location={location} />
+
       <h1 className="text-4xl font-bold text-center text-blue-600">
         All the trips
       </h1>
-      <MapContainer>
-              {/* Pass the location information to the Map component */}
-         
-            </MapContainer>
 
-    
       <div className="grid grid-cols-3 gap-4 mt-8">
         {trips.map((trip) => (
           <div
@@ -373,9 +455,7 @@ const SeeTrips = () => {
                 Request Seat
               </Button>
               <Button onClick={() => handleSubmit(trip.tripId)}>Submit</Button>
-              <ButtonMap
-                onClick={() => handleShowOnMap(trip.destinationLocation)}
-              >
+              <ButtonMap onClick={() => handleShowOnMap(trip.destinationLocation)}>
                 Show in Map
               </ButtonMap>
             </div>
