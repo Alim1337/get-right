@@ -91,7 +91,7 @@ const CreateRide = () => {
       .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
       .addTo(newMap);
 
-      let previousMarker = null;
+    let previousMarker = null;
 
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
@@ -101,22 +101,30 @@ const CreateRide = () => {
       if (previousMarker) {
         previousMarker.remove();
       }
-  
+
       // Add a marker for the destination location
       const destinationMarker = new mapboxgl.Marker({ color: "orange" })
         .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
         .addTo(newMap);
 
-        previousMarker = destinationMarker;
-  
+      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
+        .setHTML(locationName)
+        .addTo(newMap);
+
+      destinationMarker.setPopup(popup); // Associate popup with marker
+
+      // Open the popup immediately after creating the marker
+      popup.addTo(newMap);
+
+      previousMarker = destinationMarker;
+
       setDestinationMarker(destinationMarker);
 
       drawOrUpdateLine(myPosition, lngLat, newMap);
-  
+
       // drawLine();
     });
-  
+
     setMap(newMap);
   };
 
@@ -184,21 +192,21 @@ const CreateRide = () => {
           coordinates: lineCoordinates,
         },
       };
-  
+
       const sourceId = 'line-source';
-  
+
       // Check if the source already exists, remove it if it does
       if (map.getSource(sourceId)) {
         map.removeSource(sourceId);
         map.removeLayer('line-layer');
       }
-  
+
       // Add the line to the map
       map.addSource(sourceId, {
         type: 'geojson',
         data: newLine,
       });
-  
+
       map.addLayer({
         id: 'line-layer',
         type: 'line',
@@ -212,13 +220,13 @@ const CreateRide = () => {
           'line-width': 2,
         },
       });
-  
+
       // Fit the map to the new line
       map.fitBounds([pickup.coordinates, destinationMarker.getLngLat()], { padding: 50 });
     }
   };
-  
-  
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

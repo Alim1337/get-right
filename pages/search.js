@@ -161,8 +161,16 @@ const Search = () => {
     // Add new marker
     const marker = new mapboxgl.Marker({ color: "blue" })
       .setLngLat(lngLat)
-      .setPopup(new mapboxgl.Popup().setHTML(popupContent))
       .addTo(map);
+
+      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
+        .setHTML(popupContent)
+        .addTo(map);
+
+        marker.setPopup(popup); // Associate popup with marker
+
+      // Open the popup immediately after creating the marker
+      popup.addTo(map);
 
       return marker;
   };

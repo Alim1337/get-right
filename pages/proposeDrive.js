@@ -119,13 +119,20 @@ const ProposeDrive = () => {
 
       const destinationMarker = new mapboxgl.Marker({ color: "orange" })
         .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(newMap);
+      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
+        .setHTML(locationName)
         .addTo(newMap);
 
-        previousMarker = destinationMarker;
+      destinationMarker.setPopup(popup); // Associate popup with marker
 
-        drawOrUpdateLine(myPosition, lngLat, newMap);
-      
+      // Open the popup immediately after creating the marker
+      popup.addTo(newMap);
+
+      previousMarker = destinationMarker;
+
+      drawOrUpdateLine(myPosition, lngLat, newMap);
+
 
       // Add marker for destination location
       // addDropoffMarker(lngLat, locationName);
@@ -176,7 +183,7 @@ const ProposeDrive = () => {
     }
   };
 
- 
+
   const reverseGeocode = async (latitude, longitude) => {
     try {
       const response = await fetch(
