@@ -162,7 +162,7 @@ const Index = () => {
       setTimeout(() => navigator.geolocation.clearWatch(watchId), 3000);
     });
   };
-  
+
 
   const handleDisconnect = () => {
     localStorage.removeItem("token");
@@ -172,7 +172,7 @@ const Index = () => {
     try {
       const position = await getCurrentLocation();
       console.log("Current Location:", position.coords);
-  
+
       if (mapRef.current) {
         const destinationLocationString = `${reservations.destinationLongitude},${reservations.destinationLatitude}`;
         mapRef.current.showPin(destinationLocationString);
@@ -244,26 +244,26 @@ const Index = () => {
 
 
       <SectionMain>
-  <NavBar>
-    <UserProfileSection
-      user={user}
-      role={role}
-      counter={counter}
-      handleShowReservedRides={handleShowReservedRides}
-      handleDisconnect={handleDisconnect}
-    />
-  </NavBar>
+        <NavBar>
+          <UserProfileSection
+            user={user}
+            role={role}
+            counter={counter}
+            handleShowReservedRides={handleShowReservedRides}
+            handleDisconnect={handleDisconnect}
+          />
+        </NavBar>
 
-  <Map ref={mapRef} location={location} />
-</SectionMain>
+        <Map ref={mapRef} location={location} />
+      </SectionMain>
 
       {showReservedRidesModal && (
-           <ReservedRidesModal
-           reservations={reservations}
-           onClose={handleCloseReservedRidesModal}
-           location={location}
-           showInMap={showInMap}
-         />
+        <ReservedRidesModal
+          reservations={reservations}
+          onClose={handleCloseReservedRidesModal}
+          location={location}
+          showInMap={showInMap}
+        />
       )}
 
 
@@ -280,16 +280,16 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
       </Link>
     ) : (
       <div className="flex items-center space-x-2">
-        
-          <div className="flex items-center">
-            <div className="bg-red-500 text-white text-center mb-8 -ml-2 absolute h-6 w-6 font-bold rounded-full">
-              {counter}
-            </div>
-            <ActionButtonReservedDrives onClick={handleShowReservedRides}>
-              My reserved rides
-            </ActionButtonReservedDrives>
+
+        <div className="flex items-center">
+          <div className="bg-red-500 text-white text-center mb-8 -ml-2 absolute h-6 w-6 font-bold rounded-full">
+            {counter}
           </div>
-        
+          <ActionButtonReservedDrives onClick={handleShowReservedRides}>
+            My reserved rides
+          </ActionButtonReservedDrives>
+        </div>
+
       </div>
     )}
 
@@ -321,8 +321,7 @@ const Wrapper = tw.div`
 
 const Title = tw.h1`
   text-4xl
-  font-serif
-  font-extrabold
+  font-bold
   text-center
   text-black
   tracking-wide
@@ -331,7 +330,6 @@ const Title = tw.h1`
   transition-all duration-500 ease-in-out
   hover:text-blue-500
   hover:scale-110
-  font-family: 'Roboto', sans-serif;
 `;
 
 const SectionMain = tw.div`
@@ -364,7 +362,7 @@ const UserImage = tw.img`
 
 
 const ActionButton = tw.button`
-  inline-block flex flex-col items-center w-full rounded-2xl bg-gray-200 text-black px-2 pb-2 pt-2.5 text-2xl font-serif uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)]
+  inline-block flex flex-col items-center w-full rounded-2xl bg-gray-200 text-black px-2 pb-2 pt-2.5 text-2xl  uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] font-medium
 `;
 
 const ActionItems = tw.div`
@@ -376,7 +374,7 @@ const ActionButtons = tw.div`
 `;
 
 const ActionButtonBottom = tw.button`
-  inline-block flex flex-col items-center w-full rounded-2xl bg-gray-200 text-black px-6 pb-2 pt-2.5 text-2xl font-serif uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] 
+  inline-block flex flex-col items-center w-full rounded-2xl bg-gray-200 text-black px-6 pb-2 pt-2.5 text-2xl uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-gray-300 hover:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:bg-gray-300 focus:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] focus:outline-none focus:ring-0 active:bg-gray-300 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-gray-200 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-gray-300 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-gray-300 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-gray-300 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] font-medium
 `;
 
 const SectionAside = tw.div`

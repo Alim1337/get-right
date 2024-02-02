@@ -4,6 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import { Toaster, toast } from 'sonner'
 
 
+
 function MyApp({ Component, pageProps }) {
     return (
         <>
