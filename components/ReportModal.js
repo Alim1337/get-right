@@ -1,11 +1,12 @@
-// ReportModal.js
 import React, { useState } from 'react';
-import Modal from 'react-modal'; // Update the import to use react-modal
+import Modal from 'react-modal';
 import { FaExclamationTriangle } from 'react-icons/fa';
 
 const ReportModal = ({ isOpen, onClose, onSubmit }) => {
   const [problemType, setProblemType] = useState('technical');
   const [problemDetails, setProblemDetails] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleProblemTypeChange = (event) => {
     setProblemType(event.target.value);
@@ -15,13 +16,60 @@ const ReportModal = ({ isOpen, onClose, onSubmit }) => {
     setProblemDetails(event.target.value);
   };
 
-  const handleSubmit = () => {
-    onSubmit({
-      problemType,
-      problemDetails,
-    });
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      // Prepare the data to be sent in the POST request
+      const reportData = {
+        userId: localStorage.getItem('userId'), // Assuming you store userId in localStorage
+        problemType,
+        problemDetails,
+      };
+  
+      // Make a POST request to the API endpoint using fetch
+      const response = await fetch('/api/apiReports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData),
+      });
+  
+      // Ensure the response is successful before proceeding
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      // Handle the response as needed
+      const responseData = await response.json();
+      console.log('Report submitted successfully:', responseData);
+  
+      // Call the onSubmit callback, set success message, and clear the error message
+      onSubmit(reportData);
+      setSuccessMessage('Report submitted successfully!');
+      setErrorMessage('');
+  
+      // Clear the success message after 3 seconds and then close the modal
+      setTimeout(() => {
+        setSuccessMessage('');
+        onClose(); // Move this inside the setTimeout function
+      }, 3000);
+  
+    } catch (error) {
+      // Handle errors
+      console.error('Error submitting report:', error);
+  
+      // Set error message and clear the success message
+      setErrorMessage('Error submitting report. Please try again.');
+      setSuccessMessage('');
+  
+      // Clear the error message after 3 seconds
+      setTimeout(() => {
+        setErrorMessage('');
+      }, 3000);
+    }
   };
+  
+  
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -30,6 +78,16 @@ const ReportModal = ({ isOpen, onClose, onSubmit }) => {
           <FaExclamationTriangle size={24} className="mr-2" />
           Report to Admin
         </h2>
+        {errorMessage && (
+          <div className="text-red-500 mb-4">
+            <p>{errorMessage}</p>
+          </div>
+        )}
+        {successMessage && (
+          <div className="text-green-500 mb-4">
+            <p>{successMessage}</p>
+          </div>
+        )}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700">Problem Type</label>
           <select

@@ -14,7 +14,7 @@ model admins {
   password String? @db.VarChar(255)
   users    users   @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "admins_ibfk_1")
 
-  @@index([userId], map: "fk_admins_users")
+  @@index([userId], map: "admins_ibfk_1")
 }
 
 model appconfig {
@@ -29,8 +29,8 @@ model reservations {
   passengerId     Int
   reservationTime DateTime @db.DateTime(0)
   driverId        Int
-  users           users    @relation(fields: [passengerId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_2")
   trips           trips    @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_1")
+  users           users    @relation(fields: [passengerId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_2")
 
   @@unique([passengerId, tripId], map: "unique_reservation")
   @@index([tripId], map: "tripId")
@@ -52,7 +52,7 @@ model trips {
   ride_requests        ride_requests[]
   users                users           @relation(fields: [driverId], references: [userId], onUpdate: Restrict, map: "trips_ibfk_1")
 
-  @@index([driverId], map: "fk_trips_users")
+  @@index([driverId], map: "trips_ibfk_1")
 }
 
 model users {
@@ -66,6 +66,7 @@ model users {
   role          users_role?     @default(client)
   admins        admins[]
   proposition   proposition[]
+  reports       reports[]
   reservations  reservations[]
   ride_requests ride_requests[]
   trips         trips[]
@@ -77,8 +78,8 @@ model ride_requests {
   tripId       Int
   status       ride_requests_status? @default(pending)
   nbr_seat_req Int?
-  trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "ride_requests_ibfk_2")
   users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
+  trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "ride_requests_ibfk_2")
 
   @@index([tripId], map: "tripId")
   @@index([userId], map: "userId")
@@ -96,6 +97,17 @@ model proposition {
   destinationLatitude  Float?   @db.Float
   destinationLongitude Float?   @db.Float
   users                users    @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "proposition_ibfk_1")
+
+  @@index([userId], map: "userId")
+}
+
+model reports {
+  reportId       Int       @id @default(autoincrement())
+  userId         Int?
+  problemType    String?   @db.VarChar(255)
+  problemDetails String?   @db.Text
+  createdAt      DateTime? @default(now()) @db.Timestamp(0)
+  users          users?    @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "reports_ibfk_1")
 
   @@index([userId], map: "userId")
 }

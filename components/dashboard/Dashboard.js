@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import Modal from 'react-modal';
+const useModal = () => {
+  const [modalIsOpen, setModalIsOpen] = useState(false);
 
+  const openModal = () => {
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+  };
+
+  return { modalIsOpen, openModal, closeModal };
+};
 const Dashboard = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRideMenu, setShowRideMenu] = useState(false);
@@ -8,8 +21,30 @@ const Dashboard = () => {
   const [rides, setRides] = useState([]);
   const [deleteRideId, setDeleteRideId] = useState(null);
   const [showConfigTable, setShowConfigTable] = useState(false);
-  const [maxSeats, setMaxSeats] = useState(5); // Initial value, change as needed
-  const [maxRidesPerDay, setMaxRidesPerDay] = useState(4); // Initial value, change as needed
+  const [maxSeats, setMaxSeats] = useState(5);
+  const [maxRidesPerDay, setMaxRidesPerDay] = useState(4);
+  const [reports, setReports] = useState([]);
+  const { modalIsOpen, openModal, closeModal } = useModal();
+  const [modalDetails, setModalDetails] = useState('');
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const response = await fetch('/api/apiReports');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+    
+        const reportsData = await response.json();
+        console.log('Reports data:', reportsData);
+        setReports(reportsData);
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      }
+    };
+    
+    fetchReports();
+  }, []); 
   const toggleUserMenu = () => {
     setShowUserMenu(!showUserMenu);
     if (!showUserMenu) {
@@ -31,7 +66,45 @@ const Dashboard = () => {
   const handleMaxRidesPerDayChange = (event) => {
     setMaxRidesPerDay(parseInt(event.target.value, 10));
   };
+  
+  const DetailsModal = ({ isOpen, onClose, details }) => {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onRequestClose={onClose}
+        style={{
+          content: {
+            top: '50%',
+            left: '50%',
+            right: 'auto',
+            bottom: 'auto',
+            marginRight: '-50%',
+            transform: 'translate(-50%, -50%)',
+            width: '50%', // Adjust the width as needed
+          },
+        }}
+      >
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Problem Details</h2>
+          <p className="mb-4">{details}</p>
+          <button
+            onClick={onClose}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
+    );
+  };
+  
+  
 
+  const handleReadDetails = (details) => {
+    openModal(); // Open the modal
+    setModalDetails(details); // Set the details in the state
+  };
+  
   const handleDoneButtonClick = async () => {
     try {
       // Save the changes to the server
@@ -158,7 +231,60 @@ const Dashboard = () => {
     // Fetch rides when the component mounts
     fetchRides();
   }, []);
-
+  const renderReportsSection = () => {
+    return (
+      <div className="flex flex-col md:col-span-2 md:row-span-2 bg-white shadow rounded-lg">
+        <div className="px-6 py-5 font-semibold border-b border-gray-100">Reports</div>
+        <div className="p-4 flex-grow">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    User ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Problem Type
+                  </th>
+                 
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                  {/* Add more columns if needed */}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reports.map((report) => (
+                  <tr key={report.reportId}>
+                    <td className="px-6 py-4 whitespace-nowrap">{report.userId}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{report.problemType}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+              <button
+                onClick={() => handleReadDetails(report.problemDetails)}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
+                Read Details
+              </button>
+            </td>
+                    {/* Add more cells if needed */}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   return (
     <>
@@ -551,6 +677,10 @@ className="text-white bg-gradient-to-r from-red-400 via-red-500
               </div>
             </div>
           </div>
+          {modalIsOpen && (
+  <DetailsModal isOpen={modalIsOpen} onClose={closeModal} details={modalDetails} />
+)}
+          {renderReportsSection()}
         </section>
       </main>
     </>
