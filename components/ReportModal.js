@@ -49,7 +49,7 @@ const ReportModal = ({ isOpen, onClose, onSubmit }) => {
             className="mt-1 p-2 w-full border rounded-md"
           ></textarea>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 space-x-3">
           <button
             onClick={handleSubmit}
             className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
@@ -57,11 +57,11 @@ const ReportModal = ({ isOpen, onClose, onSubmit }) => {
             Submit
           </button>
           <button
-          onClick={onClose}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            onClick={onClose}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
           >
-          Close
-        </button>
+            Close
+          </button>
         </div>
       </div>
     </Modal>
