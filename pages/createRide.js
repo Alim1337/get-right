@@ -153,7 +153,7 @@ const CreateRide = () => {
         source: 'route',
         paint: {
           'line-color': 'orange',  // Customize line color
-          'line-width': 2,       // Customize line width
+          'line-width': 4,       // Customize line width
         },
       });
     }

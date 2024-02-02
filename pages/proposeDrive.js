@@ -34,6 +34,7 @@ const ProposeDrive = () => {
   });
   const [map, setMap] = useState(null);
   const [line, setLine] = useState(null);
+  const myPosition = [0, 0];
 
 
   const getCurrentLocation = () => {
@@ -70,6 +71,7 @@ const ProposeDrive = () => {
       };
       setPickup(currentLocation);
       setupMapWithPickup(currentLocation);
+      myPosition = currentLocation.coordinates;
     } catch (error) {
       console.error("Error getting current location:", error);
       setupMapWithPickup({
@@ -104,20 +106,75 @@ const ProposeDrive = () => {
     // Add marker for Pickup Location
     addPickupMarker(pickupLocation.coordinates, pickupLocation.locationName);
 
+    let previousMarker = null;
+
     newMap.on("dblclick", async (event) => {
       const lngLat = event.lngLat.toArray();
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
 
-      // Add marker for destination location
-      addDropoffMarker(lngLat, locationName);
+      if (previousMarker) {
+        previousMarker.remove();
+      }
 
-      drawLine();
+      const destinationMarker = new mapboxgl.Marker({ color: "orange" })
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(newMap);
+
+        previousMarker = destinationMarker;
+
+        drawOrUpdateLine(myPosition, lngLat, newMap);
+      
+
+      // Add marker for destination location
+      // addDropoffMarker(lngLat, locationName);
+
+      // drawLine();
     });
 
     setMap(newMap);
   };
 
+
+  const drawOrUpdateLine = (startCoords, endCoords, map) => {
+    const lineCoordinates = [startCoords, endCoords];
+    console.log('lineCoordinates', lineCoordinates);
+
+    if (map.getSource('route')) {
+      map.getSource('route').setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: lineCoordinates,
+        },
+      });
+    } else {
+      // Create a new source and layer
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoordinates,
+          },
+        },
+      });
+
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': 'orange',  // Customize line color
+          'line-width': 4,       // Customize line width
+        },
+      });
+    }
+  };
 
  
   const reverseGeocode = async (latitude, longitude) => {
@@ -143,65 +200,67 @@ const ProposeDrive = () => {
     }
   };
 
-  const addDropoffMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "blue" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
-  const drawLine = () => {
-    if (map && pickup && dropoff) {
-      // Add a marker for Pickup Location
-      addPickupMarker(pickup.coordinates, "Pickup Location");
+  // const addDropoffMarker = (lngLat, locationName) => {
+  //   if (map) {
+  //     new mapboxgl.Marker({ color: "blue" })
+  //       .setLngLat(lngLat)
+  //       .setPopup(new mapboxgl.Popup().setHTML(locationName))
+  //       .addTo(map);
+  //   }
+  // };
 
-      // Add a marker for Destination
-      addDestinationMarker(dropoff.coordinates, "Destination");
 
-      // Create a line between pickup and destination
-      const newLine = {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: [pickup.coordinates, dropoff.coordinates],
-        },
-      };
+  // const drawLine = () => {
+  //   if (map && pickup && dropoff) {
+  //     // Add a marker for Pickup Location
+  //     addPickupMarker(pickup.coordinates, "Pickup Location");
 
-      const sourceId = 'line-source';
+  //     // Add a marker for Destination
+  //     addDestinationMarker(dropoff.coordinates, "Destination");
 
-      // Check if the source already exists, remove it if it does
-      if (map.getSource(sourceId)) {
-        map.removeSource(sourceId);
-        map.removeLayer('line-layer');
-      }
+  //     // Create a line between pickup and destination
+  //     const newLine = {
+  //       type: 'Feature',
+  //       geometry: {
+  //         type: 'LineString',
+  //         coordinates: [pickup.coordinates, dropoff.coordinates],
+  //       },
+  //     };
 
-      // Add the line to the map
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: newLine,
-      });
+  //     const sourceId = 'line-source';
 
-      map.addLayer({
-        id: 'line-layer',
-        type: 'line',
-        source: sourceId,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': 'red',
-          'line-width': 2,
-        },
-      });
+  //     // Check if the source already exists, remove it if it does
+  //     if (map.getSource(sourceId)) {
+  //       map.removeSource(sourceId);
+  //       map.removeLayer('line-layer');
+  //     }
 
-      // Fit the map to the new line
-      map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
+  //     // Add the line to the map
+  //     map.addSource(sourceId, {
+  //       type: 'geojson',
+  //       data: newLine,
+  //     });
 
-      setLine(newLine);
-    }
-  };
+  //     map.addLayer({
+  //       id: 'line-layer',
+  //       type: 'line',
+  //       source: sourceId,
+  //       layout: {
+  //         'line-join': 'round',
+  //         'line-cap': 'round',
+  //       },
+  //       paint: {
+  //         'line-color': 'red',
+  //         'line-width': 2,
+  //       },
+  //     });
+
+  //     // Fit the map to the new line
+  //     map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
+
+  //     setLine(newLine);
+  //   }
+  // };
 
   // Helper function to calculate zoom level based on bounds
   const getZoomLevel = (bounds, map) => {
