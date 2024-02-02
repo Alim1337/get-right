@@ -9,6 +9,7 @@ mapboxgl.accessToken = accessToken;
 
 const Map = forwardRef(({ location }, ref) => {
   const mapRef = useRef(null);
+  const previousMarker = null;
 
   useEffect(() => {
     console.log("Received Coordinates:", location);
@@ -45,12 +46,20 @@ const Map = forwardRef(({ location }, ref) => {
   const addToMap = (map, latLon) =>
     new mapboxgl.Marker().setLngLat(latLon).addTo(map);
 
+
     const showPin = (destinationLocation) => {
+      if (previousMarker) {
+        previousMarker.remove();
+      }
+      
       const [lat, lng] = destinationLocation.split(',').map(parseFloat);
       console.log('showPin log ', [lat, lng]);
-      new mapboxgl.Marker({ color: "red" })
+      const marker = new mapboxgl.Marker({ color: "red" })
         .setLngLat([lat, lng])
         .addTo(mapRef.current);
+
+        previousMarker = marker;
+      
     };
 
     const showRoad = (startCoords, endCoords) => {
