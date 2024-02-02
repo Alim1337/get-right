@@ -122,11 +122,35 @@ export default async function handler(req, res) {
         });
 
         return res.status(200).json({ message: 'Ride modified successfully', ride: modifiedRide });
-      } catch (error) {
+      }
+      
+       catch (error) {
         console.error('Error modifying ride:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
       }
     }
+ else   if (type === 'config') {
+      try {
+        // Update Max Seats in your database or storage
+        // You may need to modify this part based on your database structure
+        // Example: You might have a configuration table where you store such settings
+
+        // For demonstration purposes, let's assume you have a configuration model in Prisma
+        const updatedConfig = await prisma.configuration.update({
+          where: { id: 1 }, // Assuming the configuration has an ID
+          data: {
+            maxSeats,
+          },
+        });
+
+        return res.status(200).json({ message: 'Max Seats updated successfully', config: updatedConfig });
+      } catch (error) {
+        console.error('Error updating Max Seats:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
+    }
+  
+
   } else {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }

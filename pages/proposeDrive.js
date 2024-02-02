@@ -6,12 +6,9 @@ import tw from "tailwind-styled-components";
 import Link from "next/link";
 import {
   BsArrowLeft,
-  BsCircleFill,
-  BsPlusLg,
-  BsThreeDotsVertical,
+
 } from "react-icons/bs";
-import { FaSquareFull } from "react-icons/fa";
-import { MdStars } from "react-icons/md";
+
 import { Toaster, toast } from 'sonner'
 
 const ProposeDrive = () => {
@@ -37,6 +34,19 @@ const ProposeDrive = () => {
   });
   const [map, setMap] = useState(null);
   const [line, setLine] = useState(null);
+
+
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => resolve(position),
+        (error) => reject(error)
+      );
+
+      setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
+    });
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
@@ -44,46 +54,52 @@ const ProposeDrive = () => {
     console.log('this is decodedToken', decodedToken);
   }, []);
 
-  useEffect(() => {
-    console.log('this is driver id ', userId);
-  }, [userId]); // This useEffect runs whenever driverId changes
 
-  useEffect(() => {
-    setupMap();
-  }, []); // Run this effect once after the initial render
 
-  const setupMap = () => {
+  const setupMap = async () => {
     mapboxgl.accessToken = accessToken;
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const currentLocation = {
-          coordinates: [position.coords.longitude, position.coords.latitude],
-          locationName: await reverseGeocode(
-            position.coords.latitude,
-            position.coords.longitude
-          ),
-        };
-        setPickup(currentLocation);
-        setupMapWithPickup(currentLocation);
-      },
-      (error) => {
-        console.error("Error getting current location:", error);
-        setupMapWithPickup({
-          coordinates: [0, 0],
-          locationName: "Unknown Location",
-        });
-      }
-    );
+    try {
+      const position = await getCurrentLocation();
+      const currentLocation = {
+        coordinates: [position.coords.longitude, position.coords.latitude],
+        locationName: await reverseGeocode(
+          position.coords.latitude,
+          position.coords.longitude
+        ),
+      };
+      setPickup(currentLocation);
+      setupMapWithPickup(currentLocation);
+    } catch (error) {
+      console.error("Error getting current location:", error);
+      setupMapWithPickup({
+        coordinates: [0, 0],
+        locationName: "Unknown Location",
+      });
+    }
   };
-
   const setupMapWithPickup = (pickupLocation) => {
+    const addPickupMarker = (lngLat, locationName) => {
+      if (map) {
+        new mapboxgl.Marker({ color: "green" })
+          .setLngLat(lngLat)
+          .setPopup(new mapboxgl.Popup().setHTML(locationName))
+          .addTo(map);
+      }
+    };
+
     const newMap = new mapboxgl.Map({
       container: "map",
       style: "mapbox://styles/mapbox/streets-v11",
       center: pickupLocation.coordinates,
       zoom: 12,
     });
+
+    // Add marker for current position
+    new mapboxgl.Marker({ color: "green" })
+      .setLngLat(pickupLocation.coordinates)
+      .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
+      .addTo(newMap);
 
     // Add marker for Pickup Location
     addPickupMarker(pickupLocation.coordinates, pickupLocation.locationName);
@@ -93,31 +109,17 @@ const ProposeDrive = () => {
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
 
-      // Add marker for Destination
-      addDestinationMarker(lngLat, locationName);
+      // Add marker for destination location
+      addDropoffMarker(lngLat, locationName);
+
+      drawLine();
     });
 
     setMap(newMap);
   };
 
-  const addPickupMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "green" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
 
-  const addDestinationMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "blue" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
-
+ 
   const reverseGeocode = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -132,6 +134,15 @@ const ProposeDrive = () => {
     }
   };
 
+  const addPickupMarker = (lngLat, locationName) => {
+    if (map) {
+      new mapboxgl.Marker({ color: "green" })
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(map);
+    }
+  };
+
   const addDropoffMarker = (lngLat, locationName) => {
     if (map) {
       new mapboxgl.Marker({ color: "blue" })
@@ -140,25 +151,110 @@ const ProposeDrive = () => {
         .addTo(map);
     }
   };
-
   const drawLine = () => {
     if (map && pickup && dropoff) {
-      if (line) {
-        line.remove();
+      // Add a marker for Pickup Location
+      addPickupMarker(pickup.coordinates, "Pickup Location");
+
+      // Add a marker for Destination
+      addDestinationMarker(dropoff.coordinates, "Destination");
+
+      // Create a line between pickup and destination
+      const newLine = {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [pickup.coordinates, dropoff.coordinates],
+        },
+      };
+
+      const sourceId = 'line-source';
+
+      // Check if the source already exists, remove it if it does
+      if (map.getSource(sourceId)) {
+        map.removeSource(sourceId);
+        map.removeLayer('line-layer');
       }
-  
-      const newLine = new mapboxgl.Marker({ color: "red" })
-        .setLngLat(pickup.coordinates)
-        .setPopup(new mapboxgl.Popup().setHTML("Pickup Location"))
-        .addTo(map);
-  
-      newLine.setLngLat(dropoff.coordinates);
-      newLine.setPopup(new mapboxgl.Popup().setHTML("Destination"));
-  
+
+      // Add the line to the map
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: newLine,
+      });
+
+      map.addLayer({
+        id: 'line-layer',
+        type: 'line',
+        source: sourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': 'red',
+          'line-width': 2,
+        },
+      });
+
+      // Fit the map to the new line
+      map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
+
       setLine(newLine);
     }
   };
-  
+
+  // Helper function to calculate zoom level based on bounds
+  const getZoomLevel = (bounds, map) => {
+    const WORLD_DIM = { height: 256, width: 256 };
+    const ZOOM_MAX = 21;
+
+    const ne = map.project(bounds.getNorthEast());
+    const sw = map.project(bounds.getSouthWest());
+
+    const dx = ne.x - sw.x;
+    const dy = ne.y - sw.y;
+
+    for (let zoom = ZOOM_MAX; zoom >= 0; --zoom) {
+      if (dx <= WORLD_DIM.width && dy <= WORLD_DIM.height) {
+        return zoom;
+      }
+      dx /= 2;
+      dy /= 2;
+    }
+
+    return 0;
+  };
+
+
+
+  // Example function to add a line to the map using GeoJSON source and layer
+  const addLineToMap = (coordinates) => {
+    map.addSource('line-source', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates,
+        },
+      },
+    });
+
+    map.addLayer({
+      id: 'line-layer',
+      type: 'line',
+      source: 'line-source',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': 'red',
+        'line-width': 2,
+      },
+    });
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 

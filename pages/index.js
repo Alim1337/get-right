@@ -10,9 +10,11 @@ import { FaCar, FaPlusCircle, FaCalendarAlt, FaBell } from "react-icons/fa";
 import Link from "next/link";
 import ReservedRidesModal from '../components/ReservedRidesModal';
 import { Toaster, toast } from 'sonner'
+import { useRef } from "react";
 
 
 const Index = () => {
+  const mapRef = useRef(); // Create a ref for the Map component
 
   const [user, setUser] = useState(null);
   const [location, setLocation] = useState([44, 36.2]);
@@ -165,7 +167,13 @@ const Index = () => {
     localStorage.removeItem("token");
     router.push("/login");
   };
-
+  const showInMap = (reservations) => {
+    // Implement the logic to show a red pin on the map at destinationLocation
+    // Assuming that the mapRef is a reference to your Map component
+    if (mapRef.current) {
+      mapRef.current.showPin(reservations.destinationLocation);
+    }
+  };
   return (
     <Wrapper>
 
@@ -226,26 +234,26 @@ const Index = () => {
 
 
       <SectionMain>
-        <NavBar>
-          <UserProfileSection
-            user={user}
-            role={role}
-            counter={counter}
-            handleShowReservedRides={handleShowReservedRides}
-            handleDisconnect={handleDisconnect}
-          />
-        </NavBar>
+  <NavBar>
+    <UserProfileSection
+      user={user}
+      role={role}
+      counter={counter}
+      handleShowReservedRides={handleShowReservedRides}
+      handleDisconnect={handleDisconnect}
+    />
+  </NavBar>
 
-        <Map location={location} />
-
-      </SectionMain>
+  <Map ref={mapRef} location={location} />
+</SectionMain>
 
       {showReservedRidesModal && (
-        <ReservedRidesModal
-          reservations={reservations}
-          onClose={handleCloseReservedRidesModal}
-          location={location}
-        />
+           <ReservedRidesModal
+           reservations={reservations}
+           onClose={handleCloseReservedRidesModal}
+           location={location}
+           showInMap={showInMap}
+         />
       )}
 
 

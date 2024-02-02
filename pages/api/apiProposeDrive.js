@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
   const combinedDateTimeString = `${date}T${time}:00.000Z`;
   const departureTime = new Date(combinedDateTimeString);
-
+ console.log(departureTime);
 
   try {
     const proposeDrive = await prisma.proposition.create({

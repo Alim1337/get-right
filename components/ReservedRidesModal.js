@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
 
-const ReservedRidesModal = ({ reservations, onClose, location }) => {
+const ReservedRidesModal = ({ reservations, onClose, showInMap, location }) => {
+  console.log('Received reservations in ReservedRidesModal:', reservations);
+
   useEffect(() => {
     console.log('Received reservations from comp:', reservations);
   }, [reservations]);
+  
 
   const handleDeleteReservation = async (reservationId) => {
 
@@ -30,10 +33,9 @@ const ReservedRidesModal = ({ reservations, onClose, location }) => {
     }
   };
 
-  const handleShowInMap = (reservation) => {
-    // Pass the reservation's destination location to the map component
-    // Assume that `map` is a ref to the Map component (useRef)
-    // map.current.showPin(reservation.destinationLocation);
+  const handleShowInMap = (destinationLocation) => {
+    console.log('handelShowmap log ', destinationLocation);
+    showInMap(destinationLocation); // Pass destinationLocation directly
   };
 
   const formatTime = (seconds) => {

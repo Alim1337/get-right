@@ -32,15 +32,29 @@ const Dashboard = () => {
     setMaxRidesPerDay(parseInt(event.target.value, 10));
   };
 
-  const handleDoneButtonClick = () => {
-    // Implement logic to save the changes, e.g., send to server
-    // You can use the maxSeats and maxRidesPerDay values for this
+  const handleDoneButtonClick = async () => {
+    try {
+      // Save the changes to the server
+      const response = await fetch('/api/admin_functions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'config',
+          maxSeats,
+        }),
+      });
 
-    // For demonstration purposes, you can log the values to the console
-    console.log('Max Seats:', maxSeats);
-    console.log('Max Rides Per Day:', maxRidesPerDay);
-
-    // Add any additional logic you need for finalizing the changes
+      if (response.ok) {
+        console.log('Max Seats updated successfully');
+        // Add any additional logic you need after updating Max Seats
+      } else {
+        console.error('Failed to update Max Seats');
+      }
+    } catch (error) {
+      console.error('Error updating Max Seats:', error);
+    }
   };
 
   const handleUserAction = (action) => {

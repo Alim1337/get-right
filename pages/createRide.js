@@ -17,6 +17,7 @@ import { Toaster, toast } from 'sonner'
 const CreateRide = () => {
   const router = useRouter();
   const [driverId, setDriverId] = useState('');
+  const [destinationMarker, setDestinationMarker] = useState(null);
 
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
@@ -93,13 +94,20 @@ const CreateRide = () => {
       const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
       setDropoff({ coordinates: lngLat, locationName });
       addDropoffMarker(lngLat, locationName);
+  
+      // Add a marker for the destination location
+      const destinationMarker = new mapboxgl.Marker({ color: "orange" })
+        .setLngLat(lngLat)
+        .setPopup(new mapboxgl.Popup().setHTML(locationName))
+        .addTo(newMap);
+  
+      setDestinationMarker(destinationMarker);
+  
       drawLine();
     });
-
+  
     setMap(newMap);
   };
-
-
   const reverseGeocode = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -125,28 +133,29 @@ const CreateRide = () => {
   const drawLine = () => {
     if (map && pickup && dropoff) {
       // Create a line between pickup and destination
+      const lineCoordinates = [pickup.coordinates, destinationMarker.getLngLat()];
       const newLine = {
         type: 'Feature',
         geometry: {
           type: 'LineString',
-          coordinates: [pickup.coordinates, dropoff.coordinates],
+          coordinates: lineCoordinates,
         },
       };
-
+  
       const sourceId = 'line-source';
-
+  
       // Check if the source already exists, remove it if it does
       if (map.getSource(sourceId)) {
         map.removeSource(sourceId);
         map.removeLayer('line-layer');
       }
-
+  
       // Add the line to the map
       map.addSource(sourceId, {
         type: 'geojson',
         data: newLine,
       });
-
+  
       map.addLayer({
         id: 'line-layer',
         type: 'line',
@@ -156,16 +165,17 @@ const CreateRide = () => {
           'line-cap': 'round',
         },
         paint: {
-          'line-color': 'red',
+          'line-color': 'blue',
           'line-width': 2,
         },
       });
-
+  
       // Fit the map to the new line
-      map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
+      map.fitBounds([pickup.coordinates, destinationMarker.getLngLat()], { padding: 50 });
     }
   };
-
+  
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
