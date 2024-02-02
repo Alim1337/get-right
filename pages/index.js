@@ -11,7 +11,9 @@ import Link from "next/link";
 import ReservedRidesModal from '../components/ReservedRidesModal';
 import { Toaster, toast } from 'sonner'
 import { useRef } from "react";
+import { FaExclamationTriangle } from "react-icons/fa";
 
+import ReportModal from "../components/ReportModal";;
 
 const Index = () => {
   const mapRef = useRef(null); // Create a ref for the Map component
@@ -24,7 +26,20 @@ const Index = () => {
   const [showReservedRidesModal, setShowReservedRidesModal] = useState(false);
   const [counter, setCounter] = useState(0);
   const [role, setRole] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const handleShowReportModal = () => {
+    setShowReportModal(true);
+  };
 
+  const handleCloseReportModal = () => {
+    setShowReportModal(false);
+  };
+
+  const handleReportToAdmin = ({ problemType, problemDetails }) => {
+    // Handle the report submission logic here
+    console.log('Problem Type:', problemType);
+    console.log('Problem Details:', problemDetails);
+  };
   useEffect(() => {
     const storedRole = localStorage.getItem('role');
     setRole(storedRole);
@@ -185,6 +200,8 @@ const Index = () => {
     console.log(reservations.destinationLocation)
     mapRef.current.showRoad(location, destinationLocationString);
   }
+
+  
   return (
     <Wrapper>
 
@@ -246,13 +263,14 @@ const Index = () => {
 
       <SectionMain>
         <NavBar>
-          <UserProfileSection
-            user={user}
-            role={role}
-            counter={counter}
-            handleShowReservedRides={handleShowReservedRides}
-            handleDisconnect={handleDisconnect}
-          />
+        <UserProfileSection
+        user={user}
+        role={role}
+        counter={counter}
+        handleShowReservedRides={handleShowReservedRides}
+        handleDisconnect={handleDisconnect}
+        handleReportToAdmin={handleShowReportModal}
+      />
         </NavBar>
 
         <Map ref={mapRef} location={location} />
@@ -267,13 +285,14 @@ const Index = () => {
         />
       )}
 
+<ReportModal isOpen={showReportModal} onClose={handleCloseReportModal} onSubmit={handleReportToAdmin} />
 
 
     </Wrapper>
   );
 };
 
-const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect }) => (
+const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect,handleReportToAdmin }) => (
   <div className="flex items-center space-x-4 justify-between w-full">
     {user && role === 'driver' ? (
       <Link href="/manageDrives" passHref>
@@ -293,7 +312,10 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
 
       </div>
     )}
-
+  <ActionButtonReport onClick={handleReportToAdmin}>
+          <FaExclamationTriangle size={24} />
+          Report to Admin
+        </ActionButtonReport>
     <div className="flex space-x-2 items-center ">
       <Profile>
         <div className="text-2xl font-bold text-blue-700">
@@ -308,12 +330,19 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
 
       <DisconnectButton onClick={handleDisconnect}>Disconnect</DisconnectButton>
 
+      <div className="flex space-x-2 items-center">
+      
+      </div>
     </div>
 
   </div>
 );
 
 
+
+const ActionButtonReport = tw.button`
+  inline-block flex flex-col items-center  rounded-2xl bg-red-500 text-white px-6 pb-2 pt-2.5 text-xl uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-red-600 focus:bg-red-600 focus:outline-none focus:ring-0 active:bg-red-700 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-red-500 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-red-600 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-red-600 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-red-700 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] font-medium
+`;
 
 const Wrapper = tw.div`
   flex flex-row bg-white h-screen transition-all duration-500 ease-in-out

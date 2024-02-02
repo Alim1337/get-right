@@ -24,6 +24,7 @@
     "react-dom": "17.0.2",
     "react-icons": "^5.0.1",
     "react-js-pagination": "^3.0.3",
+    "react-modal": "^3.16.1",
     "react-toast-notifications": "^2.5.1",
     "react-toastify": "^10.0.4",
     "sonner": "^1.4.0",
