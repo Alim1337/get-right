@@ -37,7 +37,7 @@ const Map = forwardRef(({ location }, ref) => {
       ref.current = {
         ...mapRef.current,
         showPin: showPin, // Add showPin to the ref
-        showRoad : showRoad,
+        showRoad: showRoad,
 
       };
     }
@@ -47,62 +47,72 @@ const Map = forwardRef(({ location }, ref) => {
     new mapboxgl.Marker().setLngLat(latLon).addTo(map);
 
 
-    const showPin = (destinationLocation) => {
+    const showPin = (destinationLocation, destinationName) => {
       if (previousMarker) {
         previousMarker.remove();
       }
-      
+    
       const [lat, lng] = destinationLocation.split(',').map(parseFloat);
       console.log('showPin log ', [lat, lng]);
+    
       const marker = new mapboxgl.Marker({ color: "red" })
         .setLngLat([lat, lng])
-        .addTo(mapRef.current);
-
-        previousMarker = marker;
-      
+        .addTo(mapRef.current); // Add marker to map
+    
+      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
+        .setHTML(destinationName)
+        .addTo(mapRef.current); // Add popup to map
+    
+      marker.setPopup(popup); // Associate popup with marker
+    
+      // Open the popup immediately after creating the marker
+      popup.addTo(mapRef.current);
+    
+      previousMarker = marker;
     };
+    
 
-    const showRoad = (startCoords, endCoords) => {
-      const end = endCoords.split(',').map(parseFloat);
-      const lineCoordinates = [startCoords, end];
-      console.log('showRoad log ', lineCoordinates);
-  
-      if (mapRef.current.getSource('route')) {
-        mapRef.current.getSource('route').setData({
+  const showRoad = (startCoords, endCoords) => {
+    const end = endCoords.split(',').map(parseFloat);
+    const lineCoordinates = [startCoords, end];
+    console.log('showRoad log ', lineCoordinates);
+
+    if (mapRef.current.getSource('route')) {
+      mapRef.current.getSource('route').setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: lineCoordinates,
+        },
+      });
+    } else {
+      // Create a new source and layer
+      mapRef.current.addSource('route', {
+        type: 'geojson',
+        data: {
           type: 'Feature',
           properties: {},
           geometry: {
             type: 'LineString',
             coordinates: lineCoordinates,
           },
-        });
-      } else {
-        // Create a new source and layer
-        mapRef.current.addSource('route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: lineCoordinates,
-            },
-          },
-        });
-  
-        mapRef.current.addLayer({
-          id: 'route',
-          type: 'line',
-          source: 'route',
-          paint: {
-            'line-color': 'red',  // Customize line color
-            'line-width': 2,       // Customize line width
-          },
-        });
-      }
-    };
-    
-    
+        },
+      });
+
+      mapRef.current.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': 'red',  // Customize line color
+          'line-width': 2,       // Customize line width
+        },
+      });
+    }
+  };
+
+
 
   return <Wrapper id="map"></Wrapper>;
 });

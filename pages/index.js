@@ -169,19 +169,20 @@ const Index = () => {
     router.push("/login");
   };
 
-  
 
-  
+
+
 
   function showInMap(reservations) {
     if (!mapRef.current) {
       console.log('mapRef.current is null', mapRef.current);
       return;
     }
-  
+
     const destinationLocationString = `${reservations.destinationLongitude},${reservations.destinationLatitude}`;
-    mapRef.current.showPin(destinationLocationString);
-    console.log(location)
+    mapRef.current.showPin(destinationLocationString, reservations.destinationLocation);
+    console.log(reservations)
+    console.log(reservations.destinationLocation)
     mapRef.current.showRoad(location, destinationLocationString);
   }
   return (
