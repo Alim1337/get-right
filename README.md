@@ -30,8 +30,8 @@ Vous pouvez cloner ce dépôt directement depuis VSCode ou en utilisant le termi
 1.Créez un fichier .env à la racine du projet.
 
 2.Remplissez les informations de connexion à la base de données dans le fichier .env selon le format suivant :
-        DATABASE_URL=mysql://root@localhost:3306/get_right
-        JWT_SECRET="A#9_çç^:872012P<+2"
+        - DATABASE_URL=mysql://root@localhost:3306/get_right
+        - JWT_SECRET="A#9_çç^:872012P<+2"
         "
         
 3.Assurez-vous de ne pas utiliser le port 3306 ailleurs, puis connectez-vous au serveur MySQL.
@@ -41,7 +41,7 @@ Vous pouvez cloner ce dépôt directement depuis VSCode ou en utilisant le termi
 - yarn prisma migrate dev
   
  Cette commande génère et exécute les scripts SQL nécessaires à la création de la base de données
- En utilisant le schéma défini dans le fichier 'schema.prisma' du dossier 'prisma'.
+ en utilisant le schéma défini dans le fichier 'schema.prisma' du dossier 'prisma'.
 Lorsqu'on vous demande un nom pour la migration, par exemple, saisissez migrate1.
 
 Ensuite, remplissez les tables users et admins avec les données nécessaires en exécutant les commandes SQL 
