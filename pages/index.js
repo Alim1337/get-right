@@ -189,7 +189,7 @@ const Index = () => {
     <Wrapper>
 
       <SectionAside>
-        <Title>Get Right</Title>
+        <Title><span className="bg-black text-white rounded-md p-1.5">Get</span> <span className="p-1.5">Right</span> </Title>
         <ActionItems>
           <ActionButtons>
             <Link href="/search" passHref>
@@ -321,16 +321,7 @@ const Wrapper = tw.div`
 
 
 const Title = tw.h1`
-  text-4xl
-  font-bold
-  text-center
-  text-black
-  tracking-wide
-  mt-6
-  mb-4
-  transition-all duration-500 ease-in-out
-  hover:text-blue-500
-  hover:scale-110
+  text-3xl uppercase mt-6 font-bold mb-6
 `;
 
 const SectionMain = tw.div`
