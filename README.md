@@ -16,8 +16,9 @@ Ce dépôt contient le code source de l'application Get Right. Suivez les instru
 ## Clonage du dépôt
 
 Vous pouvez cloner ce dépôt directement depuis VSCode ou en utilisant le terminal. Exécutez les commandes suivantes :
-git clone https://github.com/Alim1337/get-right.git
-cd get-right
+
+-git clone https://github.com/Alim1337/get-right.git
+-cd get-right
 
 ## Installation des dépendances
 npm install -g yarn
