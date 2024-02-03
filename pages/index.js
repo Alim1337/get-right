@@ -43,14 +43,14 @@ const Index = () => {
   useEffect(() => {
     const storedRole = localStorage.getItem('role');
     setRole(storedRole);
-  }, []);
+  }, [router]);
 
 
 
   //useEffect to check if user is connected
   useEffect(() => {
     const token = localStorage.getItem('token');
-
+  
     if (!token) {
       router.push('/login');
     } else {
@@ -65,10 +65,11 @@ const Index = () => {
         });
       } catch (error) {
         console.error('Error decoding token:', error);
+        localStorage.removeItem('token'); // Remove invalid token
         router.push('/login');
       }
     }
-  }, [router]);
+  }, [router, role]);
 
   // useEffect(() => {
   //   // Fetch initial reservations
@@ -313,7 +314,7 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
       </div>
     )}
   <ActionButtonReport onClick={handleReportToAdmin}>
-          <FaExclamationTriangle size={18} />
+          <FaExclamationTriangle size={24} />
           Report to Admin
         </ActionButtonReport>
     <div className="flex space-x-2 items-center ">
@@ -341,7 +342,7 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
 
 
 const ActionButtonReport = tw.button`
-  inline-block flex flex-col items-center  rounded bg-red-500 text-white px-6 pb-2 pt-2.5 text-s uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-red-600 focus:bg-red-600 focus:outline-none focus:ring-0 active:bg-red-700 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-red-500 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-red-600 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-red-600 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-red-700 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] font-medium
+  inline-block flex flex-col items-center  rounded-2xl bg-red-500 text-white px-6 pb-2 pt-2.5 text-xl uppercase leading-normal text-center shadow-[0_4px_9px_-4px_rgba(51,45,45,0.7)] transition-all duration-500 ease-in-out hover:bg-red-600 focus:bg-red-600 focus:outline-none focus:ring-0 active:bg-red-700 active:shadow-[0_8px_9px_-4px_rgba(51,45,45,0.2),0_4px_18px_0_rgba(51,45,45,0.1)] dark:bg-red-500 dark:shadow-[0_4px_9px_-4px_#030202] dark:hover:bg-red-600 dark:hover:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:focus:bg-red-600 dark:focus:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] dark:active:bg-red-700 dark:active:shadow-[0_8px_9px_-4px_rgba(3,2,2,0.3),0_4px_18px_0_rgba(3,2,2,0.2)] font-medium
 `;
 
 const Wrapper = tw.div`

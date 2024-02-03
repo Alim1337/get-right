@@ -119,7 +119,19 @@ const Login = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      router.push("/"); // Redirect to the main page if token exists
+      // Check if token is valid on the server
+      verifyToken(token)
+        .then(isValid => {
+          if (isValid) {
+            router.push("/");
+          } else {
+            localStorage.removeItem('token'); // Remove invalid token
+          }
+        })
+        .catch(error => {
+          console.error('Error verifying token:', error);
+          localStorage.removeItem('token'); // Remove token on error
+        });
     }
   }, []);
 
@@ -170,7 +182,7 @@ const Login = () => {
       showErrorToast('Login failed. Please check your credentials.');
     }
   };
-  
+
 
   const handleRegister = async () => {
     // if (!validateEmail(username)) {
