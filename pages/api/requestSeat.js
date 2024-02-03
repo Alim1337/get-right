@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     console.log('userid ,tripid , nbr_seat_req', userId, tripId, nbr_seat_req);
 
     try {
-      await prisma.$transaction(async (tx) => { // Renamed to `tx`
+      const rideRequest = await prisma.$transaction(async (tx) => { // Corrected: Use `tx` for consistency
         // Update user role within the transaction
         await tx.users.update({
           where: { userId: userId },
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         });
 
         // Create ride request within the transaction
-        const rideRequest = await tx.ride_requests.create({
+        return tx.ride_requests.create({ // Corrected: Return from `create`
           data: {
             userId: userId,
             tripId: tripId,
@@ -25,8 +25,6 @@ export default async function handler(req, res) {
             // Include other relevant fields here
           },
         });
-
-        return rideRequest; // Return the created ride request
       });
 
       res.status(201).json({ message: 'Seat requested successfully', rideRequest });
