@@ -46,6 +46,8 @@ const Index = () => {
   }, []);
 
 
+
+  //useEffect to check if user is connected
   useEffect(() => {
     const token = localStorage.getItem('token');
 
@@ -76,20 +78,20 @@ const Index = () => {
   // }, [user]);
 
 
-
+  //useEffect to fetch reservations periodically
   useEffect(() => {
-    // Fetch reservations periodically
+
     const intervalCleanup = fetchReservationsPeriodically();
 
-    // Cleanup interval on component unmount
     return () => {
       clearInterval(intervalCleanup);
     };
   }, [user]);
 
+
+  //function to fetch the reservations periodically
   const fetchReservationsPeriodically = () => {
     if (user && role === 'driver') {
-      // If the user is a driver, do not fetch data periodically
       return;
     }
     const intervalId = setInterval(async () => {
@@ -98,20 +100,20 @@ const Index = () => {
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
-    }, 1000); // Fetch every 10 seconds (adjust as needed)
+    }, 1000); 
 
     return () => clearInterval(intervalId);
   };
 
+
+
+  //function to fetch reservations
   const fetchReservations = async () => {
     try {
 
       if (!user || !user.id) {
-        // Check if user or user.id is null or undefined
-        // console.error('User or user id is null or undefined');
         return;
       }
-
 
       const response = await fetch(`/api/apiReservation?userId=${user.id}`);
       const data = await response.json();
@@ -128,7 +130,6 @@ const Index = () => {
       setCounter((prevCounter) => {
         const newCounter = data.numberOfReservations;
 
-        // Check for the condition and display toast if necessary
         if (newCounter > prevCounter) {
           toast.success('You have a new reservation!');
         }
@@ -142,12 +143,11 @@ const Index = () => {
 
 
 
-
+  //useEffect to update user location
   useEffect(() => {
     const updateLocation = async () => {
       try {
         const position = await getCurrentLocation();
-        console.log("Updated Location:", position.coords);
         setLocation([position.coords.longitude, position.coords.latitude]);
       } catch (error) {
         console.error("Error getting location:", error);
@@ -166,6 +166,7 @@ const Index = () => {
     setShowReservedRidesModal(false);
   };
 
+  //function to get current location
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
       const watchId = navigator.geolocation.watchPosition(
@@ -173,7 +174,6 @@ const Index = () => {
         (error) => reject(error)
       );
 
-      // Stopping the watch after 5 seconds for simplicity. Adjust as needed.
       setTimeout(() => navigator.geolocation.clearWatch(watchId), 3000);
     });
   };

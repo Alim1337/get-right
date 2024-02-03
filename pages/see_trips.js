@@ -20,15 +20,15 @@ const SeeTrips = () => {
   const router = useRouter();
   const myPosition = [0, 0];
 
-  const [seatError, setSeatError] = useState('');
-  const [dateError, setDateError] = useState('');
-  const [rideDetails, setRideDetails] = useState({
-    departure: '',
-    destination: '',
-    date: '',
-    time: '',
-    seatsAvailable: 0,
-  });
+  // const [seatError, setSeatError] = useState('');
+  // const [dateError, setDateError] = useState('');
+  // const [rideDetails, setRideDetails] = useState({
+  //   departure: '',
+  //   destination: '',
+  //   date: '',
+  //   time: '',
+  //   seatsAvailable: 0,
+  // });
   const [pickup, setPickup] = useState({
     coordinates: [0, 0],
     locationName: "",
@@ -37,9 +37,9 @@ const SeeTrips = () => {
     coordinates: [0, 0],
     locationName: "",
   });
-  const [map, setMap] = useState(null);
-  const [line, setLine] = useState(null);
 
+
+  //useEffect to check if user is connected
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -52,11 +52,14 @@ const SeeTrips = () => {
     setPickup(`(${pickup.locationName})`);
     setDropoff(dropoff ? dropoff.locationName : "");
   }, [pickup, dropoff]);
+
+
+
+  //useEffect to update user location
   useEffect(() => {
     const updateLocation = async () => {
       try {
         const position = await getCurrentLocation();
-        console.log("Updated Location:", position.coords);
         setLocation([position.coords.longitude, position.coords.latitude]);
       } catch (error) {
         console.error("Error getting location:", error);
@@ -65,6 +68,11 @@ const SeeTrips = () => {
 
     updateLocation();
   }, []);
+
+
+
+
+  //useEffect to fetch all trips
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -82,6 +90,10 @@ const SeeTrips = () => {
 
     fetchData();
   }, []);
+
+
+
+  //function to get current location
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
       const watchId = navigator.geolocation.watchPosition(
@@ -93,269 +105,244 @@ const SeeTrips = () => {
     });
   };
 
-  const setupMap = async () => {
-    if (!mapboxgl) {
-      console.error('Mapbox GL JS library not loaded.');
-      return;
-    }
-    mapboxgl.accessToken = accessToken;
-    console.log("Setting up map...");
+  // const setupMap = async () => {
+  //   if (!mapboxgl) {
+  //     console.error('Mapbox GL JS library not loaded.');
+  //     return;
+  //   }
+  //   mapboxgl.accessToken = accessToken;
+  //   console.log("Setting up map...");
 
-    try {
-      const position = await getCurrentLocation();
-      const currentLocation = {
-        coordinates: [position.coords.longitude, position.coords.latitude],
-        locationName: await reverseGeocode(
-          position.coords.latitude,
-          position.coords.longitude
-        ),
-      };
-      setPickup(currentLocation);
-      setupMapWithPickup(currentLocation);
-      myPosition = currentLocation.coordinates;
-    } catch (error) {
-      console.error("Error getting current location:", error);
-      setupMapWithPickup({
-        coordinates: [0, 0],
-        locationName: "Unknown Location",
-      });
-    }
-  };
+  //   try {
+  //     const position = await getCurrentLocation();
+  //     const currentLocation = {
+  //       coordinates: [position.coords.longitude, position.coords.latitude],
+  //       locationName: await reverseGeocode(
+  //         position.coords.latitude,
+  //         position.coords.longitude
+  //       ),
+  //     };
+  //     setPickup(currentLocation);
+  //     setupMapWithPickup(currentLocation);
+  //     myPosition = currentLocation.coordinates;
+  //   } catch (error) {
+  //     console.error("Error getting current location:", error);
+  //     setupMapWithPickup({
+  //       coordinates: [0, 0],
+  //       locationName: "Unknown Location",
+  //     });
+  //   }
+  // };
 
-  const setupMapWithPickup = (pickupLocation) => {
-    const newMap = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: pickupLocation.coordinates,
-      zoom: 12,
-    });
+  // const setupMapWithPickup = (pickupLocation) => {
+  //   const newMap = new mapboxgl.Map({
+  //     container: "map",
+  //     style: "mapbox://styles/mapbox/streets-v11",
+  //     center: pickupLocation.coordinates,
+  //     zoom: 12,
+  //   });
 
-    // Add marker for current position
-    new mapboxgl.Marker({ color: "green" })
-      .setLngLat(pickupLocation.coordinates)
-      .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
-      .addTo(newMap);
+  //   // Add marker for current position
+  //   new mapboxgl.Marker({ color: "green" })
+  //     .setLngLat(pickupLocation.coordinates)
+  //     .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
+  //     .addTo(newMap);
 
-    let previousMarker = null;
+  //   let previousMarker = null;
 
-    newMap.on("dblclick", async (event) => {
-      const lngLat = event.lngLat.toArray();
-      const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
-      setDropoff({ coordinates: lngLat, locationName });
+  //   newMap.on("dblclick", async (event) => {
+  //     const lngLat = event.lngLat.toArray();
+  //     const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
+  //     setDropoff({ coordinates: lngLat, locationName });
 
-      // Draw or update the line between pickup and dropoff
-      drawOrUpdateLine(myPosition, lngLat, newMap);
+  //     // Draw or update the line between pickup and dropoff
+  //     // drawOrUpdateLine(myPosition, lngLat, newMap);
 
-      // Create marker at the clicked location
-      previousMarker = createMarker(lngLat, newMap, locationName, previousMarker);
-
-
-
-    });
+  //     // Create marker at the clicked location
+  //     // previousMarker = createMarker(lngLat, newMap, locationName, previousMarker);
 
 
-    setMap(newMap);
-  };
 
- 
-  const reverseGeocode = async (latitude, longitude) => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${accessToken}`
-      );
-      const data = await response.json();
-      const locationName = data.features[0]?.place_name || "Unknown Location";
-      return locationName;
-    } catch (error) {
-      console.error("Error fetching reverse geocoding:", error);
-      return "Unknown Location";
-    }
-  };
+  //   });
 
-  const addPickupMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "green" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
 
-  const addDropoffMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "blue" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
-  const drawLine = () => {
-    if (map && pickup && dropoff) {
-      // Add a marker for Pickup Location
-      addPickupMarker(pickup.coordinates, "Pickup Location");
+  //   setMap(newMap);
+  // };
 
-      // Add a marker for Destination
-      addDestinationMarker(dropoff.coordinates, "Destination");
 
-      // Create a line between pickup and destination
-      const newLine = {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: [pickup.coordinates, dropoff.coordinates],
-        },
-      };
+  // const reverseGeocode = async (latitude, longitude) => {
+  //   try {
+  //     const response = await fetch(
+  //       `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${accessToken}`
+  //     );
+  //     const data = await response.json();
+  //     const locationName = data.features[0]?.place_name || "Unknown Location";
+  //     return locationName;
+  //   } catch (error) {
+  //     console.error("Error fetching reverse geocoding:", error);
+  //     return "Unknown Location";
+  //   }
+  // };
 
-      const sourceId = 'line-source';
+  // const addPickupMarker = (lngLat, locationName) => {
+  //   if (map) {
+  //     new mapboxgl.Marker({ color: "green" })
+  //       .setLngLat(lngLat)
+  //       .setPopup(new mapboxgl.Popup().setHTML(locationName))
+  //       .addTo(map);
+  //   }
+  // };
 
-      // Check if the source already exists, remove it if it does
-      if (map.getSource(sourceId)) {
-        map.removeSource(sourceId);
-        map.removeLayer('line-layer');
-      }
+  // const addDropoffMarker = (lngLat, locationName) => {
+  //   if (map) {
+  //     new mapboxgl.Marker({ color: "blue" })
+  //       .setLngLat(lngLat)
+  //       .setPopup(new mapboxgl.Popup().setHTML(locationName))
+  //       .addTo(map);
+  //   }
+  // };
+  // const drawLine = () => {
+  //   if (map && pickup && dropoff) {
+  //     // Add a marker for Pickup Location
+  //     addPickupMarker(pickup.coordinates, "Pickup Location");
 
-      // Add the line to the map
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: newLine,
-      });
+  //     // Add a marker for Destination
+  //     addDestinationMarker(dropoff.coordinates, "Destination");
 
-      map.addLayer({
-        id: 'line-layer',
-        type: 'line',
-        source: sourceId,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': 'red',
-          'line-width': 2,
-        },
-      });
+  //     // Create a line between pickup and destination
+  //     const newLine = {
+  //       type: 'Feature',
+  //       geometry: {
+  //         type: 'LineString',
+  //         coordinates: [pickup.coordinates, dropoff.coordinates],
+  //       },
+  //     };
 
-      // Fit the map to the new line
-      map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
+  //     const sourceId = 'line-source';
 
-      setLine(newLine);
-    }
-  };
-  const drawOrUpdateLine = (startCoords, endCoords, map) => {
-    const lineCoordinates = [startCoords, endCoords];
-    console.log('lineCoordinates', lineCoordinates);
+  //     // Check if the source already exists, remove it if it does
+  //     if (map.getSource(sourceId)) {
+  //       map.removeSource(sourceId);
+  //       map.removeLayer('line-layer');
+  //     }
 
-    if (map.getSource('route')) {
-      map.getSource('route').setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: lineCoordinates,
-        },
-      });
-    } else {
-      // Create a new source and layer
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: lineCoordinates,
-          },
-        },
-      });
+  //     // Add the line to the map
+  //     map.addSource(sourceId, {
+  //       type: 'geojson',
+  //       data: newLine,
+  //     });
 
-      map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        paint: {
-          'line-color': 'blue',  // Customize line color
-          'line-width': 2,       // Customize line width
-        },
-      });
-    }
-  };
+  //     map.addLayer({
+  //       id: 'line-layer',
+  //       type: 'line',
+  //       source: sourceId,
+  //       layout: {
+  //         'line-join': 'round',
+  //         'line-cap': 'round',
+  //       },
+  //       paint: {
+  //         'line-color': 'red',
+  //         'line-width': 2,
+  //       },
+  //     });
 
-  const createMarker = (lngLat, map, popupContent, previousMarker) => {
-    // Remove previous marker
-    if (previousMarker) {
-      previousMarker.remove();
-    }
+  //     // Fit the map to the new line
+  //     map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
 
-    // Add new marker
-    const marker = new mapboxgl.Marker({ color: "blue" })
-      .setLngLat(lngLat)
-      .addTo(map);
+  //     setLine(newLine);
+  //   }
+  // };
+  // const drawOrUpdateLine = (startCoords, endCoords, map) => {
+  //   const lineCoordinates = [startCoords, endCoords];
+  //   console.log('lineCoordinates', lineCoordinates);
 
-      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
-        .setHTML(popupContent)
-        .addTo(map);
+  //   if (map.getSource('route')) {
+  //     map.getSource('route').setData({
+  //       type: 'Feature',
+  //       properties: {},
+  //       geometry: {
+  //         type: 'LineString',
+  //         coordinates: lineCoordinates,
+  //       },
+  //     });
+  //   } else {
+  //     // Create a new source and layer
+  //     map.addSource('route', {
+  //       type: 'geojson',
+  //       data: {
+  //         type: 'Feature',
+  //         properties: {},
+  //         geometry: {
+  //           type: 'LineString',
+  //           coordinates: lineCoordinates,
+  //         },
+  //       },
+  //     });
 
-        marker.setPopup(popup); // Associate popup with marker
+  //     map.addLayer({
+  //       id: 'route',
+  //       type: 'line',
+  //       source: 'route',
+  //       paint: {
+  //         'line-color': 'blue',  // Customize line color
+  //         'line-width': 2,       // Customize line width
+  //       },
+  //     });
+  //   }
+  // };
 
-      // Open the popup immediately after creating the marker
-      popup.addTo(map);
+  // const createMarker = (lngLat, map, popupContent, previousMarker) => {
+  //   // Remove previous marker
+  //   if (previousMarker) {
+  //     previousMarker.remove();
+  //   }
 
-      return marker;
-  };
-  useEffect(() => {
-    setupMap();
-  }, []);
+  //   // Add new marker
+  //   const marker = new mapboxgl.Marker({ color: "blue" })
+  //     .setLngLat(lngLat)
+  //     .addTo(map);
+
+  //   const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
+  //     .setHTML(popupContent)
+  //     .addTo(map);
+
+  //   marker.setPopup(popup); // Associate popup with marker
+
+  //   // Open the popup immediately after creating the marker
+  //   popup.addTo(map);
+
+  //   return marker;
+  // };
+  // useEffect(() => {
+  //   setupMap();
+  // }, []);
+
+
   // Helper function to calculate zoom level based on bounds
-  const getZoomLevel = (bounds, map) => {
-    const WORLD_DIM = { height: 256, width: 256 };
-    const ZOOM_MAX = 21;
+  // const getZoomLevel = (bounds, map) => {
+  //   const WORLD_DIM = { height: 256, width: 256 };
+  //   const ZOOM_MAX = 21;
 
-    const ne = map.project(bounds.getNorthEast());
-    const sw = map.project(bounds.getSouthWest());
+  //   const ne = map.project(bounds.getNorthEast());
+  //   const sw = map.project(bounds.getSouthWest());
 
-    const dx = ne.x - sw.x;
-    const dy = ne.y - sw.y;
+  //   const dx = ne.x - sw.x;
+  //   const dy = ne.y - sw.y;
 
-    for (let zoom = ZOOM_MAX; zoom >= 0; --zoom) {
-      if (dx <= WORLD_DIM.width && dy <= WORLD_DIM.height) {
-        return zoom;
-      }
-      dx /= 2;
-      dy /= 2;
-    }
+  //   for (let zoom = ZOOM_MAX; zoom >= 0; --zoom) {
+  //     if (dx <= WORLD_DIM.width && dy <= WORLD_DIM.height) {
+  //       return zoom;
+  //     }
+  //     dx /= 2;
+  //     dy /= 2;
+  //   }
 
-    return 0;
-  };
+  //   return 0;
+  // };
 
 
 
-  // Example function to add a line to the map using GeoJSON source and layer
-  const addLineToMap = (coordinates) => {
-    map.addSource('line-source', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates,
-        },
-      },
-    });
 
-    map.addLayer({
-      id: 'line-layer',
-      type: 'line',
-      source: 'line-source',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': 'red',
-        'line-width': 2,
-      },
-    });
-  };
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => {
@@ -414,9 +401,24 @@ const SeeTrips = () => {
     }
   };
 
-  const handleShowOnMap = (destinationLocation) => {
-    setMapDestination(destinationLocation);
+
+  
+
+  const handleShowOnMap = (trip) => {
+    setMapDestination(trip);
+    console.log('first function triggered')
+    if (!mapRef.current) {
+      console.log('mapRef.current is null', mapRef.current);
+      return;
+    }
+
+    const destinationLocationString = `${trip.destinationLongitude},${trip.destinationLatitude}`;
+    mapRef.current.showPin(destinationLocationString, trip.destinationLocation);
+    mapRef.current.showRoad(location, destinationLocationString);
   };
+
+
+
   return (
     <Wrapper>
       <ButtonContainer>
@@ -455,7 +457,7 @@ const SeeTrips = () => {
                 Request Seat
               </Button>
               <Button onClick={() => handleSubmit(trip.tripId)}>Submit</Button>
-              <ButtonMap onClick={() => handleShowOnMap(trip.destinationLocation)}>
+              <ButtonMap onClick={() => handleShowOnMap(trip)}>
                 Show in Map
               </ButtonMap>
             </div>
