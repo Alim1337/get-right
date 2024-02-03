@@ -11,7 +11,7 @@ mapboxgl.accessToken = accessToken;
 
 const Map = forwardRef(({ location, mapDestination }, ref) => {
   const mapRef = useRef(null);
-  const previousMarker = null;
+  let previousMarkers = [];
 
   useEffect(() => {
     const map = new mapboxgl.Map({
@@ -48,34 +48,71 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
     }
   }, [mapDestination]);
 
-  const addToMap = (map, latLon) =>
-    new mapboxgl.Marker().setLngLat(latLon).addTo(map);
+  const addToMap = (map, latLon) => new mapboxgl.Marker().setLngLat(latLon).addTo(map);
 
-  const showPin = (destinationLocation, destinationName) => {
-    if (previousMarker) {
-      previousMarker.remove();
-    }
 
+  // const showPin = (destinationLocation, destinationName) => {
+  //   // Remove any existing markers
+  //   previousMarkers.forEach((marker) => marker.remove());
+  //   previousMarkers = [];
+
+  //   const [lat, lng] = destinationLocation.split(",").map(parseFloat);
+
+  //   const marker = new mapboxgl.Marker({ color: "red" })
+  //     .setLngLat([lat, lng])
+  //     .addTo(mapRef.current);
+
+  //   const popup = new mapboxgl.Popup({ offset: 25 })
+  //     .setHTML(destinationName)
+  //     .addTo(mapRef.current);
+
+  //   marker.setPopup(popup);
+
+  //   previousMarkers.push(marker); // Add the new marker to the array
+  // };
+
+  const showPin = (
+    destinationLocation,
+    destinationName,
+    departureLocation = null,
+    departureName = null
+  ) => {
+    // Remove any existing markers
+    previousMarkers.forEach((marker) => marker.remove());
+    previousMarkers = [];
+
+    // Handle destination pin (always present)
     const [lat, lng] = destinationLocation.split(",").map(parseFloat);
-
-    const marker = new mapboxgl.Marker({ color: "red" })
+    const destinationMarker = new mapboxgl.Marker({ color: "red" })
       .setLngLat([lat, lng])
       .addTo(mapRef.current);
-
-    const popup = new mapboxgl.Popup({ offset: 25 })
-      .setHTML(destinationName)
+    const destinationPopup = new mapboxgl.Popup({ offset: 25 })
+      .setHTML("Destination: " + destinationName)
       .addTo(mapRef.current);
+    destinationMarker.setPopup(destinationPopup);
+    previousMarkers.push(destinationMarker);
 
-    marker.setPopup(popup);
-
-    popup.addTo(mapRef.current);
-
-    previousMarker = marker;
+    // Handle departure pin (optional)
+    if (departureLocation) {
+      const [departureLat, departureLng] = departureLocation.split(",").map(
+        parseFloat
+      );
+      const departureMarker = new mapboxgl.Marker({ color: "red" })
+        .setLngLat([departureLat, departureLng])
+        .addTo(mapRef.current);
+      const departurePopup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML("Departure: " + departureName)
+        .addTo(mapRef.current);
+      departureMarker.setPopup(departurePopup);
+      previousMarkers.push(departureMarker);
+    }
   };
 
-  const showRoad = (startCoords, endCoords) => {
+  const showRoad = (startCoords, endCoords, includeBegin = false) => {
     const end = endCoords.split(",").map(parseFloat);
-    const lineCoordinates = [startCoords, end];
+    const lineCoordinates = includeBegin
+      ? [startCoords.split(",").map(parseFloat), end]
+      : [startCoords, end];
 
     if (mapRef.current.getSource("route")) {
       mapRef.current.getSource("route").setData({
@@ -110,6 +147,7 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
       });
     }
   };
+
 
   return <Wrapper id="map"></Wrapper>;
 });

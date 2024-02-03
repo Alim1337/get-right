@@ -402,7 +402,7 @@ const SeeTrips = () => {
   };
 
 
-  
+
 
   const handleShowOnMap = (trip) => {
     setMapDestination(trip);
@@ -413,8 +413,10 @@ const SeeTrips = () => {
     }
 
     const destinationLocationString = `${trip.destinationLongitude},${trip.destinationLatitude}`;
-    mapRef.current.showPin(destinationLocationString, trip.destinationLocation);
-    mapRef.current.showRoad(location, destinationLocationString);
+    const departureLocationString = `${trip.departureLongitude},${trip.departureLatitude}`;
+    //departure pin
+    mapRef.current.showPin(destinationLocationString, trip.destinationLocation, departureLocationString , trip.departureLocation);
+    mapRef.current.showRoad(departureLocationString,destinationLocationString, true);
   };
 
 
@@ -440,25 +442,25 @@ const SeeTrips = () => {
             key={trip.tripId}
             className="p-8 border-4 border-indigo-600 rounded-2xl shadow-2xl bg-white transform hover:scale-110 transition-transform duration-200"
           >
-             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
-             driver firstName: {trip.driver.firstName}
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+              driver firstName: {trip.driver.firstName}
             </p>
             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
-            driverlastName: {trip.driver.lastName}
+              driverlastName: {trip.driver.lastName}
             </p>
             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Destination: {trip.destinationLocation}
             </p>
             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
 
-  distance: {trip.distance.toFixed(2)}
-  km
-</p>
-<p className="text-3xl font-extrabold text-indigo-900 mb-3">
-  Departure Time: {new Date(trip.departureTime).toLocaleString()}
-</p>
+              distance: {trip.distance.toFixed(2)}
+              km
+            </p>
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+              Departure Time: {new Date(trip.departureTime).toLocaleString()}
+            </p>
 
-<p className="text-3xl font-extrabold text-indigo-900 mb-3">
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Available Seats: {trip.availableSeats}
             </p>
             <div className="flex justify-between mt-4">
