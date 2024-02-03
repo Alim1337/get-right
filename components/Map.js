@@ -51,25 +51,6 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
   const addToMap = (map, latLon) => new mapboxgl.Marker().setLngLat(latLon).addTo(map);
 
 
-  // const showPin = (destinationLocation, destinationName) => {
-  //   // Remove any existing markers
-  //   previousMarkers.forEach((marker) => marker.remove());
-  //   previousMarkers = [];
-
-  //   const [lat, lng] = destinationLocation.split(",").map(parseFloat);
-
-  //   const marker = new mapboxgl.Marker({ color: "red" })
-  //     .setLngLat([lat, lng])
-  //     .addTo(mapRef.current);
-
-  //   const popup = new mapboxgl.Popup({ offset: 25 })
-  //     .setHTML(destinationName)
-  //     .addTo(mapRef.current);
-
-  //   marker.setPopup(popup);
-
-  //   previousMarkers.push(marker); // Add the new marker to the array
-  // };
 
   const showPin = (
     destinationLocation,
