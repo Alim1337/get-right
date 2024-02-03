@@ -18,7 +18,7 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
       container: "map",
       style: "mapbox://styles/mapbox/streets-v11",
       center: location,
-      zoom: 3,
+      zoom: 2,
     });
 
     addToMap(map, location);

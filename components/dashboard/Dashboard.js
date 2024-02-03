@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
+import UserForm from '../UserForm';
+import UserModificationForm from '../UserModificationForm'; // Import the new form
+
 const useModal = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
@@ -26,7 +29,11 @@ const Dashboard = () => {
   const [reports, setReports] = useState([]);
   const { modalIsOpen, openModal, closeModal } = useModal();
   const [modalDetails, setModalDetails] = useState('');
-
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [selectedRideIdForModification, setSelectedRideIdForModification] = useState(null);
+  const [selectedUserIdForModification, setSelectedUserIdForModification] = useState(null);
+  
   useEffect(() => {
     const fetchReports = async () => {
       try {
@@ -45,18 +52,20 @@ const Dashboard = () => {
     
     fetchReports();
   }, []); 
-  const toggleUserMenu = () => {
-    setShowUserMenu(!showUserMenu);
-    if (!showUserMenu) {
-      fetchUsers();
-    }
+  const handleModifyUser = (userId) => {
+    setSelectedUserIdForModification(userId);
   };
+  const showNotification = (message, type = 'success') => {
+    // Set the notification state
+    setNotification({ message, type });
 
+    // Clear the notification after a timeout
+    setTimeout(() => {
+      setNotification(null);
+    }, 5000); // Adjust the timeout as needed
+  };
   const toggleRideMenu = () => {
     setShowRideMenu(!showRideMenu);
-  };
-  const handleConfigButtonClick = () => {
-    setShowConfigTable(!showConfigTable);
   };
 
   const handleMaxSeatsChange = (event) => {
@@ -97,14 +106,98 @@ const Dashboard = () => {
       </Modal>
     );
   };
+
+  const handleConfigButtonClick = async () => {
+    setShowConfigTable(!showConfigTable);
   
+    // Fetch current configuration settings from the server
+    try {
+      const response = await fetch('/api/admin_functions');
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const configData = await response.json();
+      setMaxSeats(configData.maxSeats);
+      setMaxRidesPerDay(configData.maxRidesPerDay);
+      // Add more state updates if needed for additional configuration settings
+    } catch (error) {
+      console.error('Error fetching configuration settings:', error);
+    }
+  };
   
 
   const handleReadDetails = (details) => {
-    openModal(); // Open the modal
-    setModalDetails(details); // Set the details in the state
+    openModal();
+    setModalDetails(details);
   };
-  
+  const handleUserModificationSubmit = async (modifiedUser) => {
+    try {
+      const response = await fetch('/api/admin_functions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'user',
+          ...modifiedUser, // Assuming modifiedUser contains the updated user data
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+
+      // Handle the response data as needed
+
+      // Show success notification
+      showNotification('User updated successfully', 'success');
+      
+      // Optionally, refetch the users to update the list
+      fetchUsers();
+      
+      // Close the modification form
+      setSelectedUserIdForModification(null);
+    } catch (error) {
+      console.error('Error updating user:', error);
+
+      // Show error notification
+      showNotification('Failed to update user', 'error');
+    }
+  };
+  const handleFormSubmit = async (formData) => {
+    try {
+      const response = await fetch('/api/admin_functions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'user', // or 'ride' based on the form data
+          ...formData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add user/ride');
+      }
+
+      const data = await response.json();
+      // Handle the response data as needed
+
+      // Show success notification
+      showNotification('User/Ride added successfully', 'success');
+
+    } catch (error) {
+      console.error('Error adding user/ride:', error);
+      // Handle error, show message to the user, etc.
+
+      // Show error notification
+      showNotification('Failed to add user/ride', 'error');
+    }
+  };
+
+
   const handleDoneButtonClick = async () => {
     try {
       // Save the changes to the server
@@ -116,29 +209,75 @@ const Dashboard = () => {
         body: JSON.stringify({
           type: 'config',
           maxSeats,
+          maxRidesPerDay,
+          // Add more configuration settings if needed
         }),
       });
-
+  
       if (response.ok) {
-        console.log('Max Seats updated successfully');
-        // Add any additional logic you need after updating Max Seats
+        console.log('Configuration settings updated successfully');
+        // Add any additional logic you need after updating configuration settings
+  
+        // Show success notification using alert
+        alert('Configuration settings updated successfully');
       } else {
-        console.error('Failed to update Max Seats');
+        console.error('Failed to update configuration settings');
+  
+        // Show error notification using alert
+        alert('Failed to update configuration settings');
       }
     } catch (error) {
-      console.error('Error updating Max Seats:', error);
+      console.error('Error updating configuration settings:', error);
+  
+      // Show error notification using alert
+      alert('Error updating configuration settings');
     }
   };
-
+  
+  
   const handleUserAction = (action) => {
     console.log(`User action selected: ${action}`);
-    // Handle the selected user action (add, delete, modify) as needed
+    if (action === 'add') {
+      setShowUserForm(true);
+    }
+    // Handle other actions as needed
   };
 
-  const handleRideAction = (action) => {
-    console.log(`Ride action selected: ${action}`);
-    // Handle the selected ride action (add, delete, modify) as needed
+  const handleCloseUserForm = () => {
+    setShowUserForm(false);
   };
+
+  const handleUserFormSubmit = async (formData) => {
+    try {
+      const response = await fetch('/api/admin_functions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'user', // or 'ride' based on the form data
+          ...formData,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to add/modify user');
+      }
+  
+      const data = await response.json();
+  
+      // Handle the response data as needed
+  
+      // Show success notification
+      showNotification('User added/modified successfully', 'success');
+    } catch (error) {
+      console.error('Error adding/modifying user:', error);
+  
+      // Show error notification
+      showNotification('Failed to add/modify user', 'error');
+    }
+  };
+  
 
   const fetchUsers = async () => {
     try {
@@ -290,36 +429,14 @@ const Dashboard = () => {
     <>
       <main className="p-6 sm:p-10 space-y-6 text-center">
         <div className="flex flex-col space-y-6 md:space-y-0 md:flex-row justify-between">
+       
           <div className="mr-6">
             <h1 className="text-4xl font-semibold mb-2">Admin Dashboard</h1>
             <h2 className="text-gray-600 ml-0.5">Manage users and travel settings</h2>
           </div>
           <div className="flex flex-wrap items-start justify-end -mb-3">
             <div className="relative inline-block text-left">
-              <button
-                type="button"
-                onClick={toggleUserMenu}
-                className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700
-                 focus:text-purple-700 hover:bg-purple-100 focus:bg-purple-100 border
-                  border-purple-600 rounded-md mb-3"
-              >
-                <svg
-                  aria-hidden="true"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="flex-shrink-0 h-5 w-5 -ml-1 mt-0.5 mr-2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 
-                    3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  />
-                </svg>
-                Manage Users
-              </button>
+             
               <button
         type="button"
         onClick={handleConfigButtonClick}
@@ -395,99 +512,13 @@ const Dashboard = () => {
         </div>
       )}
 
-              {showUserMenu && (
-                <div className="origin-top-right absolute right-0 mt-2 w-56
-                 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                    <button
-                      onClick={() => handleUserAction('show')}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
-                       hover:text-gray-900"
-                      role="menuitem"
-                    >
-                      Show Users
-                    </button>
-                    <button
-                      onClick={() => handleUserAction('add')}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100
-                       hover:text-gray-900"
-                      role="menuitem"
-                    >
-                      Add User
-                    </button>
-                    <button
-                      onClick={() => handleUserAction('delete')}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                      role="menuitem"
-                    >
-                      Delete User
-                    </button>
-                    <button
-                      onClick={() => handleUserAction('modify')}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                      role="menuitem"
-                    >
-                      Modify User
-                    </button>
-                  </div>
-                </div>
-              )}
+              
             </div>
             <div className="flex flex-col space-y-6 md:space-y-0 md:flex-row justify-between">
               <div className="mr-6"></div>
               <div className="flex flex-wrap items-start justify-end -mb-3">
                 <div className="relative inline-block text-left">
-                  <button
-                    type="button"
-                    onClick={toggleRideMenu}
-                    className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700 focus:text-purple-700
-                     hover:bg-purple-100 focus:bg-purple-100 border border-purple-600 rounded-md mb-3"
-                  >
-                    <svg
-                      aria-hidden="true"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="flex-shrink-0 h-5 w-5 -ml-1 mt-0.5 mr-2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.53
-                        6 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                      />
-                    </svg>
-                    Manage Rides
-                  </button>
-                  {showRideMenu && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-56 
-                    rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                      <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                        <button
-                          onClick={() => handleRideAction('add')}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                          role="menuitem"
-                        >
-                          Add Ride
-                        </button>
-                        <button
-                          onClick={() => handleRideAction('delete')}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                          role="menuitem"
-                        >
-                          Delete Ride
-                        </button>
-                        <button
-                          onClick={() => handleRideAction('modify')}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                          role="menuitem"
-                        >
-                          Modify Ride
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                
                 </div>
                 {/* Add more buttons for additional functionalities */}
               </div>
@@ -522,12 +553,25 @@ const Dashboard = () => {
             <span className="block text-2xl font-bold">{users.length}</span>
       <span className="block text-gray-500">Total Users</span>
             </div>
-            <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4
-             border border-gray-400 rounded shadow">
-            Add
-          </button>
+            <button
+              type="button"
+              onClick={() => handleUserAction('add')}
+              className="inline-flex px-5 py-3 text-purple-600 hover:text-purple-700
+                focus:text-purple-700 hover:bg-purple-100 focus:bg-purple-100 border
+                border-purple-600 rounded-md mb-3"
+            >
+              Add User
+            </button>
               <div className="overflow-x-auto">
-                
+              {showUserForm && (
+      <UserForm onSubmit={handleFormSubmit}  onCancel={handleCloseUserForm} />
+      )}
+     {notification && (
+  <div className={`notification ${notification.type} p-4 text-lg font-bold rounded-lg shadow-lg transform transition-all duration-500 ease-in-out hover:scale-105`}>
+    {notification.message}
+  </div>
+)}
+
               <table className="min-w-full divide-y divide-gray-200">
                 
   <thead className="bg-gray-50">
@@ -554,14 +598,15 @@ const Dashboard = () => {
               <div className="text-sm text-gray-500">{user.email}</div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
-              <button
-                className="text-white bg-gradient-to-r from-green-400 via-green-500
-                 to-green-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none
-                  focus:ring-green-300 dark:focus:ring-green-800 shadow-lg shadow-green-500/50 dark:shadow-lg 
-                  dark:shadow-green-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
-              >
-                Modify
-              </button>
+            <button
+  onClick={() => handleModifyUser(user.userId)}
+  className="text-white bg-gradient-to-r from-blue-400 via-blue-500
+    to-blue-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none
+    focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg shadow-blue-500/50 dark:shadow-lg 
+    dark:shadow-blue-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+>
+  Modify
+</button>
               <button
   onClick={() => {
     setDeleteUserId(user.userId);  // Set the state first
@@ -570,6 +615,7 @@ const Dashboard = () => {
 className="text-white bg-gradient-to-r from-red-400 via-red-500
   to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg 
   dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+  
 >
   Delete
 </button>
@@ -580,7 +626,24 @@ className="text-white bg-gradient-to-r from-red-400 via-red-500
 </table>
 
               </div>
-            </div>
+         
+
+              {selectedUserIdForModification && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
+          <div className="bg-white p-8 rounded-md">
+            <h2 className="text-2xl font-bold mb-4">Modify User</h2>
+            <UserModificationForm
+              user={users.find((user) => user.userId === selectedUserIdForModification)}
+              onSubmit={handleUserModificationSubmit}
+              onCancel={() => {
+                // Close the modification form
+                setSelectedUserIdForModification(null);
+              }}
+            />
+          </div>
+        </div>
+      )}       </div>
+            
           </div>
           {/* Add more sections for other functionalities */}
           
@@ -608,7 +671,8 @@ className="text-white bg-gradient-to-r from-red-400 via-red-500
           </div>
             <div className="px-6 py-5 font-semibold border-b border-gray-100">Rides</div>
             <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4
-              border border-gray-400 rounded shadow">
+              border border-gray-400 rounded shadow"
+             >
               Add
             </button>
             <div className="p-4 flex-grow">

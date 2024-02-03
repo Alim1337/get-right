@@ -180,22 +180,40 @@ const SeeTrips = () => {
 
 
 
-  const handleShowOnMap = (trip) => {
+  const handleShowOnMap = (trip, e) => {
+    e.preventDefault(); // Prevent the default behavior
+  
     setMapDestination(trip);
-    console.log('first function triggered')
+    console.log('first function triggered');
     if (!mapRef.current) {
       console.log('mapRef.current is null', mapRef.current);
       return;
     }
-
+  
     const destinationLocationString = `${trip.destinationLongitude},${trip.destinationLatitude}`;
     const departureLocationString = `${trip.departureLongitude},${trip.departureLatitude}`;
-    //departure pin
-    mapRef.current.showPin(destinationLocationString, trip.destinationLocation, departureLocationString, trip.departureLocation);
+  
+    // Set the new zoom level (you can adjust the value as needed)
+    const newZoomLevel = 10;
+  
+    // Assuming setZoom is available in your map library
+    if (mapRef.current.setZoom) {
+      mapRef.current.setZoom(newZoomLevel);
+    } else {
+      console.error('setZoom is not supported in this map library.');
+    }
+  
+    // Show departure pin, destination pin, and road
+    mapRef.current.showPin(
+      destinationLocationString,
+      trip.destinationLocation,
+      departureLocationString,
+      trip.departureLocation
+    );
     mapRef.current.showRoad(departureLocationString, destinationLocationString, true);
   };
-
-
+  
+  
 
   return (
     <Wrapper>
@@ -253,9 +271,8 @@ const SeeTrips = () => {
                 Request Seat
               </Button>
               <Button onClick={() => handleSubmit(trip.tripId)}>Submit</Button>
-              <ButtonMap onClick={() => handleShowOnMap(trip)}>
-                Show in Map
-              </ButtonMap>
+              <ButtonMap onClick={(e) => handleShowOnMap(trip, e)}>Show on Map</ButtonMap>
+              
             </div>
           </div>
         ))}
