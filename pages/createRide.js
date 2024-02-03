@@ -19,8 +19,9 @@ const CreateRide = () => {
   const [driverId, setDriverId] = useState('');
   const [destinationMarker, setDestinationMarker] = useState(null);
 
-  const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
+  const [maxSeatsPerTrip, setMaxSeatsPerTrip] = useState(0);
+  const [seatError, setSeatError] = useState('');
   const [rideDetails, setRideDetails] = useState({
     departure: '',
     destination: '',
@@ -51,6 +52,24 @@ const CreateRide = () => {
   }, [driverId]); // This useEffect runs whenever driverId changes
 
 
+  useEffect(() => {
+    const fetchMaxSeatsPerTrip = async () => {
+      try {
+        const response = await fetch('/api/getMaxSeatsPerTrip'); // Replace with your actual API endpoint
+        if (response.ok) {
+          const data = await response.json();
+          setMaxSeatsPerTrip(data.maxSeatsPerTrip);
+          console.log('maxSeatsPerTrip',maxSeatsPerTrip);
+        } else {
+          console.error('Failed to fetch max seats per trip:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching max seats per trip:', error);
+      }
+    };
+
+    fetchMaxSeatsPerTrip();
+  }, []);
   const setupMap = () => {
     mapboxgl.accessToken = accessToken;
 
@@ -296,9 +315,12 @@ const CreateRide = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // Enforce maxSeatsPerTrip when updating seatsAvailable
+    const seatsAvailable = Math.min(parseInt(value, 10), maxSeatsPerTrip);
+
     setRideDetails((prevDetails) => ({
       ...prevDetails,
-      [name]: value,
+      [name]: seatsAvailable,
     }));
   };
 
@@ -395,19 +417,27 @@ const CreateRide = () => {
                 </label>
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
-                  Seats Available:
-                  <input
-                    type="number"
-                    name="seatsAvailable"
-                    value={rideDetails.seatsAvailable}
-                    onChange={handleChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-                {seatError && (
-                  <p className="text-red-500 text-s text-center">{seatError}</p>
-                )}
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="maxSeats">
+                Max Seats:
+                <span className="text-gray-500 ml-2">{maxSeatsPerTrip}</span>
+              </label>
+            </div>
+              <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
+                Seats Available:
+                <input
+  type="number"
+  name="seatsAvailable"
+  value={rideDetails.seatsAvailable}
+  onChange={handleChange}
+  max={maxSeatsPerTrip}
+  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+/>
+
+              </label>
+              {seatError && (
+                <p className="text-red-500 text-s text-center">{seatError}</p>
+              )}
               </div>
               <div className='mt-10 text-center'>
                 <button
