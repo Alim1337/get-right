@@ -50,7 +50,7 @@ const Index = () => {
   //useEffect to check if user is connected
   useEffect(() => {
     const token = localStorage.getItem('token');
-  
+
     if (!token) {
       router.push('/login');
     } else {
@@ -101,7 +101,7 @@ const Index = () => {
       } catch (error) {
         console.error('Error fetching reservations:', error);
       }
-    }, 1000); 
+    }, 1000);
 
     return () => clearInterval(intervalId);
   };
@@ -202,13 +202,13 @@ const Index = () => {
     mapRef.current.showRoad(location, destinationLocationString);
   }
 
-  
-    const handleProfileClick = () => {
-      // Redirect to the user profile page
-      router.push('/userProfile');
-    };
 
-  
+  const handleProfileClick = () => {
+    // Redirect to the user profile page
+    router.push('/userProfile');
+  };
+
+
   return (
     <Wrapper>
 
@@ -230,7 +230,7 @@ const Index = () => {
                 <ActionButtonImage>
                   <FaPlusCircle size={50} />
                 </ActionButtonImage>
-                Create Trip
+                Create a Trip
               </ActionButton>
             </Link>
 
@@ -239,7 +239,7 @@ const Index = () => {
                 <ActionButtonImage>
                   <FaCalendarAlt size={50} />
                 </ActionButtonImage>
-                See Trips
+                See all Trips
               </ActionButton>
             </Link>
           </ActionButtons>
@@ -248,14 +248,14 @@ const Index = () => {
             {user && role === 'driver' ? (
               <Link href="/manageProposedDrives" passHref>
                 <div className="text-center justify-center">
-                  <ActionButtonBottom className="">Trajets proposé</ActionButtonBottom>
+                  <ActionButtonBottom className="">Proposed trips</ActionButtonBottom>
                 </div>
               </Link>
             ) : (
               <Link href="/proposeDrive" passHref>
                 <div className=" text-center justify-center">
                   <ActionButtonBottom className="w-full text-center">
-                    Proposer un trajet
+                    Propose a trip
                   </ActionButtonBottom>
                 </div>
               </Link>
@@ -270,15 +270,15 @@ const Index = () => {
 
       <SectionMain>
         <NavBar>
-        <UserProfileSection
-        user={user}
-        role={role}
-        counter={counter}
-        handleShowReservedRides={handleShowReservedRides}
-        handleDisconnect={handleDisconnect}
-        handleReportToAdmin={handleShowReportModal}
-        handleProfileClick={handleProfileClick}
-      />
+          <UserProfileSection
+            user={user}
+            role={role}
+            counter={counter}
+            handleShowReservedRides={handleShowReservedRides}
+            handleDisconnect={handleDisconnect}
+            handleReportToAdmin={handleShowReportModal}
+            handleProfileClick={handleProfileClick}
+          />
         </NavBar>
 
         <Map ref={mapRef} location={location} />
@@ -293,14 +293,14 @@ const Index = () => {
         />
       )}
 
-<ReportModal isOpen={showReportModal} onClose={handleCloseReportModal} onSubmit={handleReportToAdmin} />
+      <ReportModal isOpen={showReportModal} onClose={handleCloseReportModal} onSubmit={handleReportToAdmin} />
 
 
     </Wrapper>
   );
 };
 
-const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect,handleReportToAdmin, handleProfileClick }) => (
+const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect, handleReportToAdmin, handleProfileClick }) => (
   <div className="flex items-center space-x-4 justify-between w-full">
     {user && role === 'driver' ? (
       <Link href="/manageDrives" passHref>
@@ -320,10 +320,10 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
 
       </div>
     )}
-  <ActionButtonReport onClick={handleReportToAdmin}>
-          <FaExclamationTriangle size={24} />
-          Report to Admin
-        </ActionButtonReport>
+    <ActionButtonReport onClick={handleReportToAdmin}>
+      <FaExclamationTriangle size={24} />
+      Report to Admin
+    </ActionButtonReport>
     <div className="flex space-x-2 items-center ">
       <Profile>
         <div className="text-2xl font-bold text-blue-700">
@@ -340,7 +340,7 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
       <DisconnectButton onClick={handleDisconnect}>Disconnect</DisconnectButton>
 
       <div className="flex space-x-2 items-center">
-      
+
       </div>
     </div>
 
