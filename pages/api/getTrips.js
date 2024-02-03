@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       const { sort } = req.query;
       let trips;
 
-      if(sort){
+      if(sort === "Asc" || sort === "Desc"){
          trips = await prisma.trips.findMany({
           include: {
             reservations: true,
@@ -61,6 +61,17 @@ export default async function handler(req, res) {
           },
         }))
         .filter((trip) => trip.reservations.length === 0);
+
+        if(sort === "AscDist" || sort === "DscDist"){
+          tripsWithDistance.sort((a, b) => {
+            if (sort === "AscDist") {
+              return a.distance - b.distance;
+            } else {
+              return b.distance - a.distance;
+            }
+          });
+        }
+        
 
       res.status(200).json(tripsWithDistance);
     } catch (error) {

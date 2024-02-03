@@ -213,6 +213,8 @@ const SeeTrips = () => {
         <option value="">Sort by...</option>
         <option value="Asc">Departure Time Asc</option>
         <option value="Dsc">Departure Time Desc</option>
+        <option value="AscDist">Distance Asc</option>
+        <option value="DscDist">Distance Desc</option>
       </select>
 
       <h1 className="text-5xl font-extrabold text-center text-indigo-800 mb-10">
