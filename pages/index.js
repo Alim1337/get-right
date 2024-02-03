@@ -203,6 +203,12 @@ const Index = () => {
   }
 
   
+    const handleProfileClick = () => {
+      // Redirect to the user profile page
+      router.push('/userProfile');
+    };
+
+  
   return (
     <Wrapper>
 
@@ -271,6 +277,7 @@ const Index = () => {
         handleShowReservedRides={handleShowReservedRides}
         handleDisconnect={handleDisconnect}
         handleReportToAdmin={handleShowReportModal}
+        handleProfileClick={handleProfileClick}
       />
         </NavBar>
 
@@ -293,7 +300,7 @@ const Index = () => {
   );
 };
 
-const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect,handleReportToAdmin }) => (
+const UserProfileSection = ({ user, role, counter, handleShowReservedRides, handleDisconnect,handleReportToAdmin, handleProfileClick }) => (
   <div className="flex items-center space-x-4 justify-between w-full">
     {user && role === 'driver' ? (
       <Link href="/manageDrives" passHref>
@@ -326,6 +333,7 @@ const UserProfileSection = ({ user, role, counter, handleShowReservedRides, hand
           src={user && user.photoUrl}
           alt="User Photo"
           className="h-16 w-16 cursor-pointer rounded-full border-4 border-blue-800"
+          onClick={handleProfileClick}
         />
       </Profile>
 
