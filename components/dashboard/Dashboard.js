@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import UserForm from '../UserForm';
 import UserModificationForm from '../UserModificationForm'; // Import the new form
+import { Toaster, toast } from 'sonner'
 
 const useModal = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);

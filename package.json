@@ -15,6 +15,7 @@
     "axios": "^1.6.5",
     "bcrypt": "^5.1.1",
     "firebase": "^9.5.0",
+    "install": "^0.13.0",
     "jsonwebtoken": "^9.0.2",
     "mapbox-gl": "^2.15.0",
     "mysql": "^2.18.1",
@@ -27,6 +28,7 @@
     "react-modal": "^3.16.1",
     "react-toast-notifications": "^2.5.1",
     "react-toastify": "^10.0.4",
+    "snotify": "^1.0.0",
     "sonner": "^1.4.0",
     "twin.macro": "^3.4.1"
   },
