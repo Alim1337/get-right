@@ -63,21 +63,28 @@ const RideItem = ({ ride, onRequestSeat, onSeatCountChange, drawLine, setDropoff
   );
 };
 
-const ListRides = ({ rides, onRequestSeat, onSeatCountChange, drawLine, setDropoff }) => (
-  <Wrapper>
-    {rides.map((ride) => (
-      <RideItem
-        key={ride.tripId}
-        ride={ride}
-        onRequestSeat={onRequestSeat}
-        onSeatCountChange={onSeatCountChange}
-        drawLine={drawLine}
-        setDropoff={setDropoff}
-      />
-    ))}
-  </Wrapper>
-);
+const ListRides = ({ rides, onRequestSeat, onSeatCountChange, drawLine, setDropoff }) => {
+  // Check if rides is an array
+  if (!Array.isArray(rides)) {
+    return null; // or display a message or placeholder if necessary
+  }
 
+  return (
+    <Wrapper>
+      {rides.map((ride) => (
+        <RideItem
+          key={ride.tripId}
+          ride={ride}
+          onRequestSeat={onRequestSeat}
+          onSeatCountChange={onSeatCountChange}
+          drawLine={drawLine}
+          setDropoff={setDropoff}
+        />
+      ))}
+    </Wrapper>
+
+);
+      }
 const Wrapper = tw.div`
   mt-4
 `;

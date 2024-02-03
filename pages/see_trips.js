@@ -430,26 +430,35 @@ const SeeTrips = () => {
       </ButtonContainer>
       <Map ref={mapRef} location={location} />
 
-      <h1 className="text-4xl font-bold text-center text-blue-600">
+      <h1 className="text-5xl font-extrabold text-center text-indigo-800 mb-10">
         All the trips
       </h1>
 
-      <div className="grid grid-cols-3 gap-4 mt-8">
+      <div className="grid grid-cols-3 gap-8">
         {trips.map((trip) => (
           <div
             key={trip.tripId}
-            className="p-4 border-2 border-blue-600 rounded-lg shadow-lg"
+            className="p-8 border-4 border-indigo-600 rounded-2xl shadow-2xl bg-white transform hover:scale-110 transition-transform duration-200"
           >
-            <p className="text-xl font-semibold text-blue-800">
-              Departure: {trip.departureLocation}
+             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+             driver firstName: {trip.driver.firstName}
             </p>
-            <p className="text-xl font-semibold text-blue-800">
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+            driverlastName: {trip.driver.lastName}
+            </p>
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Destination: {trip.destinationLocation}
             </p>
-            <p className="text-lg text-gray-700">
-              Departure Time: {trip.departureTime.toString()}
-            </p>
-            <p className="text-lg text-gray-700">
+            <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+
+  distance: {trip.distance.toFixed(2)}
+  km
+</p>
+<p className="text-3xl font-extrabold text-indigo-900 mb-3">
+  Departure Time: {new Date(trip.departureTime).toLocaleString()}
+</p>
+
+<p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Available Seats: {trip.availableSeats}
             </p>
             <div className="flex justify-between mt-4">
@@ -474,22 +483,24 @@ const SeeTrips = () => {
 };
 
 const ButtonMap = tw.button`
-  bg-green-500 text-white px-4 py-2 rounded-md cursor-pointer
+className=" bg-green-500 text-white px-4 py-2 rounded-full text-lg font-roboto my-3 leading-normal transition-all duration-300 ease-in-out hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 active:bg-green-700
 `;
 
 const Button = tw.button`
-  bg-blue-500 text-white px-4 py-2 rounded-md cursor-pointer
+mt-2 self-end bg-indigo-500 text-white py-3 px-6 gap-2 rounded-full flex justify-center items-center hover:bg-indigo-700 transition-colors duration-200
 `;
-
 const Wrapper = tw.div`
   p-4 bg-gray-200 h-screen
 `;
 
 const ButtonContainer = tw.div`
-  bg-white p-2 h-12
+bg-white p-4 h-16
 `;
 
-const BackButton = tw.button``;
+const BackButton = tw.button`
+hover:bg-gray-300 transition-colors duration-200
+`;
+
 
 const NotificationContainer = tw.div`
   fixed bottom-0 right-0 p-4 mb-4 mr-4 bg-green-500 text-white rounded-md
@@ -498,5 +509,6 @@ const NotificationContainer = tw.div`
 const MapContainer = tw.div`
   flex-1 w-full rounded-xl
 `;
+
 
 export default SeeTrips;

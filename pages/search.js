@@ -343,8 +343,8 @@ const Search = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Nearby results:', data.nearbyTrips);
-        setNearbyResults(data.nearbyTrips);
+        console.log('Nearby results:', data.formattedTrips);
+        setNearbyResults(data.formattedTrips);
         setShowNearbyResults(true);
       } else {
         console.error('Failed to fetch nearby results');
@@ -450,7 +450,7 @@ const Search = () => {
         <div>
           <SectionTitle>Rides disponible</SectionTitle>
           <ListRides
-            rides={searchResults}
+            rides={searchResults.formattedTrips}
             onRequestSeat={handleRequestSeat}
             onSeatCountChange={handleSeatCountChange}
             drawLine={drawLine}

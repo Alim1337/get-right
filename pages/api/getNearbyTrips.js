@@ -12,8 +12,8 @@ export default async function handler(req, res) {
   console.log('latitude, longitude, range ', latitude, longitude, range);
 
   // Convert range from kilometers to degrees
-  const rangeInDegrees = range/ 111.32; // 1 degree is approximately 111.32 kilometers
-  console.log('rangeInDegrees  ',rangeInDegrees );
+  const rangeInDegrees = range / 111.32; // 1 degree is approximately 111.32 kilometers
+  console.log('rangeInDegrees  ', rangeInDegrees);
 
   try {
     const nearbyTrips = await prisma.trips.findMany({
@@ -26,16 +26,19 @@ export default async function handler(req, res) {
           gte: parseFloat(longitude) - rangeInDegrees,
           lte: parseFloat(longitude) + rangeInDegrees,
         },
-      
+      },
+      include: {
+        users: true, // Include the user details for the driver
       },
     });
+
     const formattedTrips = nearbyTrips.map((trip) => ({
       tripId: trip.tripId,
       departureLocation: trip.departureLocation,
       destinationLocation: trip.destinationLocation,
       departureTime: trip.departureTime,
       availableSeats: trip.availableSeats,
-      driverName: `${trip.users.firstName} ${trip.users.lastName}`,
+      driverName: trip.users ? `${trip.users.firstName} ${trip.users.lastName}` : 'N/A',
       // Calculate and include distance here
       distance: calculateDistance(
         trip.departureLatitude,
@@ -45,7 +48,7 @@ export default async function handler(req, res) {
       ),
     }));
 
- //   console.log('nearbyTrips', { nearbyTrips });
+     console.log('NearbyTrips', { formattedTrips });
     return res.status(200).json({ formattedTrips });
   } catch (error) {
     console.error('Error fetching nearby trips:', error);
@@ -54,6 +57,7 @@ export default async function handler(req, res) {
     await prisma.$disconnect();
   }
 }
+
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // Radius of the Earth in kilometers
   const dLat = deg2rad(lat2 - lat1);

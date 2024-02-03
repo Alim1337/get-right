@@ -1,6 +1,23 @@
+// api/searchTrips.js
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+// Function to calculate distance between two points using Haversine formula
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in kilometers
+  return distance;
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -21,8 +38,18 @@ export default async function handler(req, res) {
   try {
     const targetTrips = await prisma.trips.findMany({
       where: {
-        departureLocation: { contains: searchTermPickup },
-        destinationLocation: { contains: searchTermDropoff },
+        OR: [
+          {
+            departureLocation: {
+              contains: searchTermPickup.toLowerCase(),
+            },
+          },
+          {
+            destinationLocation: {
+              contains: searchTermDropoff.toLowerCase(),
+            },
+          },
+        ],
       },
       include: {
         users: {
@@ -37,6 +64,7 @@ export default async function handler(req, res) {
     if (targetTrips.length === 0) {
       return res.status(404).json({ message: 'No matching trips found' });
     }
+    console.log("searched trips", targetTrips);
 
     const formattedTrips = targetTrips.map((trip) => ({
       tripId: trip.tripId,
@@ -56,8 +84,10 @@ export default async function handler(req, res) {
       lastName :  trip.users.lastName,
     }));
 
-    // console.log("searched trips", targetTrips);
-    return res.status(200).json(formattedTrips);
+    // Sort trips by distance in ascending order
+    formattedTrips.sort((a, b) => a.distance - b.distance);
+
+    return res.status(200).json({ formattedTrips });
   } catch (error) {
     console.error('Error searching trips:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
@@ -65,20 +95,3 @@ export default async function handler(req, res) {
     await prisma.$disconnect();
   }
 }
-
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Radius of the Earth in kilometers
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c; // Distance in kilometers
-
-  return distance;
-};
-
-const deg2rad = (deg) => deg * (Math.PI / 180);
