@@ -83,7 +83,9 @@ const ProfilePage = () => {
   }, [router]);
   
   
-
+  const handleGoBack = () => {
+    router.back();
+  };
   const handleLogout = () => {
     // Clear user data and token from local storage
     localStorage.removeItem('token');
@@ -152,6 +154,13 @@ const ProfilePage = () => {
   };
   return (
     <div className="flex flex-col items-center p-8 sm:p-12">
+         <button
+            type="button"
+            onClick={handleGoBack}
+            className="mt-5 w-1/2 items-center px-4 py-2 bg-gray-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
+          >
+            Go Back
+          </button>
       <div className="flex items-center space-x-6 mb-8">
         <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
 
