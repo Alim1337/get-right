@@ -56,6 +56,8 @@ export default async function handler(req, res) {
           role: newUser.role,
           firstName: newUser.firstName,
           lastName: newUser.lastName,
+          phoneNumber: newUser.phoneNumber,
+          studentId: newUser.studentId,
         },
         SECRET_KEY,
         { expiresIn: '1h' }

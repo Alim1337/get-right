@@ -28,6 +28,8 @@ export default async function handler(req, res) {
                     role: user.role,
                     firstName: user.firstName,
                     lastName: user.lastName,
+                    phoneNumber: user.phoneNumber,
+                    studentId: user.studentId,
                 },
                 SECRET_KEY,
                 { expiresIn: '1h' }
