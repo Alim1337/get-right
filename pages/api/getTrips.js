@@ -22,12 +22,28 @@ const deg2rad = (deg) => deg * (Math.PI / 180);
 export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
-      const trips = await prisma.trips.findMany({
-        include: {
-          reservations: true,
-          users: true, // Include the user details for the driver
-        },
-      });
+      const { sort } = req.query;
+      let trips;
+
+      if(sort){
+         trips = await prisma.trips.findMany({
+          include: {
+            reservations: true,
+            users: true, // Include the user details for the driver
+          },
+          orderBy: {
+            departureTime: sort === "Asc" ? "asc" : "desc", // Apply sorting based on `sort`
+          },
+        });
+      }else{
+         trips = await prisma.trips.findMany({
+          include: {
+            reservations: true,
+            users: true, // Include the user details for the driver
+          },
+        });
+      }
+      
 
       // Calculate distance for each trip and filter trips without reservations
       const tripsWithDistance = trips

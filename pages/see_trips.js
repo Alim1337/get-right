@@ -20,6 +20,7 @@ const SeeTrips = () => {
   const [mapDestination, setMapDestination] = useState(null);
   const router = useRouter();
   const myPosition = [0, 0];
+  const [sortValue, setSortValue] = useState("");
 
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
@@ -71,7 +72,7 @@ const SeeTrips = () => {
   }, []);
 
 
-    //function to get current location
+  //function to get current location
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
       const watchId = navigator.geolocation.watchPosition(
@@ -89,10 +90,13 @@ const SeeTrips = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/getTrips");
+        const fetchUrl = sortValue ? `/api/getTrips?sort=${sortValue}` : '/api/getTrips';
+        console.log('fetchUrl:', fetchUrl);
+        const response = await fetch(fetchUrl);
         if (response.ok) {
           const data = await response.json();
           setTrips(data);
+          console.log("Trips data:", data);
         } else {
           console.error("Failed to fetch trips data");
         }
@@ -102,7 +106,7 @@ const SeeTrips = () => {
     };
 
     fetchData();
-  }, []);
+  },[sortValue]);
 
 
 
@@ -187,8 +191,8 @@ const SeeTrips = () => {
     const destinationLocationString = `${trip.destinationLongitude},${trip.destinationLatitude}`;
     const departureLocationString = `${trip.departureLongitude},${trip.departureLatitude}`;
     //departure pin
-    mapRef.current.showPin(destinationLocationString, trip.destinationLocation, departureLocationString , trip.departureLocation);
-    mapRef.current.showRoad(departureLocationString,destinationLocationString, true);
+    mapRef.current.showPin(destinationLocationString, trip.destinationLocation, departureLocationString, trip.departureLocation);
+    mapRef.current.showRoad(departureLocationString, destinationLocationString, true);
   };
 
 
@@ -203,6 +207,13 @@ const SeeTrips = () => {
         </Link>
       </ButtonContainer>
       <Map ref={mapRef} location={location} />
+
+
+      <select className="p-2 rounded-full mt-12 border-2 border-black shadow-lg w-1/8" value={sortValue} onChange={(e) => setSortValue(e.target.value)}>
+        <option value="">Sort by...</option>
+        <option value="Asc">Departure Time Asc</option>
+        <option value="Dsc">Departure Time Desc</option>
+      </select>
 
       <h1 className="text-5xl font-extrabold text-center text-indigo-800 mb-10">
         All the trips
@@ -264,7 +275,7 @@ const Button = tw.button`
 mt-2 self-end bg-indigo-500 text-white py-3 px-6 gap-2 rounded-full flex justify-center items-center hover:bg-indigo-700 transition-colors duration-200
 `;
 const Wrapper = tw.div`
-  p-4 bg-gray-200 h-screen
+  p-4 bg-gray-100 h-screen
 `;
 
 const ButtonContainer = tw.div`
