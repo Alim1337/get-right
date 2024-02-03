@@ -3,28 +3,9 @@ import { useRouter } from "next/router";
 import tw from "tailwind-styled-components";
 import { SiX } from "react-icons/si";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
-import { toast } from 'sonner'
+import { Notification, toast } from 'sonner';
 import Image from 'next/image';
 
-const Notification = ({ message, type, onClose }) => {
-  return (
-    <div
-      style={{
-        padding: '10px',
-        margin: '10px',
-        borderRadius: '5px',
-        backgroundColor: type === 'success' ? 'green' : 'red',
-        color: 'white',
-        textAlign: 'center',
-      }}
-    >
-      {message}
-      <button onClick={onClose} style={{ marginLeft: '10px' }}>
-        Close
-      </button>
-    </div>
-  );
-};
 
 const validateEmail = (email) => {
   // Basic email validation, adjust as needed
@@ -41,6 +22,9 @@ const isValidStudentId = (studentId) => {
 
 const showErrorToast = (error) => {
   toast.error(error);
+};
+const showNotification = (message, type) => {
+  toast.success(message);
 };
 
 const Login = () => {
@@ -107,10 +91,7 @@ const Login = () => {
     setStep((prevStep) => Math.max(1, prevStep - 1));
   };
 
-  const showNotification = (message, type) => {
-    toast[type](message);
-  };
-
+ 
   const closeNotification = () => {
     // Close the toast if needed
     toast.dismiss();
@@ -153,7 +134,7 @@ const Login = () => {
       showErrorToast('Invalid email format. Please enter a valid email.');
       return;
     }
-
+  
     try {
       const response = await fetch('/api/login_users', {
         method: 'POST',
@@ -162,7 +143,7 @@ const Login = () => {
         },
         body: JSON.stringify({ email: username, password }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         if (data.token_login) {
@@ -170,18 +151,20 @@ const Login = () => {
           localStorage.setItem('userId', data.userId);
           localStorage.setItem('role', data.role);
           router.push("/");
-          toast.success('Login successful');
+          showNotification('Login successful', 'success');
         } else {
           showErrorToast('Login failed');
         }
       } else {
         console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
+        showErrorToast('Login failed. Please try again.');
       }
     } catch (error) {
       console.error('Error during login:', error);
       showErrorToast('Login failed. Please check your credentials.');
     }
   };
+  
 
 
   const handleRegister = async () => {
@@ -420,13 +403,13 @@ const Login = () => {
 
 
 
-      {/* {notification && (
+{notification && (
         <Notification
           message={notification.message}
           type={notification.type}
           onClose={closeNotification}
         />
-      )} */}
+      )}
     </Wrapper>
   );
 };
