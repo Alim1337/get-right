@@ -438,8 +438,11 @@ const SeeTrips = () => {
             key={trip.tripId}
             className="p-8 border-4 border-indigo-600 rounded-2xl shadow-2xl bg-white transform hover:scale-110 transition-transform duration-200"
           >
+             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
+             driver firstName: {trip.driver.firstName}
+            </p>
             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
-              Departure: {trip.departureLocation}
+            driverlastName: {trip.driver.lastName}
             </p>
             <p className="text-3xl font-extrabold text-indigo-900 mb-3">
               Destination: {trip.destinationLocation}

@@ -25,6 +25,7 @@ export default async function handler(req, res) {
       const trips = await prisma.trips.findMany({
         include: {
           reservations: true,
+          users: true, // Include the user details for the driver
         },
       });
 
@@ -38,6 +39,10 @@ export default async function handler(req, res) {
             trip.destinationLatitude,
             trip.destinationLongitude
           ),
+          driver: {
+            firstName: trip.users.firstName,
+            lastName: trip.users.lastName,
+          },
         }))
         .filter((trip) => trip.reservations.length === 0);
 
