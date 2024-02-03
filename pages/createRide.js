@@ -27,7 +27,7 @@ const CreateRide = () => {
     destination: '',
     date: '',
     time: '',
-    seatsAvailable: 0,
+    seatsAvailable: 1,
   });
   const [pickup, setPickup] = useState({
     coordinates: [0, 0],
@@ -59,7 +59,7 @@ const CreateRide = () => {
         if (response.ok) {
           const data = await response.json();
           setMaxSeatsPerTrip(data.maxSeatsPerTrip);
-          console.log('maxSeatsPerTrip',maxSeatsPerTrip);
+          console.log('maxSeatsPerTrip', maxSeatsPerTrip);
         } else {
           console.error('Failed to fetch max seats per trip:', response.status, response.statusText);
         }
@@ -417,27 +417,27 @@ const CreateRide = () => {
                 </label>
               </div>
               <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="maxSeats">
-                Max Seats:
-                <span className="text-gray-500 ml-2">{maxSeatsPerTrip}</span>
-              </label>
-            </div>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="maxSeats">
+                  Max Seats:
+                  <span className="text-gray-500 ml-2">{maxSeatsPerTrip}</span>
+                </label>
+              </div>
               <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
-                Seats Available:
-                <input
-  type="number"
-  name="seatsAvailable"
-  value={rideDetails.seatsAvailable}
-  onChange={handleChange}
-  max={maxSeatsPerTrip}
-  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-/>
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
+                  Seats Available:
+                  <input
+                    type="number"
+                    name="seatsAvailable"
+                    value={rideDetails.seatsAvailable}
+                    onChange={handleChange}
+                    max={maxSeatsPerTrip}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
 
-              </label>
-              {seatError && (
-                <p className="text-red-500 text-s text-center">{seatError}</p>
-              )}
+                </label>
+                {seatError && (
+                  <p className="text-red-500 text-s text-center">{seatError}</p>
+                )}
               </div>
               <div className='mt-10 text-center'>
                 <button

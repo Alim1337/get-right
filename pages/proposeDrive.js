@@ -15,6 +15,7 @@ const ProposeDrive = () => {
   const router = useRouter();
   const [userId, setUserId] = useState('');
 
+  const [maxSeatsPerTrip, setMaxSeatsPerTrip] = useState(0);
   const [seatError, setSeatError] = useState('');
   const [dateError, setDateError] = useState('');
   const [rideDetails, setRideDetails] = useState({
@@ -22,7 +23,7 @@ const ProposeDrive = () => {
     destination: '',
     date: '',
     time: '',
-    seatsAvailable: 0,
+    seatsAvailable: 1,
   });
   const [pickup, setPickup] = useState({
     coordinates: [0, 0],
@@ -35,6 +36,27 @@ const ProposeDrive = () => {
   const [map, setMap] = useState(null);
   const [line, setLine] = useState(null);
   const myPosition = [0, 0];
+
+
+
+  useEffect(() => {
+    const fetchMaxSeatsPerTrip = async () => {
+      try {
+        const response = await fetch('/api/getMaxSeatsPerTrip'); // Replace with your actual API endpoint
+        if (response.ok) {
+          const data = await response.json();
+          setMaxSeatsPerTrip(data.maxSeatsPerTrip);
+          console.log('maxSeatsPerTrip', maxSeatsPerTrip);
+        } else {
+          console.error('Failed to fetch max seats per trip:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching max seats per trip:', error);
+      }
+    };
+
+    fetchMaxSeatsPerTrip();
+  }, []);
 
 
   const getCurrentLocation = () => {
@@ -485,6 +507,12 @@ const ProposeDrive = () => {
                 </label>
               </div>
               <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="maxSeats">
+                  Max Seats:
+                  <span className="text-gray-500 ml-2">{maxSeatsPerTrip}</span>
+                </label>
+              </div>
+              <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
                   Seats Available:
                   <input
@@ -492,6 +520,8 @@ const ProposeDrive = () => {
                     name="seatsAvailable"
                     value={rideDetails.seatsAvailable}
                     onChange={handleChange}
+                    max={maxSeatsPerTrip}
+                    min={1}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   />
                 </label>
