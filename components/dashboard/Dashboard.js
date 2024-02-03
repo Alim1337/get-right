@@ -67,9 +67,6 @@ const Dashboard = () => {
   const toggleRideMenu = () => {
     setShowRideMenu(!showRideMenu);
   };
-  const handleConfigButtonClick = () => {
-    setShowConfigTable(!showConfigTable);
-  };
 
   const handleMaxSeatsChange = (event) => {
     setMaxSeats(parseInt(event.target.value, 10));
@@ -110,6 +107,24 @@ const Dashboard = () => {
     );
   };
 
+  const handleConfigButtonClick = async () => {
+    setShowConfigTable(!showConfigTable);
+  
+    // Fetch current configuration settings from the server
+    try {
+      const response = await fetch('/api/admin_functions');
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const configData = await response.json();
+      setMaxSeats(configData.maxSeats);
+      setMaxRidesPerDay(configData.maxRidesPerDay);
+      // Add more state updates if needed for additional configuration settings
+    } catch (error) {
+      console.error('Error fetching configuration settings:', error);
+    }
+  };
   
 
   const handleReadDetails = (details) => {
@@ -194,6 +209,7 @@ const Dashboard = () => {
         body: JSON.stringify({
           type: 'config',
           maxSeats,
+          maxRidesPerDay,
           // Add more configuration settings if needed
         }),
       });
@@ -202,19 +218,19 @@ const Dashboard = () => {
         console.log('Configuration settings updated successfully');
         // Add any additional logic you need after updating configuration settings
   
-        // Show success notification
-        showNotification('Configuration settings updated successfully', 'success');
+        // Show success notification using alert
+        alert('Configuration settings updated successfully');
       } else {
         console.error('Failed to update configuration settings');
   
-        // Show error notification
-        showNotification('Failed to update configuration settings', 'error');
+        // Show error notification using alert
+        alert('Failed to update configuration settings');
       }
     } catch (error) {
       console.error('Error updating configuration settings:', error);
   
-      // Show error notification
-      showNotification('Error updating configuration settings', 'error');
+      // Show error notification using alert
+      alert('Error updating configuration settings');
     }
   };
   

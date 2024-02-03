@@ -121,6 +121,7 @@ export default async function handler(req, res) {
             ...rest,
           },
         });
+        
 
         return res.status(200).json({ message: 'Ride modified successfully', ride: modifiedRide });
       } catch (error) {
@@ -128,8 +129,23 @@ export default async function handler(req, res) {
         return res.status(500).json({ message: 'Internal Server Error' });
       }
     } else if (type === 'config') {
-      // Handle updating configuration
-      // ...
+      try {
+        const updatedConfig = await prisma.appconfig.update({
+          where: {
+            configId: 1, // Assuming the configuration ID is always 1
+          },
+          data: {
+            /* Update the configuration fields based on the payload received */
+            maxSeatsPerTrip: req.body.maxSeats,
+            // Add other fields as needed
+          },
+        });
+      
+        return res.status(200).json({ message: 'Configuration updated successfully', config: updatedConfig });
+      } catch (error) {
+        console.error('Error updating configuration:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+      }
 
     }
   } else {

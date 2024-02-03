@@ -27,6 +27,17 @@ export default async function handler(req, res) {
   const departureTime = new Date(combinedDateTimeString);
 
   try {
+    // Fetch maxSeatsPerTrip from appconfig
+    const appConfig = await prisma.appconfig.findFirst({
+      where: { configId: 1 }, // Assuming configId 1 is the desired config entry
+    });
+
+    if (!appConfig) {
+      return res.status(500).json({ message: 'App config not found' });
+    }
+
+    const maxSeatsPerTrip = appConfig.maxSeatsPerTrip;
+
     await prisma.$transaction(async (tx) => {
       // Create the trip within the transaction
       const createdRide = await tx.trips.create({
@@ -40,7 +51,7 @@ export default async function handler(req, res) {
           departureLongitude: departureLongitude,
           destinationLatitude: destinationLatitude,
           destinationLongitude: destinationLongitude,
-          maxSeatsPerTrip:5,
+          maxSeatsPerTrip: maxSeatsPerTrip, // Use the fetched value
         },
       });
 
