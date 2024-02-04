@@ -238,7 +238,7 @@ const ManageDrives = () => {
 };
 
 const Wrapper = tw.div`
-  p-4 bg-gray-200 h-screen
+  p-4 bg-gray-200 
 `;
 
 const ButtonContainer = tw.div`
