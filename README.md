@@ -69,6 +69,9 @@ END;
 //
 
 DELIMITER ;
+ajouter cette ligne apres on peut la modifier dans le dashboard admin :
+ INSERT INTO appconfig (maxSeatsPerTrip, geoConfig)
+VALUES (5, 'value_for_geoConfig');
 
 ## Démarrage de l'application
 La configuration étant terminée, lancez l'exécution avec la commande suivante :
