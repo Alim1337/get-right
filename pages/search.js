@@ -15,7 +15,7 @@ import ListRides from "../components/ListRides";
 import { useRouter } from "next/router";
 
 
-const NEARBY_RANGE = 20;
+const NEARBY_RANGE = 10;
 const Search = () => {
   const [pickup, setPickup] = useState({
     coordinates: [0, 0],
