@@ -1,9 +1,10 @@
 // pages/api/login_admin.js
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
-const SECRET_KEY = 'HAXER'; 
+const SECRET_KEY = 'HAXER';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -16,22 +17,20 @@ export default async function handler(req, res) {
     const admin = await prisma.admins.findFirst({
       where: {
         username: username,
-        password: password,
       },
     });
 
-    if (admin) {
-      // User found, login successful
+    if (admin && await bcrypt.compare(password, admin.password)) {
+      // Password matches, login successful
       const token_admin = jwt.sign(
         { userId: admin.userId, username: admin.username },
         SECRET_KEY,
         { expiresIn: '1h' }
       );
-      
 
       return res.status(200).json({ message: 'Login successful', token_admin });
     } else {
-      // User not found, authentication failed
+      // User not found or password doesn't match, authentication failed
       return res.status(401).json({ message: 'Unauthorized' });
     }
   } catch (error) {
