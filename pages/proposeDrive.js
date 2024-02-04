@@ -450,7 +450,7 @@ const ProposeDrive = () => {
       <SecondWrapper>
         <ContentContainer>
           <FormContainer>
-            <h1 className="text-4xl mb-8 text-center font-serif text-blue-990">Proposer un trajet</h1>
+            <h1 className="text-4xl mb-8 text-center font-serif text-blue-990">Suggest a trip</h1>
             <form
               onSubmit={handleSubmit}
               className="border-2 border-blue-500 rounded-xl px-8 pt-6 pb-8 mb-4"
