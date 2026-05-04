@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -12,9 +12,9 @@ model admins {
   userId   Int
   username String? @db.VarChar(255)
   password String? @db.VarChar(255)
-  users    users   @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "admins_ibfk_1")
+  users    users   @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict)
 
-  @@index([userId], map: "admins_ibfk_1")
+  @@index([userId])
 }
 
 model appconfig {
@@ -27,32 +27,32 @@ model reservations {
   reservationId   Int      @id @default(autoincrement())
   tripId          Int
   passengerId     Int
-  reservationTime DateTime @db.DateTime(0)
+  reservationTime DateTime
   driverId        Int
-  trips           trips    @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_1")
-  users           users    @relation(fields: [passengerId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "reservations_ibfk_2")
+  trips           trips    @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict)
+  users           users    @relation(fields: [passengerId], references: [userId], onDelete: Cascade, onUpdate: Restrict)
 
-  @@unique([passengerId, tripId], map: "unique_reservation")
-  @@index([tripId], map: "tripId")
+  @@unique([passengerId, tripId])
+  @@index([tripId])
 }
 
 model trips {
   tripId               Int             @id @default(autoincrement())
   departureLocation    String          @db.VarChar(100)
   destinationLocation  String          @db.VarChar(100)
-  departureTime        DateTime        @db.DateTime(0)
+  departureTime        DateTime
   availableSeats       Int
   driverId             Int
-  departureLatitude    Float?          @db.Float
-  departureLongitude   Float?          @db.Float
-  destinationLatitude  Float?          @db.Float
-  destinationLongitude Float?          @db.Float
+  departureLatitude    Float?
+  departureLongitude   Float?
+  destinationLatitude  Float?
+  destinationLongitude Float?
   maxSeatsPerTrip      Int
   reservations         reservations[]
   ride_requests        ride_requests[]
-  users                users           @relation(fields: [driverId], references: [userId], onUpdate: Restrict, map: "trips_ibfk_1")
+  users                users           @relation(fields: [driverId], references: [userId], onUpdate: Restrict)
 
-  @@index([driverId], map: "trips_ibfk_1")
+  @@index([driverId])
 }
 
 model users {
@@ -60,7 +60,7 @@ model users {
   firstName     String          @db.VarChar(50)
   lastName      String          @db.VarChar(50)
   phoneNumber   String          @db.VarChar(15)
-  email         String          @unique(map: "email") @db.VarChar(100)
+  email         String          @unique @db.VarChar(100)
   studentId     String          @unique @db.VarChar(20)
   password      String          @db.VarChar(255)
   role          users_role?     @default(client)
@@ -78,11 +78,11 @@ model ride_requests {
   tripId       Int
   status       ride_requests_status? @default(pending)
   nbr_seat_req Int?
-  users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "ride_requests_ibfk_1")
-  trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict, map: "ride_requests_ibfk_2")
+  users        users                 @relation(fields: [userId], references: [userId], onUpdate: Restrict)
+  trips        trips                 @relation(fields: [tripId], references: [tripId], onDelete: Cascade, onUpdate: Restrict)
 
-  @@index([tripId], map: "tripId")
-  @@index([userId], map: "userId")
+  @@index([tripId])
+  @@index([userId])
 }
 
 model proposition {
@@ -90,26 +90,26 @@ model proposition {
   userId               Int
   departureLocation    String   @db.VarChar(100)
   destinationLocation  String   @db.VarChar(100)
-  departureTime        DateTime @db.DateTime(0)
+  departureTime        DateTime
   availableSeats       Int
-  departureLatitude    Float?   @db.Float
-  departureLongitude   Float?   @db.Float
-  destinationLatitude  Float?   @db.Float
-  destinationLongitude Float?   @db.Float
-  users                users    @relation(fields: [userId], references: [userId], onUpdate: Restrict, map: "proposition_ibfk_1")
+  departureLatitude    Float?
+  departureLongitude   Float?
+  destinationLatitude  Float?
+  destinationLongitude Float?
+  users                users    @relation(fields: [userId], references: [userId], onUpdate: Restrict)
 
-  @@index([userId], map: "userId")
+  @@index([userId])
 }
 
 model reports {
   reportId       Int       @id @default(autoincrement())
   userId         Int?
   problemType    String?   @db.VarChar(255)
-  problemDetails String?   @db.Text
-  createdAt      DateTime? @default(now()) @db.Timestamp(0)
-  users          users?    @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict, map: "reports_ibfk_1")
+  problemDetails String?
+  createdAt      DateTime? @default(now())
+  users          users?    @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: Restrict)
 
-  @@index([userId], map: "userId")
+  @@index([userId])
 }
 
 enum users_role {
