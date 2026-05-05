@@ -2,494 +2,297 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import mapboxgl from 'mapbox-gl';
 import { accessToken } from '../components/Map';
-import tw from "tailwind-styled-components";
 import Link from "next/link";
-import {
-  BsArrowLeft,
-  BsCircleFill,
-  BsPlusLg,
-  BsThreeDotsVertical,
-} from "react-icons/bs";
-import { FaSquareFull } from "react-icons/fa";
-import { MdStars } from "react-icons/md";
-import { Toaster, toast } from 'sonner'
+import { BsArrowLeft } from "react-icons/bs";
+import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaChair, FaRoute } from "react-icons/fa";
+import { toast } from 'sonner';
+import Head from "next/head";
 
 const CreateRide = () => {
   const router = useRouter();
   const [driverId, setDriverId] = useState('');
   const [destinationMarker, setDestinationMarker] = useState(null);
-
-  const [dateError, setDateError] = useState('');
   const [maxSeatsPerTrip, setMaxSeatsPerTrip] = useState(0);
-  const [seatError, setSeatError] = useState('');
-  const [rideDetails, setRideDetails] = useState({
-    departure: '',
-    destination: '',
-    date: '',
-    time: '',
-    seatsAvailable: 1,
-  });
-  const [pickup, setPickup] = useState({
-    coordinates: [0, 0],
-    locationName: "",
-  });
-  const [dropoff, setDropoff] = useState({
-    coordinates: [0, 0],
-    locationName: "",
-  });
+  const [rideDetails, setRideDetails] = useState({ date: '', time: '', seatsAvailable: 1 });
+  const [pickup, setPickup] = useState({ coordinates: [0, 0], locationName: "" });
+  const [dropoff, setDropoff] = useState({ coordinates: [0, 0], locationName: "" });
   const [map, setMap] = useState(null);
-  const [line, setLine] = useState(null);
-  const myPosition = [0, 0];
+  const [loading, setLoading] = useState(false);
+  let myPosition = [0, 0];
+
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const decodedToken = JSON.parse(atob(token.split('.')[1]));
-    setDriverId(decodedToken.userId);
-    console.log('this is decodedToken', decodedToken);
+    if (!token) { router.push('/login'); return; }
+    const decoded = JSON.parse(atob(token.split('.')[1]));
+    setDriverId(decoded.userId);
   }, []);
 
   useEffect(() => {
-    console.log('this is driver id ', driverId);
-  }, [driverId]); // This useEffect runs whenever driverId changes
-
-
-  useEffect(() => {
-    const fetchMaxSeatsPerTrip = async () => {
-      try {
-        const response = await fetch('/api/getMaxSeatsPerTrip'); // Replace with your actual API endpoint
-        if (response.ok) {
-          const data = await response.json();
-          setMaxSeatsPerTrip(data.maxSeatsPerTrip);
-          console.log('maxSeatsPerTrip', maxSeatsPerTrip);
-        } else {
-          console.error('Failed to fetch max seats per trip:', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('Error fetching max seats per trip:', error);
-      }
-    };
-
-    fetchMaxSeatsPerTrip();
+    fetch('/api/getMaxSeatsPerTrip')
+      .then(r => r.json())
+      .then(d => setMaxSeatsPerTrip(d.maxSeatsPerTrip))
+      .catch(console.error);
   }, []);
-  const setupMap = () => {
-    mapboxgl.accessToken = accessToken;
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const currentLocation = {
-          coordinates: [position.coords.longitude, position.coords.latitude],
-          locationName: await reverseGeocode(
-            position.coords.latitude,
-            position.coords.longitude
-          ),
-        };
-        setPickup(currentLocation);
-        setupMapWithPickup(currentLocation);
-        myPosition = currentLocation.coordinates;
-      },
-      (error) => {
-        console.error("Error getting current location:", error);
-        setupMapWithPickup({
-          coordinates: [0, 0],
-          locationName: "Unknown Location",
-        });
-      }
-    );
-  };
-
-  const setupMapWithPickup = (pickupLocation) => {
-    const newMap = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: pickupLocation.coordinates,
-      zoom: 12,
-    });
-
-    // Add a marker for the current position
-    new mapboxgl.Marker({ color: "green" })
-      .setLngLat(pickupLocation.coordinates)
-      .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
-      .addTo(newMap);
-
-    let previousMarker = null;
-
-    newMap.on("dblclick", async (event) => {
-      const lngLat = event.lngLat.toArray();
-      const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
-      setDropoff({ coordinates: lngLat, locationName });
-
-      if (previousMarker) {
-        previousMarker.remove();
-      }
-
-      // Add a marker for the destination location
-      const destinationMarker = new mapboxgl.Marker({ color: "orange" })
-        .setLngLat(lngLat)
-        .addTo(newMap);
-
-      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
-        .setHTML(locationName)
-        .addTo(newMap);
-
-      destinationMarker.setPopup(popup); // Associate popup with marker
-
-      // Open the popup immediately after creating the marker
-      popup.addTo(newMap);
-
-      previousMarker = destinationMarker;
-
-      setDestinationMarker(destinationMarker);
-
-      drawOrUpdateLine(myPosition, lngLat, newMap);
-
-      // drawLine();
-    });
-
-    setMap(newMap);
-  };
-
-  const drawOrUpdateLine = (startCoords, endCoords, map) => {
-    const lineCoordinates = [startCoords, endCoords];
-    console.log('lineCoordinates', lineCoordinates);
-
-    if (map.getSource('route')) {
-      map.getSource('route').setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: lineCoordinates,
-        },
-      });
-    } else {
-      // Create a new source and layer
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: lineCoordinates,
-          },
-        },
-      });
-
-      map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        paint: {
-          'line-color': 'orange',  // Customize line color
-          'line-width': 4,       // Customize line width
-        },
-      });
-    }
-  };
-
-  const reverseGeocode = async (latitude, longitude) => {
+  const reverseGeocode = async (lat, lng) => {
     try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${accessToken}`
-      );
-      const data = await response.json();
-      const locationName = data.features[0]?.place_name || "Unknown Location";
-      return locationName;
-    } catch (error) {
-      console.error("Error fetching reverse geocoding:", error);
-      return "Unknown Location";
+      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`);
+      const data = await res.json();
+      return data.features[0]?.place_name || "Unknown Location";
+    } catch { return "Unknown Location"; }
+  };
+
+  const drawOrUpdateLine = (start, end, m) => {
+    const coords = [start, end];
+    if (m.getSource('route')) {
+      m.getSource('route').setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } });
+    } else {
+      m.addSource('route', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } } });
+      m.addLayer({ id: 'route', type: 'line', source: 'route', paint: { 'line-color': '#4f46e5', 'line-width': 3 } });
     }
   };
 
-  const drawLine = () => {
-    if (map && pickup && dropoff) {
-      // Create a line between pickup and destination
-      const lineCoordinates = [pickup.coordinates, destinationMarker.getLngLat()];
-      const newLine = {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: lineCoordinates,
-        },
-      };
-
-      const sourceId = 'line-source';
-
-      // Check if the source already exists, remove it if it does
-      if (map.getSource(sourceId)) {
-        map.removeSource(sourceId);
-        map.removeLayer('line-layer');
-      }
-
-      // Add the line to the map
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: newLine,
+  useEffect(() => {
+    mapboxgl.accessToken = accessToken;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const loc = { coordinates: [pos.coords.longitude, pos.coords.latitude], locationName: await reverseGeocode(pos.coords.latitude, pos.coords.longitude) };
+      setPickup(loc);
+      myPosition = loc.coordinates;
+      const m = new mapboxgl.Map({ container: "cr-map", style: "mapbox://styles/mapbox/light-v11", center: loc.coordinates, zoom: 12 });
+      new mapboxgl.Marker({ color: "#4f46e5" }).setLngLat(loc.coordinates).setPopup(new mapboxgl.Popup().setHTML(loc.locationName)).addTo(m);
+      let prevMarker = null;
+      m.on("dblclick", async (e) => {
+        const lngLat = e.lngLat.toArray();
+        const name = await reverseGeocode(lngLat[1], lngLat[0]);
+        setDropoff({ coordinates: lngLat, locationName: name });
+        if (prevMarker) prevMarker.remove();
+        const marker = new mapboxgl.Marker({ color: "#ef4444" }).setLngLat(lngLat).addTo(m);
+        new mapboxgl.Popup({ offset: 25 }).setHTML(name).addTo(m);
+        marker.setPopup(new mapboxgl.Popup().setHTML(name));
+        prevMarker = marker;
+        setDestinationMarker(marker);
+        drawOrUpdateLine(myPosition, lngLat, m);
       });
+      setMap(m);
+    }, (err) => {
+      console.error(err);
+      const m = new mapboxgl.Map({ container: "cr-map", style: "mapbox://styles/mapbox/light-v11", center: [0, 0], zoom: 2 });
+      setMap(m);
+    });
+  }, []);
 
-      map.addLayer({
-        id: 'line-layer',
-        type: 'line',
-        source: sourceId,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': 'blue',
-          'line-width': 2,
-        },
-      });
-
-      // Fit the map to the new line
-      map.fitBounds([pickup.coordinates, destinationMarker.getLngLat()], { padding: 50 });
-    }
+  const reverseGeocodeCoords = async (name) => {
+    try {
+      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(name)}.json?access_token=${accessToken}`);
+      const data = await res.json();
+      const coords = data.features[0]?.geometry?.coordinates || [0, 0];
+      return { latitude: coords[1], longitude: coords[0] };
+    } catch { return { latitude: 0, longitude: 0 }; }
   };
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (!dropoff.locationName) { toast.error('Please select a destination on the map'); return; }
+    if (!rideDetails.date || !rideDetails.time) { toast.error('Please fill in date and time'); return; }
+    setLoading(true);
     try {
-      // Reverse geocode to get coordinates for departure and destination
-      const pickupCoordinates = await reverseGeocodeCoordinates(pickup.locationName);
-      const dropoffCoordinates = await reverseGeocodeCoordinates(dropoff.locationName);
-
-      const response = await fetch('/api/apiCreateRide', {
+      const pickupCoords = await reverseGeocodeCoords(pickup.locationName);
+      const dropoffCoords = await reverseGeocodeCoords(dropoff.locationName);
+      const res = await fetch('/api/apiCreateRide', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          departure: pickup.locationName,
-          destination: dropoff.locationName,
-          date: rideDetails.date,
-          time: rideDetails.time,
-          seatsAvailable: rideDetails.seatsAvailable,
-          driverId: driverId,
-          departureLatitude: pickupCoordinates.latitude,
-          departureLongitude: pickupCoordinates.longitude,
-          destinationLatitude: dropoffCoordinates.latitude,
-          destinationLongitude: dropoffCoordinates.longitude,
+          departure: pickup.locationName, destination: dropoff.locationName,
+          date: rideDetails.date, time: rideDetails.time,
+          seatsAvailable: rideDetails.seatsAvailable, driverId,
+          departureLatitude: pickupCoords.latitude, departureLongitude: pickupCoords.longitude,
+          destinationLatitude: dropoffCoords.latitude, destinationLongitude: dropoffCoords.longitude,
         }),
       });
-
-      if (response.ok) {
-        console.log('Ride created successfully');
+      if (res.ok) {
         localStorage.setItem('role', 'driver');
-        // Show a notification before redirecting
-        toast.success('Drive created successfully', {
-          position: 'top-center',
-          duration: 3000,
-        });
-        // Redirect or perform any other actions after successful ride creation
-        router.push('/'); // Redirect to the home page
-      } else {
-        toast.error('Error during ride creation', {
-          position: 'top-center',
-          duration: 3000,
-        });
-        console.error('Failed to create ride');
-      }
-    } catch (error) {
-      console.error('Error during ride creation:', error);
-    }
+        toast.success('Trip created successfully!');
+        router.push('/');
+      } else { toast.error('Failed to create trip. Please try again.'); }
+    } catch (e) { toast.error('An error occurred.'); }
+    finally { setLoading(false); }
   };
-
-  // Function to get coordinates from location name using reverse geocoding
-  const reverseGeocodeCoordinates = async (locationName) => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?access_token=${accessToken}`
-      );
-      const data = await response.json();
-      const coordinates = data.features[0]?.geometry?.coordinates || [0, 0];
-      return { latitude: coordinates[1], longitude: coordinates[0] };
-    } catch (error) {
-      console.error("Error fetching reverse geocoding coordinates:", error);
-      return { latitude: 0, longitude: 0 }; // Return default coordinates on error
-    }
-  };
-
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Enforce maxSeatsPerTrip when updating seatsAvailable
-    const seatsAvailable = Math.min(parseInt(value, 10), maxSeatsPerTrip);
-
-    setRideDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: seatsAvailable,
-    }));
-  };
-
-  const handleDateChange = (e) => {
-    const { name, value } = e.target;
-
-    setRideDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
-
-  const handleTimeChange = (e) => {
-    const { name, value } = e.target;
-
-    setRideDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
-
-  useEffect(() => {
-    setupMap();
-  }, []); // Run this effect once after the initial render
 
   return (
-    <Wrapper>
-      <ButtonContainer>
-        <Link href="/" passHref>
-          <BackButton>
-            <BsArrowLeft size={30} />
-          </BackButton>
-        </Link>
-      </ButtonContainer>
+    <>
+      <Head>
+        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+      </Head>
 
-      <SecondWrapper>
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: #f5f6fa; }
 
-        <ContentContainer>
-          <FormContainer>
-            <h1 className="text-4xl mb-8 text-center font-serif text-blue-990">Create a Trip</h1>
-            <form
-              onSubmit={handleSubmit}
-              className="border-2 border-blue-500 rounded-xl px-8 pt-6 pb-8 mb-4"
-            >
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="departure">
-                  Pickup Location:
-                  <input
-                    type="text"
-                    name="departure"
-                    value={pickup.locationName}
-                    onChange={handleChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
+        .cr-root { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .cr-topbar {
+          height: 60px; flex-shrink: 0;
+          background: #1e2235;
+          display: flex; align-items: center;
+          padding: 0 1.25rem; gap: 1rem;
+        }
+        .cr-back {
+          display: flex; align-items: center; justify-content: center;
+          width: 36px; height: 36px; border-radius: 8px;
+          background: rgba(255,255,255,0.08); border: none;
+          color: #fff; cursor: pointer; transition: all 0.15s;
+          text-decoration: none;
+        }
+        .cr-back:hover { background: rgba(255,255,255,0.15); }
+        .cr-topbar-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 1rem; font-weight: 700; color: #fff;
+        }
+
+        .cr-body { flex: 1; display: flex; overflow: hidden; }
+
+        .cr-form-col {
+          width: 380px; flex-shrink: 0;
+          background: #fff; border-right: 1px solid #e5e7eb;
+          overflow-y: auto; padding: 1.5rem;
+          display: flex; flex-direction: column; gap: 1.25rem;
+        }
+
+        .cr-form-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.25rem; font-weight: 700;
+          color: #111827; letter-spacing: -0.01em;
+        }
+        .cr-form-sub { font-size: 0.8rem; color: #9ca3af; margin-top: 0.2rem; }
+
+        .cr-hint {
+          display: flex; align-items: center; gap: 0.5rem;
+          background: #eef2ff; border: 1px solid #c7d2fe;
+          border-radius: 8px; padding: 0.65rem 0.85rem;
+          font-size: 0.78rem; color: #4f46e5;
+        }
+
+        .cr-field { display: flex; flex-direction: column; gap: 0.4rem; }
+        .cr-label {
+          font-size: 0.72rem; font-weight: 600;
+          color: #6b7280; text-transform: uppercase; letter-spacing: 0.07em;
+        }
+        .cr-input {
+          width: 100%; padding: 0.7rem 0.9rem;
+          background: #f9fafb; border: 1px solid #e5e7eb;
+          border-radius: 8px; font-size: 0.875rem;
+          font-family: 'DM Sans', sans-serif; color: #111827;
+          outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .cr-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); background: #fff; }
+        .cr-input:read-only { color: #6b7280; cursor: default; }
+
+        .cr-row { display: flex; gap: 0.75rem; }
+        .cr-row .cr-field { flex: 1; }
+
+        .cr-seats-info {
+          display: flex; align-items: center; justify-content: space-between;
+          font-size: 0.75rem; color: #9ca3af;
+        }
+
+        .cr-submit {
+          width: 100%; padding: 0.85rem;
+          background: #4f46e5; color: #fff;
+          border: none; border-radius: 10px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 0.9rem; font-weight: 500;
+          cursor: pointer; transition: background 0.15s;
+          margin-top: auto;
+        }
+        .cr-submit:hover { background: #4338ca; }
+        .cr-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .cr-map-col {
+          flex: 1; position: relative; overflow: hidden;
+        }
+        #cr-map {
+          width: 100%; height: 100%;
+          position: absolute; top: 0; left: 0;
+        }
+        .cr-map-hint {
+          position: absolute; bottom: 1rem; left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255,255,255,0.95); border: 1px solid #e5e7eb;
+          border-radius: 100px; padding: 0.4rem 1rem;
+          font-size: 0.75rem; color: #6b7280;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          white-space: nowrap; z-index: 5;
+        }
+      `}</style>
+
+      <div className="cr-root">
+        <div className="cr-topbar">
+          <Link href="/" passHref>
+            <a className="cr-back"><BsArrowLeft size={16} /></a>
+          </Link>
+          <div className="cr-topbar-title">Create a Trip</div>
+        </div>
+
+        <div className="cr-body">
+          <div className="cr-form-col">
+            <div>
+              <div className="cr-form-title">Trip Details</div>
+              <div className="cr-form-sub">Double-click on the map to set your destination</div>
+            </div>
+
+            <div className="cr-hint">
+              <FaRoute size={13} />
+              Your current location is set as departure. Double-click map to set destination.
+            </div>
+
+            <div className="cr-field">
+              <div className="cr-label"><FaMapMarkerAlt size={10} style={{display:'inline',marginRight:4}} />Pickup Location</div>
+              <input className="cr-input" type="text" value={pickup.locationName} readOnly />
+            </div>
+
+            <div className="cr-field">
+              <div className="cr-label"><FaMapMarkerAlt size={10} style={{display:'inline',marginRight:4,color:'#ef4444'}} />Destination</div>
+              <input className="cr-input" type="text" value={dropoff.locationName} readOnly placeholder="Double-click on map…" />
+            </div>
+
+            <div className="cr-row">
+              <div className="cr-field">
+                <div className="cr-label"><FaCalendarAlt size={10} style={{display:'inline',marginRight:4}} />Date</div>
+                <input className="cr-input" type="date" value={rideDetails.date}
+                  onChange={e => setRideDetails(p => ({ ...p, date: e.target.value }))} />
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destination">
-                  Destination:
-                  <input
-                    type="text"
-                    name="destination"
-                    value={dropoff.locationName}
-                    onChange={handleChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
+              <div className="cr-field">
+                <div className="cr-label"><FaClock size={10} style={{display:'inline',marginRight:4}} />Time</div>
+                <input className="cr-input" type="time" value={rideDetails.time}
+                  onChange={e => setRideDetails(p => ({ ...p, time: e.target.value }))} />
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="date">
-                  Date:
-                  <input
-                    type="date"
-                    name="date"
-                    value={rideDetails.date}
-                    onChange={handleDateChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-                {dateError && (
-                  <p className="text-red-500 text-s text-center">{dateError}</p>
-                )}
+            </div>
+
+            <div className="cr-field">
+              <div className="cr-label"><FaChair size={10} style={{display:'inline',marginRight:4}} />Seats Available</div>
+              <input className="cr-input" type="number" min={1} max={maxSeatsPerTrip}
+                value={rideDetails.seatsAvailable}
+                onChange={e => setRideDetails(p => ({ ...p, seatsAvailable: Math.min(parseInt(e.target.value) || 1, maxSeatsPerTrip) }))} />
+              <div className="cr-seats-info">
+                <span>Min: 1</span>
+                <span>Max allowed: {maxSeatsPerTrip}</span>
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="time">
-                  Time:
-                  <input
-                    type="time"
-                    name="time"
-                    value={rideDetails.time}
-                    onChange={handleTimeChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="maxSeats">
-                  Max Seats:
-                  <span className="text-gray-500 ml-2">{maxSeatsPerTrip}</span>
-                </label>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
-                  Seats Available:
-                  <input
-                    type="number"
-                    name="seatsAvailable"
-                    value={rideDetails.seatsAvailable}
-                    onChange={handleChange}
-                    max={maxSeatsPerTrip}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
+            </div>
 
-                </label>
-                {seatError && (
-                  <p className="text-red-500 text-s text-center">{seatError}</p>
-                )}
-              </div>
-              <div className='mt-10 text-center'>
-                <button
-                  disabled={dateError || seatError}
-                  type="submit"
-                  className="left-1/2 bg-blue-500 hover:bg-blue-700
-                 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                  Publish Ride
-                </button>
-              </div>
-            </form>
-          </FormContainer>
+            <button className="cr-submit" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Publishing…' : 'Publish Trip →'}
+            </button>
+          </div>
 
-
-        </ContentContainer>
-
-        <MapContainer id="map" />
-
-      </SecondWrapper>
-
-
-
-
-    </Wrapper>
+          <div className="cr-map-col">
+            <div id="cr-map" />
+            <div className="cr-map-hint">Double-click to set destination</div>
+          </div>
+        </div>
+      </div>
+    </>
   );
-}
-const Wrapper = tw.div`
-  pt-1 bg-gray-200 h-screen 
-`;
-
-const SecondWrapper = tw.div`
-  flex h-screen mt-2
-`;
-
-const ButtonContainer = tw.div`
-  bg-white p-2 h-12
-`;
-
-const BackButton = tw.button``;
-
-const MapContainer = tw.div`
-  flex-1 w-full rounded-xl
-`;
-
-const ContentContainer = tw.div`
-   flex flex-row mr-2 h-full
-`;
-
-const FormContainer = tw.div`
-   max-w-2xl mb-1 p-8 bg-white shadow-2xl rounded-xl
-`;
-
+};
 
 export default CreateRide;

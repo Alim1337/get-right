@@ -1,46 +1,80 @@
 // components/Map.js
+import React, { forwardRef, useEffect, useRef, useImperativeHandle } from "react";
 
-import React, { forwardRef, useEffect, useRef } from "react";
-import tw from "tailwind-styled-components";
-import mapboxgl from "mapbox-gl";
-
-export const accessToken =
-  "pk.eyJ1IjoidGhlYXNzZXQiLCJhIjoiY2tyb3V1ZTZmMWpsMDJubDdha2lsbXYxeSJ9.A_zwqkPVPGP75uNMSHlzNQ";
-
-mapboxgl.accessToken = accessToken;
+// Keep accessToken export so existing imports don't break
+export const accessToken = "";
 
 const Map = forwardRef(({ location, mapDestination }, ref) => {
-  const mapRef = useRef(null);
-  let previousMarkers = [];
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const routeLayerRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    showPin,
+    showRoad,
+    setZoom: (z) => mapInstanceRef.current?.setZoom(z),
+  }));
 
   useEffect(() => {
-    const map = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: location,
-      zoom: 2,
+    // Dynamically import leaflet to avoid SSR issues
+    if (typeof window === "undefined") return;
+    if (mapInstanceRef.current) return; // already initialized
+
+    import("leaflet").then((L) => {
+      // Fix default marker icon path issue with Next.js
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+      });
+
+      const map = L.map(mapContainerRef.current).setView(
+        [location[1], location[0]], // Leaflet uses [lat, lng]
+        13
+      );
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Add current location marker
+      const userIcon = L.divIcon({
+        className: "",
+        html: `<div style="
+          width:14px;height:14px;
+          background:#4f46e5;
+          border:3px solid #fff;
+          border-radius:50%;
+          box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        "></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      L.marker([location[1], location[0]], { icon: userIcon })
+        .addTo(map)
+        .bindPopup("Your location");
+
+      mapInstanceRef.current = map;
     });
 
-    addToMap(map, location);
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
 
-    const bounds = new mapboxgl.LngLatBounds(location, location);
-
-    map.fitBounds(bounds, {
-      padding: 50,
-    });
-
-    // Attach the map instance to the ref
-    mapRef.current = map;
-
-    // Attach the ref to the map component
-    if (ref) {
-      ref.current = {
-        ...mapRef.current,
-        showPin: showPin,
-        showRoad: showRoad,
-      };
+  // Update view when location changes
+  useEffect(() => {
+    if (mapInstanceRef.current && location) {
+      mapInstanceRef.current.setView([location[1], location[0]], 13);
     }
-  }, [location, ref]);
+  }, [location]);
 
   useEffect(() => {
     if (mapDestination) {
@@ -48,95 +82,111 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
     }
   }, [mapDestination]);
 
-  const addToMap = (map, latLon) => new mapboxgl.Marker().setLngLat(latLon).addTo(map);
+  const showPin = (destinationLocation, destinationName, departureLocation = null, departureName = null) => {
+    if (!mapInstanceRef.current) return;
 
+    import("leaflet").then((L) => {
+      // Remove old markers
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
 
+      const makeIcon = (color) => L.divIcon({
+        className: "",
+        html: `<div style="
+          width:16px;height:16px;
+          background:${color};
+          border:3px solid #fff;
+          border-radius:50%;
+          box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        "></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
 
-  const showPin = (
-    destinationLocation,
-    destinationName,
-    departureLocation = null,
-    departureName = null
-  ) => {
-    // Remove any existing markers
-    previousMarkers.forEach((marker) => marker.remove());
-    previousMarkers = [];
+      // Parse destination
+      const [dLng, dLat] = destinationLocation.split(",").map(parseFloat);
+      const destMarker = L.marker([dLat, dLng], { icon: makeIcon("#ef4444") })
+        .addTo(mapInstanceRef.current)
+        .bindPopup(`<b>Destination:</b> ${destinationName}`)
+        .openPopup();
+      markersRef.current.push(destMarker);
 
-    // Handle destination pin (always present)
-    const [lat, lng] = destinationLocation.split(",").map(parseFloat);
-    const destinationMarker = new mapboxgl.Marker({ color: "red" })
-      .setLngLat([lat, lng])
-      .addTo(mapRef.current);
-    const destinationPopup = new mapboxgl.Popup({ offset: 25 })
-      .setHTML("Destination: " + destinationName)
-      .addTo(mapRef.current);
-    destinationMarker.setPopup(destinationPopup);
-    previousMarkers.push(destinationMarker);
+      // Parse departure if provided
+      if (departureLocation) {
+        const [depLng, depLat] = departureLocation.split(",").map(parseFloat);
+        const depMarker = L.marker([depLat, depLng], { icon: makeIcon("#16a34a") })
+          .addTo(mapInstanceRef.current)
+          .bindPopup(`<b>Departure:</b> ${departureName}`);
+        markersRef.current.push(depMarker);
 
-    // Handle departure pin (optional)
-    if (departureLocation) {
-      const [departureLat, departureLng] = departureLocation.split(",").map(
-        parseFloat
-      );
-      const departureMarker = new mapboxgl.Marker({ color: "red" })
-        .setLngLat([departureLat, departureLng])
-        .addTo(mapRef.current);
-      const departurePopup = new mapboxgl.Popup({ offset: 25 })
-        .setHTML("Departure: " + departureName)
-        .addTo(mapRef.current);
-      departureMarker.setPopup(departurePopup);
-      previousMarkers.push(departureMarker);
-    }
+        // Fit map to show both markers
+        const group = L.featureGroup([destMarker, depMarker]);
+        mapInstanceRef.current.fitBounds(group.getBounds(), { padding: [40, 40] });
+      } else {
+        mapInstanceRef.current.setView([dLat, dLng], 13);
+      }
+    });
   };
 
   const showRoad = (startCoords, endCoords, includeBegin = false) => {
-    const end = endCoords.split(",").map(parseFloat);
-    const lineCoordinates = includeBegin
-      ? [startCoords.split(",").map(parseFloat), end]
-      : [startCoords, end];
+    if (!mapInstanceRef.current) return;
 
-    if (mapRef.current.getSource("route")) {
-      mapRef.current.getSource("route").setData({
-        type: "Feature",
-        properties: {},
-        geometry: {
-          type: "LineString",
-          coordinates: lineCoordinates,
-        },
-      });
-    } else {
-      mapRef.current.addSource("route", {
-        type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: lineCoordinates,
-          },
-        },
-      });
+    import("leaflet").then((L) => {
+      // Remove old route
+      if (routeLayerRef.current) {
+        routeLayerRef.current.remove();
+        routeLayerRef.current = null;
+      }
 
-      mapRef.current.addLayer({
-        id: "route",
-        type: "line",
-        source: "route",
-        paint: {
-          "line-color": "red",
-          "line-width": 2,
-        },
-      });
-    }
+      let start, end;
+
+      if (includeBegin) {
+        const [sLng, sLat] = startCoords.split(",").map(parseFloat);
+        const [eLng, eLat] = endCoords.split(",").map(parseFloat);
+        start = [sLat, sLng];
+        end = [eLat, eLng];
+      } else {
+        // startCoords is already an array [lng, lat]
+        start = [startCoords[1], startCoords[0]];
+        const [eLng, eLat] = endCoords.split(",").map(parseFloat);
+        end = [eLat, eLng];
+      }
+
+      const polyline = L.polyline([start, end], {
+        color: "#4f46e5",
+        weight: 4,
+        opacity: 0.8,
+        dashArray: "8, 4",
+      }).addTo(mapInstanceRef.current);
+
+      routeLayerRef.current = polyline;
+      mapInstanceRef.current.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+    });
   };
 
-
-  return <Wrapper id="map"></Wrapper>;
+  return (
+    <>
+      <style>{`
+        .map-container {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+        }
+        .leaflet-container {
+          width: 100%; height: 100%;
+          background: #f0f0f0;
+          font-family: 'DM Sans', sans-serif;
+        }
+      `}</style>
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      />
+      <div ref={mapContainerRef} className="map-container" />
+    </>
+  );
 });
 
-Map.displayName = 'Map';
-
-const Wrapper = tw.div`
-  flex-1 h-1/2 ml-2 mt-2
-`;
+Map.displayName = "Map";
 
 export default Map;

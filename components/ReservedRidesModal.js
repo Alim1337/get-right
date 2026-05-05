@@ -1,112 +1,195 @@
 import React, { useEffect } from 'react';
+import { FaMapMarkerAlt, FaClock, FaUser, FaPhone, FaTimes, FaRoute } from 'react-icons/fa';
 
 const ReservedRidesModal = ({ reservations, onClose, showInMap, location }) => {
-  // console.log('Received reservations in ReservedRidesModal:', reservations);
-
-  useEffect(() => {
-    // console.log('Received reservations from comp:', reservations);
-  }, [reservations]);
-  
 
   const handleDeleteReservation = async (reservationId) => {
-
     try {
-
-      console.log('Deleting reservation with ID:', reservationId);
-      const response = await fetch('/api/apiReservation', {
+      await fetch('/api/apiReservation', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reservationId }),
       });
-
-      if (response.ok) {
-        // Handle successful deletion, such as refreshing the reservations list
-        console.log('Reservation deleted successfully');
-        // You might want to refetch or update the reservations list here
-      } else {
-        console.error('Failed to delete reservation');
-      }
-    } catch (error) {
-      console.error('Error deleting reservation:', error);
-    }
-  };
-
-  const handleShowInMap = (destinationLocation) => {
-    console.log('handelShowmap log ', destinationLocation);
-    showInMap(destinationLocation); // Pass destinationLocation directly
+    } catch (error) { console.error('Error deleting reservation:', error); }
   };
 
   const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-
-    return `${hours.toString().padStart(2, '0')}H ${minutes.toString().padStart(2, '0')}M ${remainingSeconds.toString().padStart(2, '0')}S`;
+    if (seconds < 0) return null;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}h ${m}m ${s}s`;
   };
 
   return (
-    <div className="fixed left-0 top-0 h-full overflow-y-auto bg-white rounded-lg p-6 shadow-lg transition-all duration-300 ease-in-out border-4 border-green-500 flex flex-col opacity-100 transform  hover:scale-105">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-4xl font-roboto font-bold text-green-700 transition-colors duration-500 ease-in-out hover:text-green-800">Your Reserved Rides</h2>
-        <button
-          onClick={onClose}
-          className="bg-green-500 text-white px-6 py-2 rounded-full text-lg font-roboto uppercase leading-normal transition-all duration-300 ease-in-out hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 active:bg-green-700"
-        >
-          Close
-        </button>
-      </div>
-      <ul className="list-none border-t-2 border-green-500">
-        {reservations && reservations.length > 0 ? (
-          reservations.map((reservation) => {
-            const now = new Date();
-            const departureTime = new Date(reservation.departureTime);
-            const timeDifference = Math.floor((departureTime - now) / 1000); // Seconds difference
-            if (timeDifference <= -12 * 60 * 60) {
-              // If more than 12 hours have passed, delete the reservation
-              handleDeleteReservation(reservation.reservationId);
-            }
+    <>
+      <style>{`
+        .rrm-overlay {
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.4);
+          z-index: 100;
+          display: flex; align-items: center; justify-content: center;
+          padding: 1.5rem;
+          backdrop-filter: blur(4px);
+        }
+        .rrm-modal {
+          background: #fff; border-radius: 16px;
+          width: 100%; max-width: 560px;
+          max-height: 80vh; display: flex; flex-direction: column;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+          overflow: hidden;
+        }
+        .rrm-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid #f3f4f6;
+        }
+        .rrm-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.1rem; font-weight: 700; color: #111827;
+        }
+        .rrm-close {
+          width: 32px; height: 32px; border-radius: 8px;
+          background: #f3f4f6; border: none;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: #6b7280; transition: all 0.15s;
+        }
+        .rrm-close:hover { background: #e5e7eb; color: #111827; }
 
-            return (
-              <li
-                key={reservation.reservationId}
-                className="mb-6 text-green-600 hover:text-green-800 transition-all duration-300 ease-in-out border-b-2 border-green-500"
-              >
-                <span className="font-bold">Reservation Time:</span> {new Date(reservation.reservationTime).toLocaleString()} <br />
-                <span className="font-bold">Departure Time:</span> {new Date(reservation.departureTime).toLocaleString()} <br />
+        .rrm-body { overflow-y: auto; padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
 
-                <span className="font-bold">Driver:</span> {reservation.driver.firstName} {reservation.driver.lastName} <br />
-                <span className="font-bold">Driver's phone:</span> {reservation.driver.phoneNumber} <br />
-                <span className="font-bold">Departure Location:</span> {reservation.departureLocation} <br />
-                <span className="font-bold">Destination Location:</span> {reservation.destinationLocation} <br />
-                <div className='flex items-center'>
-                  <button
-                    onClick={() => handleShowInMap(reservation)}
-                    className=" bg-green-500 text-white px-4 py-2 rounded-full text-lg font-roboto my-3 leading-normal transition-all duration-300 ease-in-out hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 active:bg-green-700"
-                  >
-                    Show in Map
-                  </button>
-                  <span className='ml-auto'>
-                    {timeDifference >= 0 ? (
-                      <>
-                        {formatTime(timeDifference)} before departure
-                      </>
-                    ) : (
-                      <span className=' text-red-500'>Departure time has passed</span>
-                    )}
-                  </span>
+        .rrm-card {
+          background: #f9fafb; border: 1px solid #e5e7eb;
+          border-radius: 12px; padding: 1rem;
+        }
 
+        .rrm-card-header {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 0.75rem;
+        }
+        .rrm-driver {
+          display: flex; align-items: center; gap: 0.5rem;
+        }
+        .rrm-driver-avatar {
+          width: 30px; height: 30px; border-radius: 50%;
+          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 0.65rem; font-weight: 700; color: #fff;
+        }
+        .rrm-driver-name { font-size: 0.85rem; font-weight: 600; color: #111827; }
+        .rrm-driver-phone { font-size: 0.72rem; color: #9ca3af; }
+
+        .rrm-timer {
+          font-size: 0.72rem; font-weight: 600;
+          padding: 0.25rem 0.6rem; border-radius: 100px;
+        }
+        .rrm-timer.active { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .rrm-timer.passed { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+
+        .rrm-route {
+          display: flex; flex-direction: column; gap: 0.4rem;
+          background: #fff; border-radius: 8px;
+          padding: 0.65rem 0.85rem; margin-bottom: 0.75rem;
+          border: 1px solid #f3f4f6;
+        }
+        .rrm-route-row {
+          display: flex; align-items: center; gap: 0.5rem;
+          font-size: 0.8rem; color: #374151;
+        }
+        .rrm-divider { width: 1px; height: 10px; background: #e5e7eb; margin-left: 6px; }
+
+        .rrm-meta {
+          display: flex; gap: 1rem; margin-bottom: 0.75rem;
+        }
+        .rrm-meta-item {
+          display: flex; align-items: center; gap: 0.4rem;
+          font-size: 0.75rem; color: #6b7280;
+        }
+
+        .rrm-actions { display: flex; gap: 0.5rem; }
+        .rrm-btn-map {
+          flex: 1; padding: 0.55rem;
+          background: #eef2ff; color: #4f46e5;
+          border: 1px solid #c7d2fe; border-radius: 8px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 0.8rem; font-weight: 500;
+          cursor: pointer; transition: all 0.15s;
+          display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .rrm-btn-map:hover { background: #e0e7ff; }
+
+        .rrm-empty {
+          text-align: center; padding: 3rem 1rem;
+          color: #9ca3af; font-size: 0.9rem;
+        }
+      `}</style>
+
+      <div className="rrm-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="rrm-modal">
+          <div className="rrm-header">
+            <div className="rrm-title">Your Reserved Rides</div>
+            <button className="rrm-close" onClick={onClose}><FaTimes size={14} /></button>
+          </div>
+
+          <div className="rrm-body">
+            {!reservations || reservations.length === 0 ? (
+              <div className="rrm-empty">No reserved rides yet.</div>
+            ) : reservations.map((r) => {
+              const now = new Date();
+              const dep = new Date(r.departureTime);
+              const diff = Math.floor((dep - now) / 1000);
+              if (diff <= -12 * 60 * 60) handleDeleteReservation(r.reservationId);
+              const initials = `${r.driver?.firstName?.[0] || ''}${r.driver?.lastName?.[0] || ''}`;
+              return (
+                <div key={r.reservationId} className="rrm-card">
+                  <div className="rrm-card-header">
+                    <div className="rrm-driver">
+                      <div className="rrm-driver-avatar">{initials}</div>
+                      <div>
+                        <div className="rrm-driver-name">{r.driver?.firstName} {r.driver?.lastName}</div>
+                        <div className="rrm-driver-phone">{r.driver?.phoneNumber}</div>
+                      </div>
+                    </div>
+                    <div className={`rrm-timer ${diff >= 0 ? 'active' : 'passed'}`}>
+                      {diff >= 0 ? formatTime(diff) + ' left' : 'Departed'}
+                    </div>
+                  </div>
+
+                  <div className="rrm-route">
+                    <div className="rrm-route-row">
+                      <FaMapMarkerAlt size={11} color="#16a34a" />
+                      {r.departureLocation}
+                    </div>
+                    <div className="rrm-divider" />
+                    <div className="rrm-route-row">
+                      <FaMapMarkerAlt size={11} color="#ef4444" />
+                      {r.destinationLocation}
+                    </div>
+                  </div>
+
+                  <div className="rrm-meta">
+                    <div className="rrm-meta-item">
+                      <FaClock size={11} />
+                      {new Date(r.reservationTime).toLocaleString()}
+                    </div>
+                    <div className="rrm-meta-item">
+                      <FaClock size={11} color="#4f46e5" />
+                      Departs: {new Date(r.departureTime).toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="rrm-actions">
+                    <button className="rrm-btn-map" onClick={() => showInMap(r)}>
+                      <FaRoute size={12} /> Show on Map
+                    </button>
+                  </div>
                 </div>
-
-              </li>
-            );
-          })
-        ) : (
-          <li className="mb-6 text-green-600 hover:text-green-800 transition-all duration-300 ease-in-out">No reserved rides</li>
-        )}
-      </ul>
-    </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
