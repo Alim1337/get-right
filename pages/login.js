@@ -1,506 +1,421 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import tw from "tailwind-styled-components";
-import { SiX } from "react-icons/si";
+import { toast } from 'sonner';
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
-import { Notification, toast } from 'sonner';
-import Image from 'next/image';
+import Head from "next/head";
 
+const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isPhoneNumberValid = (p) => !isNaN(p) && p.length === 10;
+const isValidStudentId = (s) => !isNaN(s) && s.length === 12;
 
-const validateEmail = (email) => {
-  // Basic email validation, adjust as needed
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-const isPhoneNumberValid = (phoneNumber) => {
-  return !isNaN(phoneNumber) && phoneNumber.length === 10;
-};
-
-const isValidStudentId = (studentId) => {
-  return !isNaN(studentId) && studentId.length === 12;
-};
-
-const showErrorToast = (error) => {
-  toast.error(error);
-};
-const showNotification = (message, type) => {
-  toast.success(message);
-};
+const STEPS = [
+  { label: "Name" },
+  { label: "Phone" },
+  { label: "Email" },
+  { label: "Password" },
+  { label: "Student ID" },
+];
 
 const Login = () => {
   const router = useRouter();
-  const [showLoginFields, setShowLoginFields] = useState(false);
-  const [showInscriptionFields, setShowInscriptionFields] = useState(false);
+  const [isRegisterVisible, setIsRegisterVisible] = useState(false);
+  const [step, setStep] = useState(1);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [studentId, setStudentId] = useState('');
-  const [notification, setNotification] = useState(null);
-  const [isRegisterVisible, setIsRegisterVisible] = useState(false);
-  const [step, setStep] = useState(1);
-  const [validationErrors, setValidationErrors] = useState({});
-
-  const validateFields = () => {
-    const errors = {};
-
-    if (step === 1) {
-      if (!firstName.trim()) {
-        errors.firstName = 'First Name is required';
-      }
-      if (!lastName.trim()) {
-        errors.lastName = 'Last Name is required';
-      }
-    } else if (step === 2) {
-      if (!phoneNumber.trim() || !isPhoneNumberValid(phoneNumber)) {
-        errors.phoneNumber = 'Invalid or empty phone number';
-      }
-    } else if (step === 3) {
-      if (!username.trim() || !validateEmail(username)) {
-        errors.username = 'Invalid or empty email';
-      }
-    } else if (step === 4) {
-      if (!password.trim()) {
-        errors.password = 'Password is required';
-      }
-    } else if (step === 5) {
-      if (!studentId.trim() || !isValidStudentId(studentId)) {
-        errors.studentId = 'Invalid or empty student ID';
-      }
-    }
-
-    setValidationErrors(errors);
-
-    // Return true if no errors, false otherwise
-    return Object.keys(errors).length === 0 ? null : errors;
-  };
-
-  const handleNextStep = () => {
-    const validationErrors = validateFields();
-    if (!validationErrors) {
-      setStep((prevStep) => prevStep + 1);
-    } else {
-      console.log('Validation errors:', validationErrors);
-      const errorMessage = Object.values(validationErrors)[0];
-      showErrorToast(errorMessage || 'Please fill in the required fields correctly.');
-    }
-  };
-
-  const handlePrevStep = () => {
-    setStep((prevStep) => Math.max(1, prevStep - 1));
-  };
-
- 
-  const closeNotification = () => {
-    // Close the toast if needed
-    toast.dismiss();
-  };
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      // Check if token is valid on the server
-      verifyToken(token)
-        .then(isValid => {
-          if (isValid) {
-            router.push("/");
-          } else {
-            localStorage.removeItem('token'); // Remove invalid token
-          }
-        })
-        .catch(error => {
-          console.error('Error verifying token:', error);
-          localStorage.removeItem('token'); // Remove token on error
-        });
-    }
+    if (token) router.push("/");
   }, []);
 
-  // const handleSignInClick = () => {
-  //   setShowLoginFields(true);
-  // };
-
-  // const handleInscriptionClick = () => {
-  //   setShowInscriptionFields(true);
-  // };
-
-  const handleToggleMode = (state) => {
-    setStep(1); // Reset step to 1
-    setIsRegisterVisible(state); // Toggle visibility of RegisterFields
+  const validateFields = () => {
+    if (step === 1) {
+      if (!firstName.trim()) return 'First name is required';
+      if (!lastName.trim()) return 'Last name is required';
+    } else if (step === 2) {
+      if (!isPhoneNumberValid(phoneNumber)) return 'Phone number must be 10 digits';
+    } else if (step === 3) {
+      if (!validateEmail(username)) return 'Invalid email address';
+    } else if (step === 4) {
+      if (!password.trim()) return 'Password is required';
+    } else if (step === 5) {
+      if (!isValidStudentId(studentId)) return 'Student ID must be 12 digits';
+    }
+    return null;
   };
 
+  const handleNextStep = () => {
+    const err = validateFields();
+    if (err) { toast.error(err); return; }
+    setStep(s => s + 1);
+  };
+
+  const handlePrevStep = () => setStep(s => Math.max(1, s - 1));
+  const handleToggleMode = (state) => { setStep(1); setIsRegisterVisible(state); };
+
   const handleLogin = async () => {
-    if (!validateEmail(username)) {
-      showErrorToast('Invalid email format. Please enter a valid email.');
-      return;
-    }
-  
+    if (!validateEmail(username)) { toast.error('Invalid email format.'); return; }
+    setLoading(true);
     try {
-      const response = await fetch('/api/login_users', {
+      const res = await fetch('/api/login_users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: username, password }),
       });
-  
-      if (response.ok) {
-        const data = await response.json();
+      if (res.ok) {
+        const data = await res.json();
         if (data.token_login) {
           localStorage.setItem('token', data.token_login);
           localStorage.setItem('userId', data.userId);
           localStorage.setItem('role', data.role);
+          toast.success('Welcome back!');
           router.push("/");
-          showNotification('Login successful', 'success');
-        } else {
-          showErrorToast('Login failed');
-        }
-      } else {
-        console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
-        showErrorToast('Login failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error during login:', error);
-      showErrorToast('Login failed. Please check your credentials.');
-    }
+        } else { toast.error('Login failed'); }
+      } else { toast.error('Invalid credentials. Please try again.'); }
+    } catch { toast.error('Login failed. Check your connection.'); }
+    finally { setLoading(false); }
   };
-  
-
 
   const handleRegister = async () => {
-    // if (!validateEmail(username)) {
-    //   showErrorToast('Invalid email format. Please enter a valid email.');
-    //   return;
-    // }
-
-    // if (!isPhoneNumberValid(phoneNumber)) {
-    //   showErrorToast('Invalid phone number format. Please enter a valid phone number.');
-    //   return;
-    // }
-
-    // if (!isValidStudentId(studentId)) {
-    //   showErrorToast('Invalid student ID format. Please enter a valid student ID.');
-    //   return;
-    // }
-
+    setLoading(true);
     try {
-      const response = await fetch('/api/signup_user', {
+      const res = await fetch('/api/signup_user', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          phoneNumber,
-          email: username,
-          password,
-          studentId,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, phoneNumber, email: username, password, studentId }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
+      if (res.ok) {
+        const data = await res.json();
         if (data.token_signup) {
           localStorage.setItem('token', data.token_signup);
           localStorage.setItem('userId', data.userId);
           localStorage.setItem('role', data.role);
+          toast.success('Registration successful!');
           router.push('/');
-          toast.success('Registration successful. You will log in.');
         }
-      } else if (response.status === 400) {
-        const errorData = await response.json();
-        showErrorToast(`Registration failed. ${errorData.error}`);
-      } else {
-        console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
-        showErrorToast('Registration failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error during registration:', error);
-      showErrorToast('Registration failed. Please try again.');
-    }
+      } else if (res.status === 400) {
+        const err = await res.json();
+        toast.error(`Registration failed: ${err.error}`);
+      } else { toast.error('Registration failed. Please try again.'); }
+    } catch { toast.error('Registration failed. Please try again.'); }
+    finally { setLoading(false); }
   };
 
-  // const isPhoneNumberValid = (phoneNumber) => {
-  //   return !isNaN(phoneNumber);
-  // };
-
   return (
-    <Wrapper>
+    <>
+      <Head>
+        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+      </Head>
 
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        .gr-page {
+          display: flex;
+          width: 100vw;
+          height: 100vh;
+          background: #0a0a0f;
+          font-family: 'DM Sans', sans-serif;
+        }
 
-      <SectionLeft>
+        /* ── LEFT ── */
+        .gr-left {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 4rem;
+          position: relative;
+          overflow: hidden;
+        }
+        .gr-left::before {
+          content: '';
+          position: absolute;
+          top: 10%; left: -10%;
+          width: 500px; height: 500px;
+          background: radial-gradient(circle, rgba(124,92,252,0.2) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .gr-left::after {
+          content: '';
+          position: absolute;
+          bottom: 5%; right: 5%;
+          width: 300px; height: 300px;
+          background: radial-gradient(circle, rgba(20,180,120,0.12) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .gr-logo {
+          font-family: 'Syne', sans-serif;
+          font-size: 1.4rem;
+          font-weight: 800;
+          color: #fff;
+          letter-spacing: -0.02em;
+          position: absolute;
+          top: 2.5rem; left: 3rem;
+          z-index: 1;
+        }
+        .gr-logo span {
+          background: linear-gradient(135deg, #7c5cfc, #14b478);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .gr-hero { position: relative; z-index: 1; }
+        .gr-eyebrow {
+          font-size: 0.7rem; font-weight: 500;
+          letter-spacing: 0.18em; text-transform: uppercase;
+          color: #7c5cfc; margin-bottom: 1.25rem;
+        }
+        .gr-title {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(2.5rem, 4vw, 4.5rem);
+          font-weight: 800; color: #fff;
+          line-height: 1.05; letter-spacing: -0.03em;
+          margin-bottom: 1.5rem;
+        }
+        .gr-title em {
+          font-style: normal;
+          background: linear-gradient(135deg, #7c5cfc, #14b478);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .gr-desc {
+          font-size: 1rem; color: #666;
+          line-height: 1.75; max-width: 380px;
+        }
 
-        <MainTitle><span className="bg-black text-white rounded-md p-1.5 pb-3">Get</span> <span className="p-1.5 text-white">Right</span> </MainTitle>
-        <Image
-          src="/assets/image6.svg"
-          alt="Your SVG Alt Text"
-          width={300} // Adjust the width as needed
-          height={200} // Adjust the height as needed
-        />
-        <div className="flex gap-20 mt-10">
-          <Image
-            src="/assets/image3.svg"
-            alt="Your SVG Alt Text"
-            width={300} // Adjust the width as needed
-            height={200} // Adjust the height as needed
-          />
-          <Image
-            src="/assets/image5.svg"
-            alt="Your SVG Alt Text"
-            width={300} // Adjust the width as needed
-            height={200} // Adjust the height as needed
-          />
+        /* ── RIGHT ── */
+        .gr-right {
+          width: 480px;
+          flex-shrink: 0;
+          background: #111118;
+          border-left: 1px solid #1c1c28;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+        }
+        .gr-form {
+          width: 100%;
+          max-width: 360px;
+        }
+
+        .gr-tag {
+          display: inline-block;
+          font-size: 0.65rem; font-weight: 500;
+          letter-spacing: 0.14em; text-transform: uppercase;
+          color: #7c5cfc;
+          background: rgba(124,92,252,0.1);
+          border: 1px solid rgba(124,92,252,0.2);
+          border-radius: 100px;
+          padding: 0.3rem 0.9rem;
+          margin-bottom: 1rem;
+        }
+        .gr-form-title {
+          font-family: 'Syne', sans-serif;
+          font-size: 2rem; font-weight: 800;
+          color: #fff; letter-spacing: -0.02em;
+          margin-bottom: 0.4rem;
+        }
+        .gr-form-sub { font-size: 0.85rem; color: #555; margin-bottom: 2rem; }
+
+        .gr-steps { display: flex; gap: 5px; margin-bottom: 0.6rem; }
+        .gr-step-bar { flex: 1; height: 3px; border-radius: 2px; background: #1e1e2e; transition: background 0.3s; }
+        .gr-step-bar.active { background: #7c5cfc; }
+        .gr-step-bar.done { background: #14b478; }
+        .gr-step-lbl { font-size: 0.72rem; color: #555; margin-bottom: 1.5rem; }
+        .gr-step-lbl strong { color: #7c5cfc; font-weight: 500; }
+
+        .gr-field { margin-bottom: 1rem; }
+        .gr-field label {
+          display: block; font-size: 0.7rem; font-weight: 500;
+          color: #555; letter-spacing: 0.08em; text-transform: uppercase;
+          margin-bottom: 0.45rem;
+        }
+        .gr-input {
+          width: 100%; background: #0c0c14;
+          border: 1px solid #1c1c28; border-radius: 10px;
+          padding: 0.85rem 1rem; font-size: 0.95rem;
+          font-family: 'DM Sans', sans-serif; color: #fff;
+          outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .gr-input::placeholder { color: #2e2e40; }
+        .gr-input:focus { border-color: #7c5cfc; box-shadow: 0 0 0 3px rgba(124,92,252,0.12); }
+
+        .gr-btn-primary {
+          width: 100%; padding: 0.9rem;
+          background: #7c5cfc; color: #fff;
+          font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500;
+          border: none; border-radius: 10px; cursor: pointer;
+          transition: background 0.2s, transform 0.15s;
+          margin-top: 0.5rem; margin-bottom: 0.75rem;
+        }
+        .gr-btn-primary:hover { background: #6a49f0; }
+        .gr-btn-primary:active { transform: scale(0.98); }
+        .gr-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .gr-btn-ghost {
+          width: 100%; padding: 0.9rem;
+          background: transparent; color: #666;
+          font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+          border: 1px solid #1c1c28; border-radius: 10px; cursor: pointer;
+          transition: all 0.2s;
+        }
+        .gr-btn-ghost:hover { border-color: #333; color: #ccc; }
+
+        .gr-nav { display: flex; gap: 0.6rem; margin-top: 0.5rem; margin-bottom: 0.75rem; }
+        .gr-btn-back {
+          flex: 1; padding: 0.9rem;
+          background: transparent; color: #555;
+          font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+          border: 1px solid #1c1c28; border-radius: 10px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          transition: all 0.2s;
+        }
+        .gr-btn-back:hover { border-color: #333; color: #ccc; }
+        .gr-btn-next {
+          flex: 1; padding: 0.9rem;
+          background: #7c5cfc; color: #fff;
+          font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+          border: none; border-radius: 10px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          transition: background 0.2s;
+        }
+        .gr-btn-next:hover { background: #6a49f0; }
+        .gr-btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .gr-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; }
+        .gr-divider-line { flex: 1; height: 1px; background: #1c1c28; }
+        .gr-divider-txt { font-size: 0.72rem; color: #3a3a50; white-space: nowrap; }
+
+        /* ── MOBILE ── */
+        @media (max-width: 860px) {
+          .gr-page { flex-direction: column; height: auto; min-height: 100vh; }
+          .gr-left {
+            padding: 6rem 2rem 3rem;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+          }
+          .gr-logo { left: 50%; transform: translateX(-50%); }
+          .gr-desc { margin: 0 auto; }
+          .gr-right {
+            width: 100%;
+            border-left: none;
+            border-top: 1px solid #1c1c28;
+            padding: 2.5rem 1.5rem;
+          }
+          .gr-form { max-width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+          .gr-left { padding: 5rem 1.5rem 2.5rem; }
+          .gr-right { padding: 2rem 1.25rem; }
+          .gr-title { font-size: 2rem; }
+          .gr-form-title { font-size: 1.7rem; }
+        }
+      `}</style>
+
+      <div className="gr-page">
+
+        {/* LEFT */}
+        <div className="gr-left">
+          <div className="gr-logo">get<span>right</span></div>
+          <div className="gr-hero">
+            <p className="gr-eyebrow">University ride sharing</p>
+            <h1 className="gr-title">Your campus,<br /><em>your commute.</em></h1>
+            <p className="gr-desc">Connect with fellow students for safe, affordable rides across campus and beyond. No hassle, no strangers.</p>
+          </div>
         </div>
 
-      </SectionLeft>
+        {/* RIGHT */}
+        <div className="gr-right">
+          <div className="gr-form">
 
-      <SectionRight>
-        <Title><span className="bg-black text-white rounded-md p-1.5">Get</span> <span className="p-1.5">Right</span> </Title>
-
-
-        {isRegisterVisible ? (
-          <RegisterFields>
-            <LoginTitle>Register</LoginTitle>
-
-            {step <= 5 && (
+            {!isRegisterVisible ? (
               <>
-                {step === 1 && (
-                  <>
-                    <Input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                    <Input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                  </>
-                )}
+                <span className="gr-tag">Welcome back</span>
+                <h2 className="gr-form-title">Sign in</h2>
+                <p className="gr-form-sub">Enter your student credentials to continue</p>
 
-                {step === 2 && (
-                  <>
-                    <Input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-                  </>
-                )}
+                <div className="gr-field">
+                  <label>Email address</label>
+                  <input className="gr-input" type="email" placeholder="you@university.edu"
+                    value={username} onChange={e => setUsername(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                </div>
+                <div className="gr-field">
+                  <label>Password</label>
+                  <input className="gr-input" type="password" placeholder="••••••••"
+                    value={password} onChange={e => setPassword(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                </div>
 
-                {step === 3 && (
-                  <>
-                    <Input type="text" placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} />
-                  </>
-                )}
+                <button className="gr-btn-primary" onClick={handleLogin} disabled={loading}>
+                  {loading ? 'Signing in…' : 'Sign in →'}
+                </button>
+                <div className="gr-divider">
+                  <div className="gr-divider-line" />
+                  <span className="gr-divider-txt">No account yet?</span>
+                  <div className="gr-divider-line" />
+                </div>
+                <button className="gr-btn-ghost" onClick={() => handleToggleMode(true)}>
+                  Create an account
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="gr-tag">New student</span>
+                <h2 className="gr-form-title">Register</h2>
+                <p className="gr-form-sub">Set up your account in a few quick steps</p>
 
-                {step === 4 && (
-                  <>
-                    <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </>
-                )}
+                <div className="gr-steps">
+                  {STEPS.map((_, i) => (
+                    <div key={i} className={`gr-step-bar ${i + 1 < step ? 'done' : i + 1 === step ? 'active' : ''}`} />
+                  ))}
+                </div>
+                <p className="gr-step-lbl">Step <strong>{step} of 5</strong> — {STEPS[step - 1].label}</p>
 
-                {step === 5 && (
-                  <>
-                    <Input type="text" placeholder="Student ID" value={studentId} onChange={(e) => setStudentId(e.target.value)} />
-                  </>
-                )}
+                {step === 1 && (<>
+                  <div className="gr-field"><label>First name</label><input className="gr-input" type="text" placeholder="Ahmed" value={firstName} onChange={e => setFirstName(e.target.value)} /></div>
+                  <div className="gr-field"><label>Last name</label><input className="gr-input" type="text" placeholder="Benali" value={lastName} onChange={e => setLastName(e.target.value)} /></div>
+                </>)}
+                {step === 2 && <div className="gr-field"><label>Phone number</label><input className="gr-input" type="tel" placeholder="0551234567" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} /></div>}
+                {step === 3 && <div className="gr-field"><label>Email address</label><input className="gr-input" type="email" placeholder="you@university.edu" value={username} onChange={e => setUsername(e.target.value)} /></div>}
+                {step === 4 && <div className="gr-field"><label>Password</label><input className="gr-input" type="password" placeholder="Choose a strong password" value={password} onChange={e => setPassword(e.target.value)} /></div>}
+                {step === 5 && <div className="gr-field"><label>Student ID</label><input className="gr-input" type="text" placeholder="12-digit student ID" value={studentId} onChange={e => setStudentId(e.target.value)} /></div>}
 
-                {step <= 5 && (
-                  <div className="flex justify-center mt-5 w-full gap-3">
-                    {step > 1 && (
-                      <PreviousNextButton onClick={handlePrevStep}>
-                        <BsArrowLeft />
-                        Previous
-                      </PreviousNextButton>
-                    )}
+                <div className="gr-nav">
+                  {step > 1 && <button className="gr-btn-back" onClick={handlePrevStep}><BsArrowLeft size={13} /> Back</button>}
+                  {step < 5
+                    ? <button className="gr-btn-next" style={step === 1 ? { flex: 1 } : {}} onClick={handleNextStep}>Next <BsArrowRight size={13} /></button>
+                    : <button className="gr-btn-next" onClick={handleRegister} disabled={loading}>{loading ? 'Creating…' : 'Create account'}</button>
+                  }
+                </div>
 
-                    {step < 5 && (
-                      <PreviousNextButton onClick={handleNextStep}>
-                        Next
-                        <BsArrowRight />
-                      </PreviousNextButton>
-                    )}
-                  </div>
-                )}
-
-                {step === 5 && (
-                  <SignInButtonL onClick={handleRegister}>
-                    Register
-                  </SignInButtonL>
-                )}
+                <div className="gr-divider">
+                  <div className="gr-divider-line" />
+                  <span className="gr-divider-txt">Already have an account?</span>
+                  <div className="gr-divider-line" />
+                </div>
+                <button className="gr-btn-ghost" onClick={() => handleToggleMode(false)}>
+                  Sign in instead
+                </button>
               </>
             )}
 
-            <div className="relative flex py-5 items-center w-full px-8 mt-20 -mb-5">
-              <div className="flex-grow border-t border-gray-400"></div>
-              <span className="flex-shrink mx-4 text-gray-600">
-                Already have an account?
-              </span>
-              <div className="flex-grow border-t border-gray-400"></div>
-            </div>
-
-            <SignInButtonB onClick={() => handleToggleMode(false)}>
-              Sign In
-            </SignInButtonB>
-          </RegisterFields>
-        ) : <LoginFields>
-          <LoginTitle>Login</LoginTitle>
-          <Input type="text" placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} />
-          <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <SignInButtonT onClick={handleLogin}>
-            Sign In
-          </SignInButtonT>
-
-          <div className="relative flex py-5 items-center w-full px-8 mt-10 -mb-5">
-            <div className="flex-grow border-t border-gray-400"></div>
-            <span className="flex-shrink mx-4 text-gray-600">
-              Don't have an account?
-            </span>
-            <div className="flex-grow border-t border-gray-400"></div>
           </div>
+        </div>
 
-          <SignInButtonB onClick={() => handleToggleMode(true)}>
-            Create an account
-          </SignInButtonB>
-        </LoginFields>}
-
-
-      </SectionRight>
-
-
-
-
-
-
-
-
-      {/* <LogoWrapper>
-        <SiX size={48} />
-      </LogoWrapper>
-      <Title>Login to access your account</Title>
-      <HeadImage src='https://i.ibb.co/CsV9RYZ/login-image.png' />
-      {showLoginFields && (
-        <>
-          <Input type="text" placeholder="email" value={username} onChange={(e) => setUsername(e.target.value)} />
-          <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <SignInButtonL onClick={handleLogin}>
-            Sign in
-          </SignInButtonL>
-        </>
-      )}
-      {showInscriptionFields && (
-        <>
-          <Input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-          <Input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          <Input type="text" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-          <Input type="text" placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} />
-          <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Input type="text" placeholder="Student ID" value={studentId} onChange={(e) => setStudentId(e.target.value)} />
-          <SignInButtonL onClick={handleRegister}>
-            Register
-          </SignInButtonL>
-        </>
-      )}
-
-      {!showLoginFields && !showInscriptionFields && <SignInButton onClick={handleSignInClick}>Sign in</SignInButton>}
-      <InscriptionButton onClick={handleInscriptionClick}>inscription</InscriptionButton> */}
-
-
-
-
-
-
-
-{notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={closeNotification}
-        />
-      )}
-    </Wrapper>
+      </div>
+    </>
   );
 };
-
-const Wrapper = tw.div`
-    flex flex-row h-screen w-screen bg-gray-500
-  `;
-
-
-
-const SectionLeft = tw.section`
-flex flex-col items-center h-screen w-1/2 
-`;
-const SectionRight = tw.section`
-flex flex-col h-screen w-1/2 bg-gray-50 rounded-l-3xl shadow-2xl
-`;
-
-const Title = tw.h1`
-   flex ml-auto text-3xl uppercase pt-8 pr-8 font-bold   
-`;
-const MainTitle = tw.h1`
-   flex text-5xl uppercase mt-20 font-bold  mb-16 
-`;
-
-const LoginTitle = tw.div`
- flex items-center justify-center text-4xl mt-2 mb-8  font-bold
-`;
-
-const LoginFields = tw.div`
-flex justify-center items-center flex-col mt-8
-`;
-
-const RegisterFields = tw.div`
-flex justify-center items-center flex-col mt-8
-`;
-
-
-const Input = tw.input`
-  w-80 py-2 px-5 my-3 bg-white border border-gray-300 rounded-xl shadow-md
-  transition-transform duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:border-black
-`;
-
-const SignInButtonT = tw.button`
-  w-1/2 py-2 px-4 bg-white mt-12 text-gray-800 
-  font-semibold text-lg border border-gray-400 rounded-full shadow-lg
-  transition-transform duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-800 hover:text-white
-`;
-
-const SignInButtonB = tw.button`
-  justify-center w-1/2 py-2 px-4 bg-gray-800 text-white mt-12 
-  font-semibold text-lg border border-gray-400 rounded-full shadow-lg
-  transition-transform duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-900
-`;
-
-
-const SignInButtonL = tw.button`
-  w-1/2 py-2 px-4 bg-white mt-12 text-gray-800 
-  font-semibold text-lg border border-gray-400 rounded-full shadow-lg
-  transition-transform duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-800 hover:text-white
-`;
-
-
-const PreviousNextButton = tw.button`
-  w-1/6 py-2 px-4 bg-white text-gray-800 flex items-center justify-center gap-3
-  font-semibold text-lg border border-gray-400 rounded-full shadow-lg
-  transition-transform duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-800 hover:text-white
-`;
-
-
-const LogoWrapper = tw.div`
-    bg-white p-4 rounded-full mb-4
-  `;
-
-const SignInButton = tw.button`
-w-64 py-2 px-4 my-4 bg-white hover:bg-gray-100 text-gray-800 
-font-semibold border border-gray-400 rounded shadow
-`;
-
-
-
-const InscriptionButton = tw.button`
-w-64 py-2 px-4 my-4 bg-white hover:bg-gray-100 text-gray-800 
-font-semibold border border-gray-400 rounded shadow
-`;
-
-
-
-
-
-const HeadImage = tw.img`
-    object-contain w-64 h-64
-`;
 
 export default Login;
