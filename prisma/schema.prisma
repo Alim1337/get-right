@@ -38,8 +38,8 @@ model reservations {
 
 model trips {
   tripId               Int             @id @default(autoincrement())
-  departureLocation    String          @db.VarChar(100)
-  destinationLocation  String          @db.VarChar(100)
+  departureLocation    String          @db.VarChar(500)
+  destinationLocation  String          @db.VarChar(500)
   departureTime        DateTime
   availableSeats       Int
   driverId             Int
@@ -88,8 +88,8 @@ model ride_requests {
 model proposition {
   propositionId        Int      @id @default(autoincrement())
   userId               Int
-  departureLocation    String   @db.VarChar(100)
-  destinationLocation  String   @db.VarChar(100)
+  departureLocation    String   @db.VarChar(500)
+  destinationLocation  String   @db.VarChar(500)
   departureTime        DateTime
   availableSeats       Int
   departureLatitude    Float?
