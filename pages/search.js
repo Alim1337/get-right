@@ -1,11 +1,9 @@
+// pages/search.js
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { BsArrowLeft } from "react-icons/bs";
-import { FaMapMarkerAlt, FaSearch, FaCrosshairs, FaCar, FaChair } from "react-icons/fa";
 import { useRouter } from "next/router";
 import { toast } from "sonner";
 import Head from "next/head";
-import ListRides from "../components/ListRides";
 
 const NEARBY_RANGE = 10;
 
@@ -38,7 +36,14 @@ const Search = () => {
   const [nearbyResults, setNearbyResults] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("search"); // 'search' | 'nearby'
+  const [activeTab, setActiveTab] = useState("search");
+  const [pinMode, setPinMode] = useState("dropoff");
+
+  // Refs that mirror state so map click handler always reads fresh values
+  const pinModeRef = useRef("dropoff");
+  // Store raw [lat, lng] coords for route drawing — avoids stale closure over state
+  const pickupLatLngRef = useRef(null);
+  const dropoffLatLngRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -47,7 +52,8 @@ const Search = () => {
     setUserId(decoded.userId);
   }, []);
 
-  // Init Leaflet map
+  useEffect(() => { pinModeRef.current = pinMode; }, [pinMode]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     import("leaflet").then((L) => {
@@ -64,70 +70,81 @@ const Search = () => {
       const makeIcon = (color, label) => L.divIcon({
         className: "",
         html: `<div style="display:flex;flex-direction:column;align-items:center;">
-          <div style="width:14px;height:14px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>
-          <div style="background:${color};color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;margin-top:2px;white-space:nowrap;">${label}</div>
+          <div style="width:13px;height:13px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
+          <div style="background:${color};color:#fff;font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;margin-top:2px;white-space:nowrap;">${label}</div>
         </div>`,
-        iconSize: [50, 30], iconAnchor: [25, 7], popupAnchor: [0, -8],
+        iconSize: [50, 30], iconAnchor: [25, 7],
       });
       L._makeIcon = makeIcon;
 
       const map = L.map(mapContainerRef.current).setView([36.7, 3.0], 12);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors", maxZoom: 19,
+        attribution: "© OpenStreetMap", maxZoom: 19,
       }).addTo(map);
       mapRef.current = map;
 
-      // Auto-detect location
+      const drawRoute = (pLatLng, dLatLng) => {
+        if (!pLatLng || !dLatLng) return;
+        if (routeLineRef.current) { routeLineRef.current.remove(); routeLineRef.current = null; }
+        const line = L.polyline([pLatLng, dLatLng], {
+          color: "#6366f1", weight: 3, opacity: 0.75, dashArray: "8,4",
+        }).addTo(map);
+        routeLineRef.current = line;
+        map.fitBounds(line.getBounds(), { padding: [50, 50] });
+      };
+
+      // Auto-detect pickup
       navigator.geolocation?.getCurrentPosition(async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const name = await reverseGeocode(lat, lng);
         map.setView([lat, lng], 14);
         if (pickupMarkerRef.current) pickupMarkerRef.current.remove();
-        pickupMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#4f46e5", "YOU") })
-          .addTo(map).bindPopup(`<b>Your location</b><br/>${name}`);
+        pickupMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#6366f1", "FROM") }).addTo(map);
+        pickupLatLngRef.current = [lat, lng];
         setPickup({ coordinates: [lng, lat], locationName: name });
+        // If destination was already set, draw route
+        if (dropoffLatLngRef.current) drawRoute([lat, lng], dropoffLatLngRef.current);
       });
 
-      // Click to set destination
       map.on("click", async (e) => {
         const { lat, lng } = e.latlng;
-        const name = await reverseGeocode(lat, lng);
-        if (destMarkerRef.current) destMarkerRef.current.remove();
-        destMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#ef4444", "DEST") })
-          .addTo(map).bindPopup(`<b>Destination</b><br/>${name}`).openPopup();
-        setDropoff({ coordinates: [lng, lat], locationName: name });
-        // Draw line
-        if (pickupMarkerRef.current) {
-          if (routeLineRef.current) routeLineRef.current.remove();
-          const p = pickupMarkerRef.current.getLatLng();
-          const line = L.polyline([[p.lat, p.lng], [lat, lng]], {
-            color: "#4f46e5", weight: 3, opacity: 0.8, dashArray: "8,4",
-          }).addTo(map);
-          routeLineRef.current = line;
-          map.fitBounds(line.getBounds(), { padding: [40, 40] });
+        const mode = pinModeRef.current;
+
+        // Place marker immediately with a loading label, then reverse geocode
+        if (mode === "pickup") {
+          if (pickupMarkerRef.current) pickupMarkerRef.current.remove();
+          pickupMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#6366f1", "FROM") }).addTo(map);
+          pickupLatLngRef.current = [lat, lng];
+          const name = await reverseGeocode(lat, lng);
+          setPickup({ coordinates: [lng, lat], locationName: name });
+          setPinMode("dropoff");
+          pinModeRef.current = "dropoff";
+          if (dropoffLatLngRef.current) drawRoute([lat, lng], dropoffLatLngRef.current);
+        } else {
+          if (destMarkerRef.current) destMarkerRef.current.remove();
+          destMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#ef4444", "TO") }).addTo(map);
+          dropoffLatLngRef.current = [lat, lng];
+          const name = await reverseGeocode(lat, lng);
+          setDropoff({ coordinates: [lng, lat], locationName: name });
+          if (pickupLatLngRef.current) drawRoute(pickupLatLngRef.current, [lat, lng]);
         }
       });
     });
-
     return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
   }, []);
 
   const showTripOnMap = (trip) => {
     const L = LRef.current;
     if (!L || !mapRef.current) return;
-    const makeIcon = L._makeIcon;
     if (destMarkerRef.current) destMarkerRef.current.remove();
     if (routeLineRef.current) routeLineRef.current.remove();
     const dep = [trip.departureLatitude, trip.departureLongitude];
     const dest = [trip.destinationLatitude, trip.destinationLongitude];
     if (!dep[0] || !dest[0]) return;
-    L.marker(dep, { icon: makeIcon("#16a34a", "DEP") }).addTo(mapRef.current)
-      .bindPopup(`<b>Departure:</b> ${trip.departureLocation}`).openPopup();
-    destMarkerRef.current = L.marker(dest, { icon: makeIcon("#ef4444", "DEST") })
-      .addTo(mapRef.current).bindPopup(`<b>Destination:</b> ${trip.destinationLocation}`);
-    const line = L.polyline([dep, dest], { color: "#4f46e5", weight: 3, dashArray: "8,4" })
-      .addTo(mapRef.current);
+    L.marker(dep, { icon: L._makeIcon("#16a34a", "DEP") }).addTo(mapRef.current);
+    destMarkerRef.current = L.marker(dest, { icon: L._makeIcon("#ef4444", "DEST") }).addTo(mapRef.current);
+    const line = L.polyline([dep, dest], { color: "#6366f1", weight: 3, dashArray: "8,4" }).addTo(mapRef.current);
     routeLineRef.current = line;
     mapRef.current.fitBounds(line.getBounds(), { padding: [40, 40] });
   };
@@ -136,32 +153,26 @@ const Search = () => {
     const L = LRef.current;
     if (!L || !mapRef.current) return;
     navigator.geolocation?.getCurrentPosition(async (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
       const name = await reverseGeocode(lat, lng);
       mapRef.current.setView([lat, lng], 14);
       if (pickupMarkerRef.current) pickupMarkerRef.current.remove();
-      pickupMarkerRef.current = L.marker([lat, lng], { icon: L._makeIcon("#4f46e5", "YOU") })
-        .addTo(mapRef.current).bindPopup(`<b>Your location</b><br/>${name}`);
+      pickupMarkerRef.current = L.marker([lat, lng], { icon: L._makeIcon("#6366f1", "FROM") }).addTo(mapRef.current);
+      pickupLatLngRef.current = [lat, lng];
       setPickup({ coordinates: [lng, lat], locationName: name });
-      toast.success("Reset to your location!");
+      toast.success("Reset to your location");
     });
   };
 
   const handleSearch = async () => {
-    if (!pickup.locationName) { toast.error("Please set a pickup location"); return; }
+    if (!pickup.locationName) { toast.error("Set a pickup location first"); return; }
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/apiSearchTrips?searchTermPickup=${encodeURIComponent(pickup.locationName)}&searchTermDropoff=${encodeURIComponent(dropoff.locationName)}`,
-        { method: "GET", headers: { "Content-Type": "application/json" } }
+        `/api/apiSearchTrips?searchTermPickup=${encodeURIComponent(pickup.locationName)}&searchTermDropoff=${encodeURIComponent(dropoff.locationName)}`
       );
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data);
-        setShowResults(true);
-        setActiveTab("search");
-      } else { toast.error("No results found"); }
+      if (res.ok) { setSearchResults(await res.json()); setShowResults(true); setActiveTab("search"); }
+      else toast.error("No results found");
     } catch { toast.error("Search failed"); }
     finally { setLoading(false); }
   };
@@ -170,15 +181,9 @@ const Search = () => {
     if (!pickup.coordinates[0]) { toast.error("Location not detected yet"); return; }
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/getNearbyTrips?latitude=${pickup.coordinates[1]}&longitude=${pickup.coordinates[0]}&range=${NEARBY_RANGE}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setNearbyResults(data.formattedTrips);
-        setShowResults(true);
-        setActiveTab("nearby");
-      } else { toast.error("No nearby rides found"); }
+      const res = await fetch(`/api/getNearbyTrips?latitude=${pickup.coordinates[1]}&longitude=${pickup.coordinates[0]}&range=${NEARBY_RANGE}`);
+      if (res.ok) { const d = await res.json(); setNearbyResults(d.formattedTrips); setShowResults(true); setActiveTab("nearby"); }
+      else toast.error("No nearby rides found");
     } catch { toast.error("Search failed"); }
     finally { setLoading(false); }
   };
@@ -190,325 +195,361 @@ const Search = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, tripId: rideInfo.ride_id, nbr_seat_req: rideInfo.requested_seats }),
       });
-      if (res.ok) {
-        localStorage.setItem("role", "client");
-        toast.success("Seat requested successfully!");
-      } else { toast.error("Failed to request seat. Please try again."); }
-    } catch { toast.error("An error occurred."); }
+      if (res.ok) { localStorage.setItem("role", "client"); toast.success("Seat requested!"); }
+      else toast.error("Failed to request seat");
+    } catch { toast.error("An error occurred"); }
   };
 
-  const activeResults = activeTab === "search"
-    ? searchResults?.formattedTrips
-    : nearbyResults;
+  const activeResults = activeTab === "search" ? searchResults?.formattedTrips : nearbyResults;
 
   return (
     <>
       <Head>
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
       </Head>
 
-      <style>{`
+
+      <style suppressHydrationWarning>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'DM Sans', sans-serif; background: #f5f6fa; }
+        body { font-family: 'Geist', sans-serif; }
 
-        .sr-root { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .s-root { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f5f9; }
 
-        .sr-topbar {
-          height: 60px; flex-shrink: 0; background: #1e2235;
-          display: flex; align-items: center; padding: 0 1.25rem; gap: 1rem;
+        /* TOPBAR */
+        .s-topbar {
+          height: 60px; flex-shrink: 0; background: #0f1117;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          display: flex; align-items: center; padding: 0 1.25rem; gap: 0.85rem;
         }
-        .sr-back {
-          display: flex; align-items: center; justify-content: center;
-          width: 36px; height: 36px; border-radius: 8px;
+        .s-back {
+          width: 32px; height: 32px; border-radius: 7px;
           background: rgba(255,255,255,0.08); border: none;
-          color: #fff; cursor: pointer; transition: all 0.15s; text-decoration: none;
+          display: flex; align-items: center; justify-content: center;
+          color: rgba(255,255,255,0.7); cursor: pointer;
+          text-decoration: none; transition: background 0.14s; flex-shrink: 0;
         }
-        .sr-back:hover { background: rgba(255,255,255,0.15); }
-        .sr-topbar-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; }
+        .s-back:hover { background: rgba(255,255,255,0.14); color: #fff; }
+        .s-topbar-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 0.95rem; font-weight: 600; color: #fff;
+        }
 
-        .sr-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+        /* BODY */
+        .s-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
-        /* LEFT PANEL */
-        .sr-panel {
-          width: 360px; flex-shrink: 0; background: #fff;
-          border-right: 1px solid #e5e7eb;
+        /* PANEL */
+        .s-panel {
+          width: 340px; flex-shrink: 0; background: #fff;
+          border-right: 1px solid #e8eaf0;
           display: flex; flex-direction: column; overflow: hidden;
         }
-
-        .sr-panel-top {
-          padding: 1.25rem; border-bottom: 1px solid #f3f4f6;
-          display: flex; flex-direction: column; gap: 0.75rem;
+        .s-panel-top {
+          padding: 1.1rem; display: flex; flex-direction: column;
+          gap: 0.75rem; border-bottom: 1px solid #f0f1f5; flex-shrink: 0;
+        }
+        .s-panel-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 1rem; font-weight: 600; color: #111827;
         }
 
-        .sr-panel-title {
-          font-family: 'Syne', sans-serif; font-size: 1.1rem;
-          font-weight: 700; color: #111827;
+        /* Pin mode toggle */
+        .s-pin-toggle {
+          display: flex; gap: 0.4rem;
+          background: #f4f5f9; border-radius: 9px; padding: 3px;
         }
+        .s-pin-btn {
+          flex: 1; padding: 0.42rem 0.6rem;
+          border-radius: 7px; border: none; font-family: 'Geist', sans-serif;
+          font-size: 0.75rem; font-weight: 500; cursor: pointer;
+          transition: all 0.14s; display: flex; align-items: center;
+          justify-content: center; gap: 5px;
+        }
+        .s-pin-btn.active-pickup { background: #6366f1; color: #fff; }
+        .s-pin-btn.active-dropoff { background: #ef4444; color: #fff; }
+        .s-pin-btn.inactive { background: transparent; color: #9ca3af; }
+        .s-pin-btn.inactive:hover { background: rgba(0,0,0,0.04); color: #374151; }
 
-        .sr-location-box {
-          background: #f9fafb; border: 1px solid #e5e7eb;
-          border-radius: 10px; padding: 0.75rem 1rem;
-          display: flex; flex-direction: column; gap: 0.6rem;
+        /* Location card */
+        .s-loc-card {
+          background: #f9fafb; border: 1px solid #e8eaf0;
+          border-radius: 10px; overflow: hidden;
         }
-        .sr-loc-row {
-          display: flex; align-items: flex-start; gap: 0.6rem;
+        .s-loc-row {
+          display: flex; align-items: flex-start; gap: 0.65rem;
+          padding: 0.7rem 0.9rem; cursor: pointer; transition: background 0.13s;
         }
-        .sr-loc-icon { flex-shrink: 0; margin-top: 3px; }
-        .sr-loc-label { font-size: 0.65rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.07em; }
-        .sr-loc-value { font-size: 0.8rem; color: #374151; line-height: 1.4; }
-        .sr-loc-placeholder { font-size: 0.8rem; color: #d1d5db; }
-        .sr-loc-divider { height: 1px; background: #f3f4f6; margin: 0 -0.25rem; }
+        .s-loc-row:hover { background: #f3f4f8; }
+        .s-loc-row.active-row { background: #eef2ff; }
+        .s-loc-dot {
+          width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+        }
+        .s-loc-inner { flex: 1; min-width: 0; }
+        .s-loc-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: #9ca3af; }
+        .s-loc-value { font-size: 0.78rem; color: #374151; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .s-loc-placeholder { font-size: 0.78rem; color: #c9cdd8; }
+        .s-loc-sep { height: 1px; background: #e8eaf0; }
+        .s-loc-edit { font-size: 0.62rem; color: #6366f1; font-weight: 500; flex-shrink: 0; margin-top: 2px; }
 
-        .sr-btn-row { display: flex; gap: 0.5rem; }
-        .sr-btn {
-          flex: 1; padding: 0.6rem 0.75rem;
-          border-radius: 8px; font-family: 'DM Sans', sans-serif;
-          font-size: 0.8rem; font-weight: 500; cursor: pointer;
-          transition: all 0.15s; border: 1px solid;
-          display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .sr-btn-primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
-        .sr-btn-primary:hover { background: #4338ca; border-color: #4338ca; }
-        .sr-btn-secondary { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-        .sr-btn-secondary:hover { background: #dcfce7; }
-        .sr-btn-ghost { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
-        .sr-btn-ghost:hover { background: #f3f4f6; color: #374151; }
-        .sr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .sr-hint {
-          font-size: 0.72rem; color: #9ca3af;
-          background: #f9fafb; border: 1px solid #f3f4f6;
-          border-radius: 6px; padding: 0.5rem 0.75rem;
+        .s-hint {
+          font-size: 0.7rem; color: #9ca3af;
+          background: #f9fafb; border: 1px solid #f0f1f5;
+          border-radius: 7px; padding: 0.45rem 0.7rem;
           display: flex; align-items: center; gap: 0.4rem;
         }
 
-        /* RESULTS */
-        .sr-results { flex: 1; overflow-y: auto; }
-
-        .sr-tabs {
-          display: flex; border-bottom: 1px solid #e5e7eb;
-          background: #fff; flex-shrink: 0;
+        /* Buttons */
+        .s-btn-row { display: flex; gap: 0.5rem; }
+        .s-btn {
+          flex: 1; padding: 0.55rem 0.7rem; border-radius: 8px;
+          font-family: 'Geist', sans-serif; font-size: 0.78rem; font-weight: 500;
+          cursor: pointer; transition: all 0.14s; border: 1px solid;
+          display: flex; align-items: center; justify-content: center; gap: 5px;
         }
-        .sr-tab {
-          flex: 1; padding: 0.75rem;
-          font-size: 0.8rem; font-weight: 500;
-          cursor: pointer; transition: all 0.15s;
-          border: none; background: transparent;
+        .s-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .s-btn-primary { background: #6366f1; color: #fff; border-color: #6366f1; }
+        .s-btn-primary:hover:not(:disabled) { background: #4f46e5; border-color: #4f46e5; }
+        .s-btn-green { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        .s-btn-green:hover:not(:disabled) { background: #dcfce7; }
+        .s-btn-ghost { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+        .s-btn-ghost:hover { background: #f3f4f6; color: #374151; }
+
+        /* Tabs */
+        .s-tabs { display: flex; border-bottom: 1px solid #e8eaf0; flex-shrink: 0; }
+        .s-tab {
+          flex: 1; padding: 0.7rem; font-size: 0.78rem; font-weight: 500;
+          cursor: pointer; border: none; background: transparent;
           color: #9ca3af; border-bottom: 2px solid transparent;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Geist', sans-serif; transition: all 0.14s;
         }
-        .sr-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+        .s-tab.active { color: #6366f1; border-bottom-color: #6366f1; }
 
-        .sr-results-list { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.65rem; }
-
-        .sr-empty {
+        /* Results */
+        .s-results { flex: 1; overflow-y: auto; }
+        .s-results-inner { padding: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem; }
+        .s-empty {
           display: flex; flex-direction: column; align-items: center;
           justify-content: center; padding: 2.5rem 1rem;
-          color: #9ca3af; font-size: 0.85rem; text-align: center; gap: 0.5rem;
+          color: #9ca3af; font-size: 0.82rem; text-align: center; gap: 0.5rem;
         }
 
-        .sr-card {
-          background: #fff; border: 1px solid #e5e7eb;
-          border-radius: 10px; padding: 0.9rem;
-          transition: box-shadow 0.15s, border-color 0.15s;
+        /* Trip card */
+        .s-card {
+          background: #fff; border: 1px solid #e8eaf0;
+          border-radius: 11px; padding: 0.85rem;
+          transition: border-color 0.14s, box-shadow 0.14s;
         }
-        .sr-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.07); border-color: #d1d5db; }
-
-        .sr-card-header {
-          display: flex; align-items: center;
-          justify-content: space-between; margin-bottom: 0.7rem;
-        }
-        .sr-driver { display: flex; align-items: center; gap: 0.5rem; }
-        .sr-avatar {
+        .s-card:hover { border-color: #d1d5db; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .s-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem; }
+        .s-driver { display: flex; align-items: center; gap: 0.5rem; }
+        .s-avatar {
           width: 30px; height: 30px; border-radius: 50%;
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: #6366f1;
           display: flex; align-items: center; justify-content: center;
-          font-size: 0.65rem; font-weight: 700; color: #fff;
+          font-size: 0.6rem; font-weight: 600; color: #fff;
         }
-        .sr-driver-name { font-size: 0.82rem; font-weight: 600; color: #111827; }
-        .sr-driver-sub { font-size: 0.68rem; color: #9ca3af; }
-        .sr-seats {
-          font-size: 0.7rem; font-weight: 500; color: #16a34a;
+        .s-dname { font-size: 0.8rem; font-weight: 600; color: #111827; }
+        .s-dsub { font-size: 0.65rem; color: #9ca3af; }
+        .s-seats-pill {
+          font-size: 0.67rem; font-weight: 600; color: #16a34a;
           background: #f0fdf4; border: 1px solid #bbf7d0;
-          border-radius: 100px; padding: 0.2rem 0.6rem;
+          border-radius: 100px; padding: 2px 8px;
         }
-
-        .sr-route {
-          background: #f9fafb; border-radius: 7px;
-          padding: 0.6rem 0.75rem; margin-bottom: 0.7rem;
-          display: flex; flex-direction: column; gap: 0.35rem;
-          border: 1px solid #f3f4f6;
+        .s-route {
+          background: #f9fafb; border: 1px solid #f0f1f5;
+          border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.65rem;
+          display: flex; flex-direction: column; gap: 0.3rem;
         }
-        .sr-route-row { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.75rem; color: #374151; line-height: 1.4; }
-        .sr-route-dot { width: 1px; height: 8px; background: #d1d5db; margin-left: 6px; flex-shrink: 0; }
-
-        .sr-meta { display: flex; gap: 0.75rem; margin-bottom: 0.7rem; flex-wrap: wrap; }
-        .sr-meta-item { font-size: 0.72rem; color: #6b7280; display: flex; align-items: center; gap: 3px; }
-
-        .sr-card-actions { display: flex; gap: 0.4rem; }
-        .sr-card-btn {
-          flex: 1; padding: 0.5rem; border-radius: 7px;
-          font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500;
-          cursor: pointer; transition: all 0.15s; border: 1px solid;
+        .s-route-row { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.73rem; color: #374151; line-height: 1.4; }
+        .s-route-sep { width: 1px; height: 8px; background: #d1d5db; margin-left: 5px; }
+        .s-meta { display: flex; gap: 0.65rem; margin-bottom: 0.65rem; flex-wrap: wrap; }
+        .s-meta-item { font-size: 0.68rem; color: #6b7280; display: flex; align-items: center; gap: 3px; }
+        .s-card-actions { display: flex; gap: 0.4rem; }
+        .s-card-btn {
+          flex: 1; padding: 0.48rem; border-radius: 7px;
+          font-family: 'Geist', sans-serif; font-size: 0.73rem; font-weight: 500;
+          cursor: pointer; transition: all 0.14s; border: 1px solid;
           display: flex; align-items: center; justify-content: center; gap: 4px;
         }
-        .sr-card-btn-map { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
-        .sr-card-btn-map:hover { background: #e0e7ff; }
-        .sr-card-btn-reserve { background: #4f46e5; color: #fff; border-color: #4f46e5; }
-        .sr-card-btn-reserve:hover { background: #4338ca; }
+        .s-card-btn-map { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+        .s-card-btn-map:hover { background: #e0e7ff; }
+        .s-card-btn-res { background: #6366f1; color: #fff; border-color: #6366f1; }
+        .s-card-btn-res:hover { background: #4f46e5; }
 
         /* MAP */
-        .sr-map-col { flex: 1; position: relative; overflow: hidden; min-height: 0; }
-        .sr-map-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .s-map { flex: 1; position: relative; overflow: hidden; }
+        .s-map-inner { position: absolute; inset: 0; }
         .leaflet-container { width: 100%; height: 100%; }
-
-        .sr-map-badge {
-          position: absolute; bottom: 1rem; left: 50%;
-          transform: translateX(-50%);
-          background: rgba(255,255,255,0.95); border: 1px solid #e5e7eb;
-          border-radius: 100px; padding: 0.35rem 0.9rem;
-          font-size: 0.72rem; color: #6b7280;
+        .s-map-hint {
+          position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+          background: rgba(255,255,255,0.96); border: 1px solid #e5e7eb;
+          border-radius: 100px; padding: 5px 14px;
+          font-size: 0.7rem; color: #374151;
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          white-space: nowrap; z-index: 999; pointer-events: none;
+          pointer-events: none; z-index: 999; white-space: nowrap;
         }
+        .s-map-mode-badge {
+          position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+          z-index: 999; display: flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.97); border: 1px solid #e5e7eb;
+          border-radius: 100px; padding: 5px 14px;
+          font-size: 0.72rem; font-weight: 500; color: #374151;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1); pointer-events: none;
+        }
+        .s-mode-dot { width: 8px; height: 8px; border-radius: 50%; }
       `}</style>
 
-      <div className="sr-root">
-        <div className="sr-topbar">
+      <div className="s-root">
+        <div className="s-topbar">
           <Link href="/" passHref>
-            <a className="sr-back"><BsArrowLeft size={16} /></a>
+            <a className="s-back">
+              <i className="ti ti-arrow-left" style={{ fontSize: 16 }} aria-hidden="true" />
+            </a>
           </Link>
-          <div className="sr-topbar-title">Search Rides</div>
+          <div className="s-topbar-title">Search Rides</div>
         </div>
 
-        <div className="sr-body">
-          {/* LEFT PANEL */}
-          <div className="sr-panel">
-            <div className="sr-panel-top">
-              <div className="sr-panel-title">Find a Ride</div>
+        <div className="s-body">
+          {/* PANEL */}
+          <div className="s-panel">
+            <div className="s-panel-top">
+              <div className="s-panel-title">Find a ride</div>
+
+              {/* Pin mode selector */}
+              <div className="s-pin-toggle">
+                <button
+                  className={`s-pin-btn ${pinMode === "pickup" ? "active-pickup" : "inactive"}`}
+                  onClick={() => setPinMode("pickup")}
+                >
+                  <i className="ti ti-map-pin" style={{ fontSize: 12 }} aria-hidden="true" />
+                  Set pickup
+                </button>
+                <button
+                  className={`s-pin-btn ${pinMode === "dropoff" ? "active-dropoff" : "inactive"}`}
+                  onClick={() => setPinMode("dropoff")}
+                >
+                  <i className="ti ti-map-pin" style={{ fontSize: 12 }} aria-hidden="true" />
+                  Set destination
+                </button>
+              </div>
 
               {/* Location display */}
-              <div className="sr-location-box">
-                <div className="sr-loc-row">
-                  <FaMapMarkerAlt size={12} color="#4f46e5" className="sr-loc-icon" />
-                  <div>
-                    <div className="sr-loc-label">From</div>
+              <div className="s-loc-card">
+                <div
+                  className={`s-loc-row ${pinMode === "pickup" ? "active-row" : ""}`}
+                  onClick={() => setPinMode("pickup")}
+                >
+                  <div className="s-loc-dot" style={{ background: "#6366f1" }} />
+                  <div className="s-loc-inner">
+                    <div className="s-loc-label">From</div>
                     {pickup.locationName
-                      ? <div className="sr-loc-value">{pickup.locationName.split(',').slice(0, 2).join(',')}</div>
-                      : <div className="sr-loc-placeholder">Detecting location…</div>
+                      ? <div className="s-loc-value">{pickup.locationName.split(",").slice(0, 2).join(",")}</div>
+                      : <div className="s-loc-placeholder">Detecting your location…</div>
                     }
                   </div>
+                  {pinMode === "pickup" && <div className="s-loc-edit">clicking map →</div>}
                 </div>
-                <div className="sr-loc-divider" />
-                <div className="sr-loc-row">
-                  <FaMapMarkerAlt size={12} color="#ef4444" className="sr-loc-icon" />
-                  <div>
-                    <div className="sr-loc-label">To</div>
+                <div className="s-loc-sep" />
+                <div
+                  className={`s-loc-row ${pinMode === "dropoff" ? "active-row" : ""}`}
+                  onClick={() => setPinMode("dropoff")}
+                >
+                  <div className="s-loc-dot" style={{ background: "#ef4444" }} />
+                  <div className="s-loc-inner">
+                    <div className="s-loc-label">To</div>
                     {dropoff.locationName
-                      ? <div className="sr-loc-value">{dropoff.locationName.split(',').slice(0, 2).join(',')}</div>
-                      : <div className="sr-loc-placeholder">Click map to set destination</div>
+                      ? <div className="s-loc-value">{dropoff.locationName.split(",").slice(0, 2).join(",")}</div>
+                      : <div className="s-loc-placeholder">Click map to set destination</div>
                     }
                   </div>
+                  {pinMode === "dropoff" && <div className="s-loc-edit">clicking map →</div>}
                 </div>
               </div>
 
-              <div className="sr-hint">
-                <FaMapMarkerAlt size={10} color="#9ca3af" />
-                Click on the map to set your destination
-              </div>
-
-              <div className="sr-btn-row">
-                <button className="sr-btn sr-btn-primary" onClick={handleSearch} disabled={loading}>
-                  <FaSearch size={11} />
+              <div className="s-btn-row">
+                <button className="s-btn s-btn-primary" onClick={handleSearch} disabled={loading}>
+                  <i className="ti ti-search" style={{ fontSize: 12 }} aria-hidden="true" />
                   {loading ? "Searching…" : "Search"}
                 </button>
-                <button className="sr-btn sr-btn-secondary" onClick={handleSearchNearby} disabled={loading}>
-                  <FaCrosshairs size={11} />
+                <button className="s-btn s-btn-green" onClick={handleSearchNearby} disabled={loading}>
+                  <i className="ti ti-focus" style={{ fontSize: 12 }} aria-hidden="true" />
                   Nearby
                 </button>
-                <button className="sr-btn sr-btn-ghost" onClick={resetToMyLocation}>
-                  <FaCrosshairs size={11} />
-                  My location
+                <button className="s-btn s-btn-ghost" onClick={resetToMyLocation}>
+                  <i className="ti ti-current-location" style={{ fontSize: 12 }} aria-hidden="true" />
                 </button>
               </div>
             </div>
 
-            {/* Results */}
             {showResults && (
               <>
-                <div className="sr-tabs">
+                <div className="s-tabs">
                   <button
-                    className={`sr-tab ${activeTab === "search" ? "active" : ""}`}
+                    className={`s-tab ${activeTab === "search" ? "active" : ""}`}
                     onClick={() => setActiveTab("search")}
                   >
-                    Search Results {searchResults?.formattedTrips?.length ? `(${searchResults.formattedTrips.length})` : ""}
+                    Results {searchResults?.formattedTrips?.length ? `(${searchResults.formattedTrips.length})` : ""}
                   </button>
                   <button
-                    className={`sr-tab ${activeTab === "nearby" ? "active" : ""}`}
+                    className={`s-tab ${activeTab === "nearby" ? "active" : ""}`}
                     onClick={() => setActiveTab("nearby")}
                   >
                     Nearby {nearbyResults?.length ? `(${nearbyResults.length})` : ""}
                   </button>
                 </div>
-
-                <div className="sr-results">
-                  <div className="sr-results-list">
+                <div className="s-results">
+                  <div className="s-results-inner">
                     {!activeResults || activeResults.length === 0 ? (
-                      <div className="sr-empty">
-                        <FaCar size={24} color="#d1d5db" />
+                      <div className="s-empty">
+                        <i className="ti ti-car-off" style={{ fontSize: 28, color: "#d1d5db" }} aria-hidden="true" />
                         No rides found. Try adjusting your search.
                       </div>
                     ) : activeResults.map((trip) => {
                       const initials = `${trip.driver?.firstName?.[0] || ""}${trip.driver?.lastName?.[0] || ""}`;
                       return (
-                        <div key={trip.tripId || trip.ride_id} className="sr-card">
-                          <div className="sr-card-header">
-                            <div className="sr-driver">
-                              <div className="sr-avatar">{initials}</div>
+                        <div key={trip.tripId || trip.ride_id} className="s-card">
+                          <div className="s-card-head">
+                            <div className="s-driver">
+                              <div className="s-avatar">{initials || "?"}</div>
                               <div>
-                                <div className="sr-driver-name">{trip.driver?.firstName} {trip.driver?.lastName}</div>
-                                <div className="sr-driver-sub">Driver</div>
+                                <div className="s-dname">{trip.driver?.firstName} {trip.driver?.lastName}</div>
+                                <div className="s-dsub">Driver</div>
                               </div>
                             </div>
-                            <div className="sr-seats">
-                              <FaChair size={9} style={{ display: "inline", marginRight: 3 }} />
-                              {trip.availableSeats} seats
-                            </div>
+                            <div className="s-seats-pill">{trip.availableSeats} seats</div>
                           </div>
-
-                          <div className="sr-route">
-                            <div className="sr-route-row">
-                              <FaMapMarkerAlt size={10} color="#16a34a" style={{ flexShrink: 0, marginTop: 2 }} />
+                          <div className="s-route">
+                            <div className="s-route-row">
+                              <i className="ti ti-circle-dot" style={{ fontSize: 11, color: "#6366f1", flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
                               {trip.departureLocation?.split(",").slice(0, 2).join(",")}
                             </div>
-                            <div className="sr-route-dot" />
-                            <div className="sr-route-row">
-                              <FaMapMarkerAlt size={10} color="#ef4444" style={{ flexShrink: 0, marginTop: 2 }} />
+                            <div className="s-route-sep" />
+                            <div className="s-route-row">
+                              <i className="ti ti-map-pin" style={{ fontSize: 11, color: "#ef4444", flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
                               {trip.destinationLocation?.split(",").slice(0, 2).join(",")}
                             </div>
                           </div>
-
-                          <div className="sr-meta">
-                            <div className="sr-meta-item">
-                              🕐 {new Date(trip.departureTime).toLocaleString()}
+                          <div className="s-meta">
+                            <div className="s-meta-item">
+                              <i className="ti ti-clock" style={{ fontSize: 11 }} aria-hidden="true" />
+                              {new Date(trip.departureTime).toLocaleString()}
                             </div>
                             {trip.distance && (
-                              <div className="sr-meta-item">
-                                📍 {trip.distance?.toFixed(1)} km
+                              <div className="s-meta-item">
+                                <i className="ti ti-route" style={{ fontSize: 11 }} aria-hidden="true" />
+                                {trip.distance.toFixed(1)} km
                               </div>
                             )}
                           </div>
-
-                          <div className="sr-card-actions">
-                            <button className="sr-card-btn sr-card-btn-map" onClick={() => showTripOnMap(trip)}>
-                              Show on map
+                          <div className="s-card-actions">
+                            <button className="s-card-btn s-card-btn-map" onClick={() => showTripOnMap(trip)}>
+                              <i className="ti ti-map" style={{ fontSize: 11 }} aria-hidden="true" /> Map
                             </button>
                             <button
-                              className="sr-card-btn sr-card-btn-reserve"
+                              className="s-card-btn s-card-btn-res"
                               onClick={() => handleRequestSeat({ ride_id: trip.tripId || trip.ride_id, requested_seats: 1 })}
                             >
-                              Request seat
+                              <i className="ti ti-armchair" style={{ fontSize: 11 }} aria-hidden="true" /> Request seat
                             </button>
                           </div>
                         </div>
@@ -521,9 +562,18 @@ const Search = () => {
           </div>
 
           {/* MAP */}
-          <div className="sr-map-col">
-            <div ref={mapContainerRef} className="sr-map-inner" />
-            <div className="sr-map-badge">Click to set destination</div>
+          <div className="s-map">
+            <div ref={mapContainerRef} className="s-map-inner" />
+            <div className="s-map-mode-badge">
+              <div
+                className="s-mode-dot"
+                style={{ background: pinMode === "pickup" ? "#6366f1" : "#ef4444" }}
+              />
+              {pinMode === "pickup" ? "Click map to set pickup" : "Click map to set destination"}
+            </div>
+            <div className="s-map-hint">
+              <i className="ti ti-hand-click" style={{ fontSize: 11 }} aria-hidden="true" /> Click anywhere on the map
+            </div>
           </div>
         </div>
       </div>

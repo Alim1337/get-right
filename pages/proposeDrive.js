@@ -1,582 +1,485 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import mapboxgl from 'mapbox-gl';
-import { accessToken } from '../components/Map';
-import tw from "tailwind-styled-components";
+// pages/proposeDrive.js
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
+import { toast } from "sonner";
+import Head from "next/head";
 import Link from "next/link";
-import {
-  BsArrowLeft,
 
-} from "react-icons/bs";
-
-import { Toaster, toast } from 'sonner'
+const reverseGeocode = async (lat, lng) => {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    const data = await res.json();
+    return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch {
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+};
 
 const ProposeDrive = () => {
   const router = useRouter();
-  const [userId, setUserId] = useState('');
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const LRef = useRef(null);
+  const pickupMarkerRef = useRef(null);
+  const destMarkerRef = useRef(null);
+  const routeLineRef = useRef(null);
+  const pickupLatLngRef = useRef(null);
+  const dropoffLatLngRef = useRef(null);
+  const pinModeRef = useRef("dropoff");
 
-  const [maxSeatsPerTrip, setMaxSeatsPerTrip] = useState(0);
-  const [seatError, setSeatError] = useState('');
-  const [dateError, setDateError] = useState('');
+  const [userId, setUserId] = useState("");
+  const [maxSeats, setMaxSeats] = useState(0);
+  const [pinMode, setPinMode] = useState("dropoff");
+  const [pickup, setPickup] = useState({ coordinates: [0, 0], locationName: "" });
+  const [dropoff, setDropoff] = useState({ coordinates: [0, 0], locationName: "" });
   const [rideDetails, setRideDetails] = useState({
-    departure: '',
-    destination: '',
-    date: '',
-    time: '',
+    date: "",
+    time: "",
     seatsAvailable: 1,
   });
-  const [pickup, setPickup] = useState({
-    coordinates: [0, 0],
-    locationName: "",
-  });
-  const [dropoff, setDropoff] = useState({
-    coordinates: [0, 0],
-    locationName: "",
-  });
-  const [map, setMap] = useState(null);
-  const [line, setLine] = useState(null);
-  const myPosition = [0, 0];
+  const [submitting, setSubmitting] = useState(false);
 
-
+  useEffect(() => { pinModeRef.current = pinMode; }, [pinMode]);
 
   useEffect(() => {
-    const fetchMaxSeatsPerTrip = async () => {
-      try {
-        const response = await fetch('/api/getMaxSeatsPerTrip'); // Replace with your actual API endpoint
-        if (response.ok) {
-          const data = await response.json();
-          setMaxSeatsPerTrip(data.maxSeatsPerTrip);
-          console.log('maxSeatsPerTrip', maxSeatsPerTrip);
-        } else {
-          console.error('Failed to fetch max seats per trip:', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('Error fetching max seats per trip:', error);
-      }
-    };
-
-    fetchMaxSeatsPerTrip();
+    const token = localStorage.getItem("token");
+    if (!token) { router.push("/login"); return; }
+    const decoded = JSON.parse(atob(token.split(".")[1]));
+    setUserId(decoded.userId);
   }, []);
-
-
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => resolve(position),
-        (error) => reject(error)
-      );
-
-      setTimeout(() => navigator.geolocation.clearWatch(watchId), 5000);
-    });
-  };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const decodedToken = JSON.parse(atob(token.split('.')[1]));
-    setUserId(decodedToken.userId);
-    console.log('this is decodedToken', decodedToken);
+    fetch("/api/getMaxSeatsPerTrip")
+      .then((r) => r.json())
+      .then((d) => setMaxSeats(d.maxSeatsPerTrip || 0))
+      .catch(console.error);
   }, []);
 
+  // Init Leaflet map
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    import("leaflet").then((L) => {
+      if (mapRef.current) return;
+      LRef.current = L;
 
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+      });
 
-  const setupMap = async () => {
-    mapboxgl.accessToken = accessToken;
+      const makeIcon = (color, label) => L.divIcon({
+        className: "",
+        html: `<div style="display:flex;flex-direction:column;align-items:center;">
+          <div style="width:13px;height:13px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
+          <div style="background:${color};color:#fff;font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;margin-top:2px;white-space:nowrap;">${label}</div>
+        </div>`,
+        iconSize: [50, 30], iconAnchor: [25, 7],
+      });
+      L._makeIcon = makeIcon;
 
-    try {
-      const position = await getCurrentLocation();
-      const currentLocation = {
-        coordinates: [position.coords.longitude, position.coords.latitude],
-        locationName: await reverseGeocode(
-          position.coords.latitude,
-          position.coords.longitude
-        ),
+      const map = L.map(mapContainerRef.current).setView([36.7, 3.0], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap", maxZoom: 19,
+      }).addTo(map);
+      mapRef.current = map;
+
+      const drawRoute = (p, d) => {
+        if (!p || !d) return;
+        if (routeLineRef.current) { routeLineRef.current.remove(); routeLineRef.current = null; }
+        const line = L.polyline([p, d], {
+          color: "#6366f1", weight: 3, opacity: 0.75, dashArray: "8,4",
+        }).addTo(map);
+        routeLineRef.current = line;
+        map.fitBounds(line.getBounds(), { padding: [50, 50] });
       };
-      setPickup(currentLocation);
-      setupMapWithPickup(currentLocation);
-      myPosition = currentLocation.coordinates;
-    } catch (error) {
-      console.error("Error getting current location:", error);
-      setupMapWithPickup({
-        coordinates: [0, 0],
-        locationName: "Unknown Location",
-      });
-    }
-  };
-  const setupMapWithPickup = (pickupLocation) => {
-    const addPickupMarker = (lngLat, locationName) => {
-      if (map) {
-        new mapboxgl.Marker({ color: "green" })
-          .setLngLat(lngLat)
-          .setPopup(new mapboxgl.Popup().setHTML(locationName))
-          .addTo(map);
-      }
-    };
 
-    const newMap = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: pickupLocation.coordinates,
-      zoom: 12,
-    });
-
-    // Add marker for current position
-    new mapboxgl.Marker({ color: "green" })
-      .setLngLat(pickupLocation.coordinates)
-      .setPopup(new mapboxgl.Popup().setHTML(pickupLocation.locationName))
-      .addTo(newMap);
-
-    // Add marker for Pickup Location
-    addPickupMarker(pickupLocation.coordinates, pickupLocation.locationName);
-
-    let previousMarker = null;
-
-    newMap.on("dblclick", async (event) => {
-      const lngLat = event.lngLat.toArray();
-      const locationName = await reverseGeocode(lngLat[1], lngLat[0]);
-      setDropoff({ coordinates: lngLat, locationName });
-
-      if (previousMarker) {
-        previousMarker.remove();
-      }
-
-      const destinationMarker = new mapboxgl.Marker({ color: "orange" })
-        .setLngLat(lngLat)
-        .addTo(newMap);
-      const popup = new mapboxgl.Popup({ offset: 25 }) // Adjust offset as needed
-        .setHTML(locationName)
-        .addTo(newMap);
-
-      destinationMarker.setPopup(popup); // Associate popup with marker
-
-      // Open the popup immediately after creating the marker
-      popup.addTo(newMap);
-
-      previousMarker = destinationMarker;
-
-      drawOrUpdateLine(myPosition, lngLat, newMap);
-
-
-      // Add marker for destination location
-      // addDropoffMarker(lngLat, locationName);
-
-      // drawLine();
-    });
-
-    setMap(newMap);
-  };
-
-
-  const drawOrUpdateLine = (startCoords, endCoords, map) => {
-    const lineCoordinates = [startCoords, endCoords];
-    console.log('lineCoordinates', lineCoordinates);
-
-    if (map.getSource('route')) {
-      map.getSource('route').setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: lineCoordinates,
-        },
-      });
-    } else {
-      // Create a new source and layer
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: lineCoordinates,
-          },
-        },
+      // Auto-detect pickup
+      navigator.geolocation?.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        const name = await reverseGeocode(lat, lng);
+        map.setView([lat, lng], 14);
+        if (pickupMarkerRef.current) pickupMarkerRef.current.remove();
+        pickupMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#6366f1", "FROM") }).addTo(map);
+        pickupLatLngRef.current = [lat, lng];
+        setPickup({ coordinates: [lng, lat], locationName: name });
+        if (dropoffLatLngRef.current) drawRoute([lat, lng], dropoffLatLngRef.current);
       });
 
-      map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        paint: {
-          'line-color': 'orange',  // Customize line color
-          'line-width': 4,       // Customize line width
-        },
+      map.on("click", async (e) => {
+        const { lat, lng } = e.latlng;
+        const mode = pinModeRef.current;
+
+        if (mode === "pickup") {
+          if (pickupMarkerRef.current) pickupMarkerRef.current.remove();
+          pickupMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#6366f1", "FROM") }).addTo(map);
+          pickupLatLngRef.current = [lat, lng];
+          const name = await reverseGeocode(lat, lng);
+          setPickup({ coordinates: [lng, lat], locationName: name });
+          setPinMode("dropoff");
+          pinModeRef.current = "dropoff";
+          if (dropoffLatLngRef.current) drawRoute([lat, lng], dropoffLatLngRef.current);
+        } else {
+          if (destMarkerRef.current) destMarkerRef.current.remove();
+          destMarkerRef.current = L.marker([lat, lng], { icon: makeIcon("#ef4444", "TO") }).addTo(map);
+          dropoffLatLngRef.current = [lat, lng];
+          const name = await reverseGeocode(lat, lng);
+          setDropoff({ coordinates: [lng, lat], locationName: name });
+          if (pickupLatLngRef.current) drawRoute(pickupLatLngRef.current, [lat, lng]);
+        }
       });
-    }
-  };
-
-
-  const reverseGeocode = async (latitude, longitude) => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${accessToken}`
-      );
-      const data = await response.json();
-      const locationName = data.features[0]?.place_name || "Unknown Location";
-      return locationName;
-    } catch (error) {
-      console.error("Error fetching reverse geocoding:", error);
-      return "Unknown Location";
-    }
-  };
-
-  const addPickupMarker = (lngLat, locationName) => {
-    if (map) {
-      new mapboxgl.Marker({ color: "green" })
-        .setLngLat(lngLat)
-        .setPopup(new mapboxgl.Popup().setHTML(locationName))
-        .addTo(map);
-    }
-  };
-
-  // const addDropoffMarker = (lngLat, locationName) => {
-  //   if (map) {
-  //     new mapboxgl.Marker({ color: "blue" })
-  //       .setLngLat(lngLat)
-  //       .setPopup(new mapboxgl.Popup().setHTML(locationName))
-  //       .addTo(map);
-  //   }
-  // };
-
-
-  // const drawLine = () => {
-  //   if (map && pickup && dropoff) {
-  //     // Add a marker for Pickup Location
-  //     addPickupMarker(pickup.coordinates, "Pickup Location");
-
-  //     // Add a marker for Destination
-  //     addDestinationMarker(dropoff.coordinates, "Destination");
-
-  //     // Create a line between pickup and destination
-  //     const newLine = {
-  //       type: 'Feature',
-  //       geometry: {
-  //         type: 'LineString',
-  //         coordinates: [pickup.coordinates, dropoff.coordinates],
-  //       },
-  //     };
-
-  //     const sourceId = 'line-source';
-
-  //     // Check if the source already exists, remove it if it does
-  //     if (map.getSource(sourceId)) {
-  //       map.removeSource(sourceId);
-  //       map.removeLayer('line-layer');
-  //     }
-
-  //     // Add the line to the map
-  //     map.addSource(sourceId, {
-  //       type: 'geojson',
-  //       data: newLine,
-  //     });
-
-  //     map.addLayer({
-  //       id: 'line-layer',
-  //       type: 'line',
-  //       source: sourceId,
-  //       layout: {
-  //         'line-join': 'round',
-  //         'line-cap': 'round',
-  //       },
-  //       paint: {
-  //         'line-color': 'red',
-  //         'line-width': 2,
-  //       },
-  //     });
-
-  //     // Fit the map to the new line
-  //     map.fitBounds([pickup.coordinates, dropoff.coordinates], { padding: 50 });
-
-  //     setLine(newLine);
-  //   }
-  // };
-
-  // Helper function to calculate zoom level based on bounds
-  const getZoomLevel = (bounds, map) => {
-    const WORLD_DIM = { height: 256, width: 256 };
-    const ZOOM_MAX = 21;
-
-    const ne = map.project(bounds.getNorthEast());
-    const sw = map.project(bounds.getSouthWest());
-
-    const dx = ne.x - sw.x;
-    const dy = ne.y - sw.y;
-
-    for (let zoom = ZOOM_MAX; zoom >= 0; --zoom) {
-      if (dx <= WORLD_DIM.width && dy <= WORLD_DIM.height) {
-        return zoom;
-      }
-      dx /= 2;
-      dy /= 2;
-    }
-
-    return 0;
-  };
-
-
-
-  // Example function to add a line to the map using GeoJSON source and layer
-  const addLineToMap = (coordinates) => {
-    map.addSource('line-source', {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates,
-        },
-      },
     });
 
-    map.addLayer({
-      id: 'line-layer',
-      type: 'line',
-      source: 'line-source',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': 'red',
-        'line-width': 2,
-      },
-    });
-  };
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+  }, []);
+
+  const handleChange = (e) =>
+    setRideDetails((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!pickup.locationName) { toast.error("Set a pickup location on the map"); return; }
+    if (!dropoff.locationName) { toast.error("Set a destination on the map"); return; }
+    if (!rideDetails.date) { toast.error("Pick a date"); return; }
+    if (!rideDetails.time) { toast.error("Pick a time"); return; }
 
+    setSubmitting(true);
     try {
-      // Reverse geocode to get coordinates for departure and destination
-      const pickupCoordinates = await reverseGeocodeCoordinates(pickup.locationName);
-      const dropoffCoordinates = await reverseGeocodeCoordinates(dropoff.locationName);
-
-
-      const response = await fetch('/api/apiProposeDrive', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const res = await fetch("/api/apiProposeDrive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           departure: pickup.locationName,
           destination: dropoff.locationName,
           date: rideDetails.date,
           time: rideDetails.time,
           seatsAvailable: rideDetails.seatsAvailable,
-          userId: userId,
-          departureLatitude: pickupCoordinates.latitude,
-          departureLongitude: pickupCoordinates.longitude,
-          destinationLatitude: dropoffCoordinates.latitude,
-          destinationLongitude: dropoffCoordinates.longitude,
+          userId,
+          departureLatitude: pickup.coordinates[1],
+          departureLongitude: pickup.coordinates[0],
+          destinationLatitude: dropoff.coordinates[1],
+          destinationLongitude: dropoff.coordinates[0],
         }),
       });
 
-      if (response.ok) {
-        console.log('Drive proposed successfully');
-        // Show a notification before redirecting
-        toast.success('Drive proposed successfully', {
-          position: 'top-center',
-          duration: 3000,
-        });
-        // Redirect or perform any other actions after successful ride creation
-        router.push('/'); // Redirect to the home page
+      if (res.ok) {
+        toast.success("Trip proposed successfully!");
+        router.push("/");
       } else {
-        console.error('Failed to create ride');
+        toast.error("Failed to propose trip");
       }
-    } catch (error) {
-      console.error('Error during ride creation:', error);
-    }
+    } catch { toast.error("An error occurred"); }
+    finally { setSubmitting(false); }
   };
-
-  // Function to get coordinates from location name using reverse geocoding
-  const reverseGeocodeCoordinates = async (locationName) => {
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(locationName)}.json?access_token=${accessToken}`
-      );
-      const data = await response.json();
-      const coordinates = data.features[0]?.geometry?.coordinates || [0, 0];
-      return { latitude: coordinates[1], longitude: coordinates[0] };
-    } catch (error) {
-      console.error("Error fetching reverse geocoding coordinates:", error);
-      return { latitude: 0, longitude: 0 }; // Return default coordinates on error
-    }
-  };
-
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setRideDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
-
-  const handleDateChange = (e) => {
-    const { name, value } = e.target;
-
-    setRideDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
-
-  const handleTimeChange = (e) => {
-    const { name, value } = e.target;
-
-    setRideDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
-
-  useEffect(() => {
-    setupMap();
-  }, []); // Run this effect once after the initial render
 
   return (
-    <Wrapper>
+    <>
+      <Head>
+        <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Geist:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+      </Head>
 
+      <style suppressHydrationWarning>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Geist', sans-serif; }
 
-      <ButtonContainer>
-        <Link href="/" passHref>
-          <BackButton>
-            <BsArrowLeft size={30} />
-          </BackButton>
-        </Link>
-      </ButtonContainer>
+        .pd-root { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #f4f5f9; }
 
-      <SecondWrapper>
-        <ContentContainer>
-          <FormContainer>
-            <h1 className="text-4xl mb-8 text-center font-serif text-blue-990">Suggest a trip</h1>
-            <form
-              onSubmit={handleSubmit}
-              className="border-2 border-blue-500 rounded-xl px-8 pt-6 pb-8 mb-4"
-            >
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="departure">
-                  Pickup Location:
-                  <input
-                    type="text"
-                    name="departure"
-                    value={pickup.locationName}
-                    onChange={handleChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="destination">
-                  Destination:
-                  <input
-                    type="text"
-                    name="destination"
-                    value={dropoff.locationName}
-                    onChange={handleChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="date">
-                  Date:
-                  <input
-                    type="date"
-                    name="date"
-                    value={rideDetails.date}
-                    onChange={handleDateChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-                {dateError && (
-                  <p className="text-red-500 text-s text-center">{dateError}</p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="time">
-                  Time:
-                  <input
-                    type="time"
-                    name="time"
-                    value={rideDetails.time}
-                    onChange={handleTimeChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="maxSeats">
-                  Max Seats:
-                  <span className="text-gray-500 ml-2">{maxSeatsPerTrip}</span>
-                </label>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="seatsAvailable">
-                  Seats Available:
-                  <input
-                    type="number"
-                    name="seatsAvailable"
-                    value={rideDetails.seatsAvailable}
-                    onChange={handleChange}
-                    max={maxSeatsPerTrip}
-                    min={1}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </label>
-                {seatError && (
-                  <p className="text-red-500 text-s text-center">{seatError}</p>
-                )}
-              </div>
-              <div className='mt-10 text-center'>
+        /* TOPBAR */
+        .pd-topbar {
+          height: 60px; flex-shrink: 0; background: #0f1117;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          display: flex; align-items: center; padding: 0 1.25rem; gap: 0.85rem;
+        }
+        .pd-back {
+          width: 32px; height: 32px; border-radius: 7px;
+          background: rgba(255,255,255,0.08); border: none;
+          display: flex; align-items: center; justify-content: center;
+          color: rgba(255,255,255,0.7); cursor: pointer;
+          text-decoration: none; transition: background 0.14s;
+        }
+        .pd-back:hover { background: rgba(255,255,255,0.14); color: #fff; }
+        .pd-topbar-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 0.95rem; font-weight: 600; color: #fff;
+        }
+
+        /* BODY */
+        .pd-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+        /* PANEL */
+        .pd-panel {
+          width: 340px; flex-shrink: 0; background: #fff;
+          border-right: 1px solid #e8eaf0;
+          display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .pd-panel-inner { padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
+
+        .pd-panel-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 1rem; font-weight: 600; color: #111827;
+        }
+
+        /* Pin toggle */
+        .pd-pin-toggle {
+          display: flex; gap: 0.4rem;
+          background: #f4f5f9; border-radius: 9px; padding: 3px;
+        }
+        .pd-pin-btn {
+          flex: 1; padding: 0.42rem 0.6rem; border-radius: 7px;
+          border: none; font-family: 'Geist', sans-serif;
+          font-size: 0.75rem; font-weight: 500; cursor: pointer;
+          transition: all 0.14s; display: flex; align-items: center;
+          justify-content: center; gap: 5px;
+        }
+        .pd-pin-btn.active-pickup { background: #6366f1; color: #fff; }
+        .pd-pin-btn.active-dropoff { background: #ef4444; color: #fff; }
+        .pd-pin-btn.inactive { background: transparent; color: #9ca3af; }
+        .pd-pin-btn.inactive:hover { background: rgba(0,0,0,0.04); color: #374151; }
+
+        /* Location card */
+        .pd-loc-card {
+          background: #f9fafb; border: 1px solid #e8eaf0; border-radius: 10px; overflow: hidden;
+        }
+        .pd-loc-row {
+          display: flex; align-items: flex-start; gap: 0.65rem;
+          padding: 0.7rem 0.9rem; cursor: pointer; transition: background 0.13s;
+        }
+        .pd-loc-row:hover { background: #f3f4f8; }
+        .pd-loc-row.active-row { background: #eef2ff; }
+        .pd-loc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+        .pd-loc-inner { flex: 1; min-width: 0; }
+        .pd-loc-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: #9ca3af; }
+        .pd-loc-value { font-size: 0.78rem; color: #374151; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pd-loc-placeholder { font-size: 0.78rem; color: #c9cdd8; }
+        .pd-loc-sep { height: 1px; background: #e8eaf0; }
+        .pd-loc-edit { font-size: 0.62rem; color: #6366f1; font-weight: 500; flex-shrink: 0; margin-top: 2px; }
+
+        /* Divider */
+        .pd-divider { height: 1px; background: #f0f1f5; }
+
+        /* Section label */
+        .pd-section-label {
+          font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
+          letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 0.5rem;
+        }
+
+        /* Fields */
+        .pd-fields { display: flex; flex-direction: column; gap: 0.7rem; }
+        .pd-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+        .pd-field { display: flex; flex-direction: column; gap: 0.28rem; }
+        .pd-label { font-size: 0.68rem; font-weight: 500; color: #6b7280; }
+        .pd-input {
+          width: 100%; padding: 0.55rem 0.8rem;
+          background: #f9fafb; border: 1px solid #e8eaf0;
+          border-radius: 8px; font-size: 0.8rem;
+          font-family: 'Geist', sans-serif; color: #111827;
+          outline: none; transition: border-color 0.14s, box-shadow 0.14s;
+        }
+        .pd-input:focus {
+          border-color: #6366f1; background: #fff;
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
+
+        /* Max seats hint */
+        .pd-max-hint {
+          font-size: 0.68rem; color: #9ca3af;
+          background: #f9fafb; border: 1px solid #f0f1f5;
+          border-radius: 7px; padding: 0.4rem 0.7rem;
+          display: flex; align-items: center; gap: 0.4rem;
+        }
+        .pd-max-hint strong { color: #6366f1; }
+
+        /* Submit */
+        .pd-btn-submit {
+          width: 100%; padding: 0.6rem;
+          background: #6366f1; color: #fff; border: none;
+          border-radius: 9px; font-family: 'Geist', sans-serif;
+          font-size: 0.82rem; font-weight: 500; cursor: pointer;
+          transition: background 0.14s;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .pd-btn-submit:hover:not(:disabled) { background: #4f46e5; }
+        .pd-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* MAP */
+        .pd-map { flex: 1; position: relative; overflow: hidden; }
+        .pd-map-inner { position: absolute; inset: 0; }
+        .leaflet-container { width: 100%; height: 100%; }
+        .pd-map-badge {
+          position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+          z-index: 999; display: flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.97); border: 1px solid #e5e7eb;
+          border-radius: 100px; padding: 5px 14px;
+          font-size: 0.72rem; font-weight: 500; color: #374151;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1); pointer-events: none;
+        }
+        .pd-mode-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .pd-map-hint {
+          position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+          background: rgba(255,255,255,0.96); border: 1px solid #e5e7eb;
+          border-radius: 100px; padding: 4px 12px;
+          font-size: 0.7rem; color: #374151;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.08); pointer-events: none; z-index: 999;
+        }
+      `}</style>
+
+      <div className="pd-root">
+
+        {/* TOPBAR */}
+        <div className="pd-topbar">
+          <Link href="/" passHref>
+            <a className="pd-back">
+              <i className="ti ti-arrow-left" style={{ fontSize: 16 }} aria-hidden="true" />
+            </a>
+          </Link>
+          <div className="pd-topbar-title">Propose a Trip</div>
+        </div>
+
+        <div className="pd-body">
+
+          {/* PANEL */}
+          <div className="pd-panel">
+            <div className="pd-panel-inner">
+              <div className="pd-panel-title">Trip details</div>
+
+              {/* Pin mode toggle */}
+              <div className="pd-pin-toggle">
                 <button
-                  disabled={dateError || seatError}
-                  type="submit"
-                  className="left-1/2 bg-blue-500 hover:bg-blue-700
-                 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  type="button"
+                  className={`pd-pin-btn ${pinMode === "pickup" ? "active-pickup" : "inactive"}`}
+                  onClick={() => setPinMode("pickup")}
                 >
-                  Proposer le trajet
+                  <i className="ti ti-map-pin" style={{ fontSize: 12 }} aria-hidden="true" />
+                  Set pickup
+                </button>
+                <button
+                  type="button"
+                  className={`pd-pin-btn ${pinMode === "dropoff" ? "active-dropoff" : "inactive"}`}
+                  onClick={() => setPinMode("dropoff")}
+                >
+                  <i className="ti ti-map-pin" style={{ fontSize: 12 }} aria-hidden="true" />
+                  Set destination
                 </button>
               </div>
-            </form>
-          </FormContainer>
-        </ContentContainer>
 
-        <MapContainer id="map" />
+              {/* Location display */}
+              <div className="pd-loc-card">
+                <div
+                  className={`pd-loc-row ${pinMode === "pickup" ? "active-row" : ""}`}
+                  onClick={() => setPinMode("pickup")}
+                >
+                  <div className="pd-loc-dot" style={{ background: "#6366f1" }} />
+                  <div className="pd-loc-inner">
+                    <div className="pd-loc-label">From</div>
+                    {pickup.locationName
+                      ? <div className="pd-loc-value">{pickup.locationName.split(",").slice(0, 2).join(",")}</div>
+                      : <div className="pd-loc-placeholder">Detecting your location…</div>
+                    }
+                  </div>
+                  {pinMode === "pickup" && <div className="pd-loc-edit">clicking map →</div>}
+                </div>
+                <div className="pd-loc-sep" />
+                <div
+                  className={`pd-loc-row ${pinMode === "dropoff" ? "active-row" : ""}`}
+                  onClick={() => setPinMode("dropoff")}
+                >
+                  <div className="pd-loc-dot" style={{ background: "#ef4444" }} />
+                  <div className="pd-loc-inner">
+                    <div className="pd-loc-label">To</div>
+                    {dropoff.locationName
+                      ? <div className="pd-loc-value">{dropoff.locationName.split(",").slice(0, 2).join(",")}</div>
+                      : <div className="pd-loc-placeholder">Click map to set destination</div>
+                    }
+                  </div>
+                  {pinMode === "dropoff" && <div className="pd-loc-edit">clicking map →</div>}
+                </div>
+              </div>
 
-      </SecondWrapper>
+              <div className="pd-divider" />
 
+              {/* Date & Time */}
+              <div>
+                <div className="pd-section-label">Schedule</div>
+                <div className="pd-fields">
+                  <div className="pd-row">
+                    <div className="pd-field">
+                      <label className="pd-label" htmlFor="date">Date</label>
+                      <input
+                        className="pd-input" type="date" id="date" name="date"
+                        value={rideDetails.date} onChange={handleChange}
+                        min={new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                    <div className="pd-field">
+                      <label className="pd-label" htmlFor="time">Time</label>
+                      <input
+                        className="pd-input" type="time" id="time" name="time"
+                        value={rideDetails.time} onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-    </Wrapper>
+              <div className="pd-divider" />
+
+              {/* Seats */}
+              <div>
+                <div className="pd-section-label">Seats</div>
+                <div className="pd-fields">
+                  {maxSeats > 0 && (
+                    <div className="pd-max-hint">
+                      <i className="ti ti-info-circle" style={{ fontSize: 12 }} aria-hidden="true" />
+                      Max allowed: <strong>{maxSeats}</strong>
+                    </div>
+                  )}
+                  <div className="pd-field">
+                    <label className="pd-label" htmlFor="seatsAvailable">Seats available</label>
+                    <input
+                      className="pd-input" type="number" id="seatsAvailable" name="seatsAvailable"
+                      value={rideDetails.seatsAvailable} onChange={handleChange}
+                      min={1} max={maxSeats || 10}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="pd-btn-submit"
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                <i className="ti ti-send" style={{ fontSize: 14 }} aria-hidden="true" />
+                {submitting ? "Proposing…" : "Propose trip"}
+              </button>
+
+            </div>
+          </div>
+
+          {/* MAP */}
+          <div className="pd-map">
+            <div ref={mapContainerRef} className="pd-map-inner" />
+            <div className="pd-map-badge">
+              <div
+                className="pd-mode-dot"
+                style={{ background: pinMode === "pickup" ? "#6366f1" : "#ef4444" }}
+              />
+              {pinMode === "pickup" ? "Click map to set pickup" : "Click map to set destination"}
+            </div>
+            <div className="pd-map-hint">
+              <i className="ti ti-hand-click" style={{ fontSize: 11 }} aria-hidden="true" /> Click anywhere on the map
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </>
   );
-}
-const Wrapper = tw.div`
-  pt-1 bg-gray-200 h-screen 
-`;
-
-const SecondWrapper = tw.div`
-  flex h-screen mt-2
-`;
-
-const ButtonContainer = tw.div`
-  bg-white p-2 h-12
-`;
-
-const BackButton = tw.button``;
-
-const MapContainer = tw.div`
-  flex-1 w-full rounded-xl
-`;
-
-const ContentContainer = tw.div`
-   flex flex-row mr-2 h-full
-`;
-
-const FormContainer = tw.div`
-   max-w-2xl mb-1 p-8 bg-white shadow-2xl rounded-xl
-`;
-
-
+};
 
 export default ProposeDrive;

@@ -30,7 +30,7 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
         shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
       });
 
-      const map = L.map(mapContainerRef.current).setView(
+      const map = L.map(mapContainerRef.current, { zoomAnimation: false }).setView(
         [location[1], location[0]], // Leaflet uses [lat, lng]
         13
       );

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt'; // Import the bcrypt library
+import bcrypt from 'bcryptjs'
+; // Import the bcrypt library
 
 const prisma = new PrismaClient();
 const SECRET_KEY = 'HAXER';
