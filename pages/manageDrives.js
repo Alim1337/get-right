@@ -321,7 +321,7 @@ const ManageDrives = () => {
                 {trips.length === 0 ? (
                   <div className="md-empty">
                     <i className="ti ti-car-off" style={{ fontSize: 28, color: "#d1d5db" }} aria-hidden="true" />
-                    You haven't created any drives yet.
+                    You have not created any drives yet.
                   </div>
                 ) : trips.map((trip) => (
                   <div key={trip.tripId} className="md-card">
