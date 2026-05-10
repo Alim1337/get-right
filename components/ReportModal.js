@@ -284,7 +284,7 @@ const ReportModal = ({ isOpen, onClose, onSubmit }) => {
               </div>
               <div>
                 <div className="rpm-title">Report an Issue</div>
-                <div className="rpm-subtitle">We'll review it as soon as possible</div>
+                <div className="rpm-subtitle">We will review it as soon as possible</div>
               </div>
             </div>
             <button className="rpm-close" onClick={onClose}>
