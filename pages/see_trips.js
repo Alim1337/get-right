@@ -221,7 +221,7 @@ const SeeTrips = () => {
         }
       `}</style>
 
-      <div className="st-root">
+<div className="st-root" suppressHydrationWarning={true}>
         <div className="st-topbar">
           <Link href="/" passHref>
             <a className="st-back">

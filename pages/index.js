@@ -7,6 +7,11 @@ import ReservedRidesModal from "../components/ReservedRidesModal";
 import ReportModal from "../components/ReportModal";
 import { Toaster, toast } from "sonner";
 import Head from "next/head";
+import {
+  FaSearch, FaPlusCircle, FaList, FaCalendarAlt, FaMapMarkerAlt,
+  FaExclamationTriangle, FaSignOutAlt, FaCar, FaTicketAlt,
+  FaUser, FaChevronRight
+} from "react-icons/fa";
 
 const Map = dynamic(() => import("../components/Map"), { ssr: false });
 
@@ -87,9 +92,18 @@ const Index = () => {
   );
 
   const navLinks = [
-    { href: "/search", label: "Search ride", icon: "ti-search", color: "#60a5fa", bg: "rgba(59,130,246,0.13)" },
-    { href: "/createRide", label: "Create trip", icon: "ti-plus-circle", color: "#a78bfa", bg: "rgba(139,92,246,0.13)" },
-    { href: "/see_trips", label: "All trips", icon: "ti-list", color: "#34d399", bg: "rgba(52,211,153,0.13)" },
+    { href: "/search", label: "Search ride", icon: <FaSearch size={13} />, color: "#60a5fa", bg: "rgba(59,130,246,0.13)" },
+    { href: "/createRide", label: "Create trip", icon: <FaPlusCircle size={13} />, color: "#a78bfa", bg: "rgba(139,92,246,0.13)" },
+    { href: "/see_trips", label: "All trips", icon: <FaList size={13} />, color: "#34d399", bg: "rgba(52,211,153,0.13)" },
+  ];
+
+  const actionCards = [
+    { href: "/search", icon: <FaSearch size={15} />, bg: "#eff6ff", color: "#3b82f6", title: "Search ride", desc: "Find rides near you" },
+    { href: "/createRide", icon: <FaPlusCircle size={15} />, bg: "#f5f3ff", color: "#7c3aed", title: "Create trip", desc: "Offer your seats" },
+    { href: "/see_trips", icon: <FaList size={15} />, bg: "#f0fdfa", color: "#0d9488", title: "All trips", desc: "Browse upcoming" },
+    role === "driver"
+      ? { href: "/manageProposedDrives", icon: <FaCalendarAlt size={15} />, bg: "#eef2ff", color: "#6366f1", title: "My drives", desc: "Manage proposals" }
+      : { href: "/proposeDrive", icon: <FaMapMarkerAlt size={15} />, bg: "#eef2ff", color: "#6366f1", title: "Propose trip", desc: "Request a route" },
   ];
 
   return (
@@ -125,14 +139,13 @@ const Index = () => {
           background: #6366f1;
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .g-logo-mark svg { width: 14px; height: 14px; fill: #fff; }
         .g-logo-text {
           font-family: 'Bricolage Grotesque', sans-serif;
           font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: -0.02em;
         }
         .g-logo-text em { color: #818cf8; font-style: normal; }
 
-        .g-nav { flex: 1; padding: 0.9rem 0.65rem; display: flex; flex-direction: column; gap: 1px; }
+        .g-nav { flex: 1; padding: 0.9rem 0.65rem; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; }
         .g-nav-lbl {
           font-size: 0.57rem; font-weight: 600; letter-spacing: 0.14em;
           text-transform: uppercase; color: rgba(255,255,255,0.18);
@@ -150,7 +163,7 @@ const Index = () => {
         .g-nav-ic {
           width: 27px; height: 27px; border-radius: 6px;
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; font-size: 13px;
+          flex-shrink: 0;
         }
 
         .g-sidebar-foot {
@@ -171,10 +184,7 @@ const Index = () => {
         .g-foot-btn.muted:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5); }
 
         /* MAIN */
-        .g-main {
-          flex: 1; display: flex; flex-direction: column;
-          overflow: hidden; min-width: 0; background: #f4f5f9;
-        }
+        .g-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; background: #f4f5f9; }
 
         /* TOPBAR */
         .g-topbar {
@@ -182,10 +192,7 @@ const Index = () => {
           background: #fff; border-bottom: 1px solid #e8eaf0;
           display: flex; align-items: center; padding: 0 1.4rem; gap: 1rem;
         }
-        .g-greeting {
-          font-family: 'Bricolage Grotesque', sans-serif;
-          font-size: 1rem; font-weight: 600; color: #111827;
-        }
+        .g-greeting { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1rem; font-weight: 600; color: #111827; }
         .g-greeting strong { color: #6366f1; }
         .g-sub { font-size: 0.7rem; color: #9ca3af; margin-top: 1px; }
         .g-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
@@ -197,6 +204,7 @@ const Index = () => {
           border-radius: 8px; color: #16a34a;
           font-size: 0.76rem; font-weight: 500; cursor: pointer;
           font-family: 'Geist', sans-serif; transition: background 0.14s;
+          white-space: nowrap;
         }
         .g-res-btn:hover { background: #dcfce7; }
         .g-badge {
@@ -213,7 +221,7 @@ const Index = () => {
           background: #eef2ff; border: 1px solid #c7d2fe;
           border-radius: 8px; color: #4f46e5;
           font-size: 0.76rem; font-weight: 500;
-          text-decoration: none; transition: background 0.14s;
+          text-decoration: none; transition: background 0.14s; white-space: nowrap;
         }
         .g-manage-btn:hover { background: #e0e7ff; }
         .g-chip {
@@ -224,24 +232,17 @@ const Index = () => {
         }
         .g-chip:hover { border-color: #d1d5db; }
         .g-avatar {
-          width: 27px; height: 27px; border-radius: 50%;
-          background: #6366f1;
+          width: 27px; height: 27px; border-radius: 50%; background: #6366f1;
           display: flex; align-items: center; justify-content: center;
           font-size: 0.58rem; font-weight: 600; color: #fff;
         }
         .g-chip-name { font-size: 0.76rem; font-weight: 500; color: #374151; white-space: nowrap; }
 
         /* BODY */
-        .g-body {
-          flex: 1; display: flex; flex-direction: column;
-          overflow: hidden; min-height: 0;
-          padding: 1.1rem; gap: 1rem;
-        }
+        .g-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 1.1rem; gap: 1rem; }
 
         /* TOP ROW */
-        .g-top-row {
-          display: flex; gap: 1rem; align-items: flex-start; flex-shrink: 0;
-        }
+        .g-top-row { display: flex; gap: 1rem; align-items: flex-start; flex-shrink: 0; }
 
         /* Action cards */
         .g-actions { display: flex; gap: 0.7rem; flex-shrink: 0; }
@@ -249,80 +250,47 @@ const Index = () => {
           background: #fff; border: 1px solid #e8eaf0;
           border-radius: 12px; padding: 0.85rem 0.9rem;
           display: flex; flex-direction: column; gap: 0.4rem;
-          text-decoration: none;
-          transition: box-shadow 0.14s, border-color 0.14s;
+          text-decoration: none; transition: box-shadow 0.14s, border-color 0.14s;
           width: 120px;
         }
         .g-action-card:hover { border-color: #d1d5db; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .g-action-ic {
-          width: 32px; height: 32px; border-radius: 8px;
-          display: flex; align-items: center; justify-content: center; font-size: 14px;
-        }
-        .g-action-title {
-          font-family: 'Bricolage Grotesque', sans-serif;
-          font-size: 0.78rem; font-weight: 600; color: #111827;
-        }
+        .g-action-ic { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .g-action-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.78rem; font-weight: 600; color: #111827; }
         .g-action-desc { font-size: 0.65rem; color: #9ca3af; line-height: 1.35; }
 
-        /* Divider */
         .g-vdiv { width: 1px; background: #e8eaf0; align-self: stretch; flex-shrink: 0; }
 
         /* Stats */
         .g-stats { display: flex; flex-direction: column; gap: 0.6rem; flex-shrink: 0; }
-        .g-stat {
-          background: #fff; border: 1px solid #e8eaf0;
-          border-radius: 10px; padding: 0.7rem 1rem; min-width: 105px;
-        }
-        .g-stat-num {
-          font-family: 'Bricolage Grotesque', sans-serif;
-          font-size: 1.4rem; font-weight: 700; color: #111827; line-height: 1;
-        }
+        .g-stat { background: #fff; border: 1px solid #e8eaf0; border-radius: 10px; padding: 0.7rem 1rem; min-width: 105px; }
+        .g-stat-num { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.4rem; font-weight: 700; color: #111827; line-height: 1; }
         .g-stat-lbl { font-size: 0.65rem; color: #9ca3af; margin-top: 3px; }
 
         /* Reservations strip */
         .g-res-strip { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-        .g-strip-lbl {
-          font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
-          letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 0.5rem;
-        }
+        .g-strip-lbl { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 0.5rem; }
         .g-strip-list { display: flex; flex-direction: column; gap: 0.45rem; }
         .g-strip-item {
           background: #fff; border: 1px solid #e8eaf0; border-radius: 10px;
-          padding: 0.58rem 0.85rem;
-          display: flex; align-items: center; gap: 0.7rem;
+          padding: 0.58rem 0.85rem; display: flex; align-items: center; gap: 0.7rem;
           cursor: pointer; transition: border-color 0.14s;
         }
         .g-strip-item:hover { border-color: #c7d2fe; }
         .g-strip-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
         .g-strip-info { flex: 1; min-width: 0; }
-        .g-strip-route {
-          font-size: 0.77rem; font-weight: 500; color: #111827;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .g-strip-route { font-size: 0.77rem; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .g-strip-meta { font-size: 0.65rem; color: #9ca3af; margin-top: 1px; }
-        .g-strip-pill {
-          font-size: 0.6rem; font-weight: 600; padding: 2px 7px;
-          border-radius: 20px; flex-shrink: 0;
-        }
+        .g-strip-pill { font-size: 0.6rem; font-weight: 600; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
         .g-strip-pill.up { background: #f0fdf4; color: #16a34a; }
         .g-strip-pill.past { background: #f9fafb; color: #9ca3af; }
-        .g-strip-more {
-          font-size: 0.7rem; color: #6366f1; font-weight: 500;
-          cursor: pointer; padding: 0.25rem 0; text-align: right;
-        }
+        .g-strip-more { font-size: 0.7rem; color: #6366f1; font-weight: 500; cursor: pointer; padding: 0.25rem 0; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
         .g-strip-more:hover { text-decoration: underline; }
-        .g-strip-empty {
-          font-size: 0.77rem; color: #9ca3af;
-          background: #fff; border: 1px solid #e8eaf0;
-          border-radius: 10px; padding: 0.75rem 1rem;
-        }
+        .g-strip-empty { font-size: 0.77rem; color: #9ca3af; background: #fff; border: 1px solid #e8eaf0; border-radius: 10px; padding: 0.75rem 1rem; }
 
-        /* MAP — bottom half, takes all remaining space */
+        /* MAP */
         .g-map-row {
-          flex: 1; min-height: 0;
-          border-radius: 12px; overflow: hidden;
-          border: 1px solid #e8eaf0;
-          position: relative;
+          flex: 1; min-height: 0; border-radius: 12px;
+          overflow: hidden; border: 1px solid #e8eaf0; position: relative;
         }
         .g-map-pill {
           position: absolute; bottom: 12px; left: 12px; z-index: 999;
@@ -335,13 +303,14 @@ const Index = () => {
         .g-loc-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
       `}</style>
 
-      <div className="g-shell">
-
+<div className="g-shell" suppressHydrationWarning={true}>
         {/* SIDEBAR */}
         <aside className="g-sidebar">
           <div className="g-logo">
             <div className="g-logo-mark">
-              <svg viewBox="0 0 16 16"><path d="M8 1L1 5.5v5L8 15l7-4.5v-5L8 1zm0 2.2l4.5 2.9L8 9l-4.5-2.9L8 3.2z"/></svg>
+              <svg viewBox="0 0 16 16" style={{ width: 14, height: 14, fill: '#fff' }}>
+                <path d="M8 1L1 5.5v5L8 15l7-4.5v-5L8 1zm0 2.2l4.5 2.9L8 9l-4.5-2.9L8 3.2z"/>
+              </svg>
             </div>
             <div className="g-logo-text">get<em>right</em></div>
           </div>
@@ -352,7 +321,7 @@ const Index = () => {
               <Link href={n.href} key={n.href} passHref>
                 <a className="g-nav-a">
                   <div className="g-nav-ic" style={{ background: n.bg }}>
-                    <i className={`ti ${n.icon}`} style={{ color: n.color }} aria-hidden="true" />
+                    <span style={{ color: n.color }}>{n.icon}</span>
                   </div>
                   {n.label}
                 </a>
@@ -364,7 +333,7 @@ const Index = () => {
               <Link href="/manageProposedDrives" passHref>
                 <a className="g-nav-a accent">
                   <div className="g-nav-ic" style={{ background: "rgba(99,102,241,0.12)" }}>
-                    <i className="ti ti-calendar-event" style={{ color: "#818cf8" }} aria-hidden="true" />
+                    <FaCalendarAlt size={13} color="#818cf8" />
                   </div>
                   Proposed trips
                 </a>
@@ -373,7 +342,7 @@ const Index = () => {
               <Link href="/proposeDrive" passHref>
                 <a className="g-nav-a accent">
                   <div className="g-nav-ic" style={{ background: "rgba(99,102,241,0.12)" }}>
-                    <i className="ti ti-map-pin-plus" style={{ color: "#818cf8" }} aria-hidden="true" />
+                    <FaMapMarkerAlt size={13} color="#818cf8" />
                   </div>
                   Propose a trip
                 </a>
@@ -382,11 +351,16 @@ const Index = () => {
           </nav>
 
           <div className="g-sidebar-foot">
-            <button className="g-foot-btn danger" onClick={() => setShowReportModal(true)}>
-              <i className="ti ti-alert-triangle" aria-hidden="true" /> Report issue
+            <button
+              className="g-foot-btn danger"
+              onClick={() => setShowReportModal(true)}
+            >
+              <FaExclamationTriangle size={13} />
+              Report issue
             </button>
             <button className="g-foot-btn muted" onClick={handleDisconnect}>
-              <i className="ti ti-logout" aria-hidden="true" /> Sign out
+              <FaSignOutAlt size={13} />
+              Sign out
             </button>
           </div>
         </aside>
@@ -404,13 +378,13 @@ const Index = () => {
               {role === "driver" ? (
                 <Link href="/manageDrives" passHref>
                   <a className="g-manage-btn">
-                    <i className="ti ti-car" aria-hidden="true" /> Manage drives
+                    <FaCar size={12} /> Manage drives
                   </a>
                 </Link>
               ) : (
                 <button className="g-res-btn" onClick={() => setShowReservedRidesModal(true)}>
                   {counter > 0 && <span className="g-badge">{counter}</span>}
-                  <i className="ti ti-ticket" aria-hidden="true" /> My reservations
+                  <FaTicketAlt size={12} /> My reservations
                 </button>
               )}
               <div className="g-chip" onClick={() => router.push("/userProfile")}>
@@ -422,59 +396,22 @@ const Index = () => {
 
           <div className="g-body">
 
-            {/* TOP ROW: actions | divider | stats | divider | reservations */}
+            {/* TOP ROW */}
             <div className="g-top-row">
 
               {/* Quick action cards */}
               <div className="g-actions">
-                <Link href="/search" passHref>
-                  <a className="g-action-card">
-                    <div className="g-action-ic" style={{ background: "#eff6ff" }}>
-                      <i className="ti ti-search" style={{ color: "#3b82f6" }} aria-hidden="true" />
-                    </div>
-                    <div className="g-action-title">Search ride</div>
-                    <div className="g-action-desc">Find rides near you</div>
-                  </a>
-                </Link>
-                <Link href="/createRide" passHref>
-                  <a className="g-action-card">
-                    <div className="g-action-ic" style={{ background: "#f5f3ff" }}>
-                      <i className="ti ti-plus-circle" style={{ color: "#7c3aed" }} aria-hidden="true" />
-                    </div>
-                    <div className="g-action-title">Create trip</div>
-                    <div className="g-action-desc">Offer your seats</div>
-                  </a>
-                </Link>
-                <Link href="/see_trips" passHref>
-                  <a className="g-action-card">
-                    <div className="g-action-ic" style={{ background: "#f0fdfa" }}>
-                      <i className="ti ti-list" style={{ color: "#0d9488" }} aria-hidden="true" />
-                    </div>
-                    <div className="g-action-title">All trips</div>
-                    <div className="g-action-desc">Browse upcoming</div>
-                  </a>
-                </Link>
-                {role === "driver" ? (
-                  <Link href="/manageProposedDrives" passHref>
+                {actionCards.map((card) => (
+                  <Link href={card.href} key={card.href} passHref>
                     <a className="g-action-card">
-                      <div className="g-action-ic" style={{ background: "#eef2ff" }}>
-                        <i className="ti ti-calendar-event" style={{ color: "#6366f1" }} aria-hidden="true" />
+                      <div className="g-action-ic" style={{ background: card.bg }}>
+                        <span style={{ color: card.color }}>{card.icon}</span>
                       </div>
-                      <div className="g-action-title">My drives</div>
-                      <div className="g-action-desc">Manage proposals</div>
+                      <div className="g-action-title">{card.title}</div>
+                      <div className="g-action-desc">{card.desc}</div>
                     </a>
                   </Link>
-                ) : (
-                  <Link href="/proposeDrive" passHref>
-                    <a className="g-action-card">
-                      <div className="g-action-ic" style={{ background: "#eef2ff" }}>
-                        <i className="ti ti-map-pin-plus" style={{ color: "#6366f1" }} aria-hidden="true" />
-                      </div>
-                      <div className="g-action-title">Propose trip</div>
-                      <div className="g-action-desc">Request a route</div>
-                    </a>
-                  </Link>
-                )}
+                ))}
               </div>
 
               <div className="g-vdiv" />
@@ -507,22 +444,14 @@ const Index = () => {
                       {reservations.slice(0, 3).map((r) => {
                         const isFuture = new Date(r.departureTime) > new Date();
                         return (
-                          <div
-                            key={r.reservationId}
-                            className="g-strip-item"
-                            onClick={() => showInMap(r)}
-                          >
+                          <div key={r.reservationId} className="g-strip-item" onClick={() => showInMap(r)}>
                             <div className="g-strip-dot" style={{ background: isFuture ? "#16a34a" : "#d1d5db" }} />
                             <div className="g-strip-info">
                               <div className="g-strip-route">
-                                {r.departureLocation} → {r.destinationLocation}
+                                {r.departureLocation?.split(",")[0]} → {r.destinationLocation?.split(",")[0]}
                               </div>
                               <div className="g-strip-meta">
-                                {r.driver?.firstName} {r.driver?.lastName} ·{" "}
-                                {new Date(r.departureTime).toLocaleDateString(undefined, {
-                                  month: "short", day: "numeric",
-                                  hour: "2-digit", minute: "2-digit",
-                                })}
+                                {r.driver?.firstName} {r.driver?.lastName} · {new Date(r.departureTime).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                               </div>
                             </div>
                             <span className={`g-strip-pill ${isFuture ? "up" : "past"}`}>
@@ -533,7 +462,7 @@ const Index = () => {
                       })}
                       {reservations.length > 3 && (
                         <div className="g-strip-more" onClick={() => setShowReservedRidesModal(true)}>
-                          View all {reservations.length} →
+                          View all {reservations.length} <FaChevronRight size={9} />
                         </div>
                       )}
                     </>
@@ -542,7 +471,7 @@ const Index = () => {
               </div>
             </div>
 
-            {/* MAP — fills the bottom half */}
+            {/* MAP */}
             <div className="g-map-row">
               <Map ref={mapRef} location={location} />
               <div className="g-map-pill">

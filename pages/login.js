@@ -322,8 +322,7 @@ const Login = () => {
         }
       `}</style>
 
-      <div className="gr-page">
-
+<div className="gr-page" suppressHydrationWarning={true}>
         {/* LEFT */}
         <div className="gr-left">
           <div className="gr-logo">get<span>right</span></div>

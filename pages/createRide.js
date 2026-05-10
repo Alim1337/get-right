@@ -342,7 +342,7 @@ const CreateRide = () => {
         .cr-map-badge.pickup { background: #fef3c7; border-color: #fde68a; color: #92400e; font-weight: 600; }
       `}</style>
 
-      <div className="cr-root">
+<div className="cr-root" suppressHydrationWarning={true}>
         <div className="cr-topbar">
           <Link href="/" passHref><a className="cr-back"><BsArrowLeft size={16} /></a></Link>
           <div className="cr-topbar-title">Create a Trip</div>
