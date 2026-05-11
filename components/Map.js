@@ -1,7 +1,6 @@
 // components/Map.js
 import React, { forwardRef, useEffect, useRef, useImperativeHandle } from "react";
 
-// Keep accessToken export so existing imports don't break
 export const accessToken = "";
 
 const Map = forwardRef(({ location, mapDestination }, ref) => {
@@ -9,23 +8,28 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const routeLayerRef = useRef(null);
+  const isMountedRef = useRef(true); // track mount state
 
   useImperativeHandle(ref, () => ({
     showPin,
     showRoad,
-    setZoom: (z) => mapInstanceRef.current?.setZoom(z),
+    setZoom: (z) => {
+      if (mapInstanceRef.current && isMountedRef.current) {
+        mapInstanceRef.current.setZoom(z);
+      }
+    },
   }));
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (mapInstanceRef.current) return;
+    isMountedRef.current = true;
 
-    // Small timeout ensures the DOM container is mounted before Leaflet tries to use it
+    if (typeof window === "undefined") return;
+
     const timer = setTimeout(() => {
-      if (!mapContainerRef.current) return; // safety check
+      if (!mapContainerRef.current || !isMountedRef.current) return;
 
       import("leaflet").then((L) => {
-        if (mapInstanceRef.current) return; // double-check after async
+        if (mapInstanceRef.current || !isMountedRef.current) return;
         if (!mapContainerRef.current) return;
 
         delete L.Icon.Default.prototype._getIconUrl;
@@ -35,12 +39,12 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
           shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
         });
 
-        const center = location
-          ? [location[1], location[0]]
-          : [36.7, 3.0]; // fallback to Algiers
+        const center = location ? [location[1], location[0]] : [36.7, 3.0];
 
         const map = L.map(mapContainerRef.current, {
-          zoomAnimation: false,
+          zoomAnimation: false,      // prevents _leaflet_pos error on unmount
+          fadeAnimation: false,      // prevents animation errors
+          markerZoomAnimation: false,
           preferCanvas: true,
         }).setView(center, 13);
 
@@ -49,7 +53,6 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
           maxZoom: 19,
         }).addTo(map);
 
-        // Current location marker
         const userIcon = L.divIcon({
           className: "",
           html: `<div style="
@@ -74,84 +77,101 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
     }, 100);
 
     return () => {
+      isMountedRef.current = false;
       clearTimeout(timer);
+
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.off(); // remove all event listeners first
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          // swallow cleanup errors silently
+        }
         mapInstanceRef.current = null;
       }
+
+      markersRef.current = [];
+      routeLayerRef.current = null;
     };
   }, []);
 
-  // Update view when location changes
   useEffect(() => {
-    if (mapInstanceRef.current && location) {
-      mapInstanceRef.current.setView([location[1], location[0]], 13);
+    if (mapInstanceRef.current && location && isMountedRef.current) {
+      try {
+        mapInstanceRef.current.setView([location[1], location[0]], 13);
+      } catch (e) { /* ignore */ }
     }
   }, [location]);
 
   useEffect(() => {
-    if (mapDestination) {
+    if (mapDestination && isMountedRef.current) {
       showPin(mapDestination.coordinates, mapDestination.locationName);
     }
   }, [mapDestination]);
 
   const showPin = (destinationLocation, destinationName, departureLocation = null, departureName = null) => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !isMountedRef.current) return;
 
     import("leaflet").then((L) => {
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
+      if (!mapInstanceRef.current || !isMountedRef.current) return;
 
-      const makeIcon = (color) => L.divIcon({
-        className: "",
-        html: `<div style="
-          width:16px;height:16px;
-          background:${color};
-          border:3px solid #fff;
-          border-radius:50%;
-          box-shadow:0 2px 6px rgba(0,0,0,0.3);
-        "></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-      });
+      try {
+        markersRef.current.forEach((m) => m.remove());
+        markersRef.current = [];
 
-      const [dLng, dLat] = destinationLocation.split(",").map(parseFloat);
-      if (isNaN(dLat) || isNaN(dLng)) return;
+        const makeIcon = (color) => L.divIcon({
+          className: "",
+          html: `<div style="
+            width:16px;height:16px;
+            background:${color};
+            border:3px solid #fff;
+            border-radius:50%;
+            box-shadow:0 2px 6px rgba(0,0,0,0.3);
+          "></div>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
 
-      const destMarker = L.marker([dLat, dLng], { icon: makeIcon("#ef4444") })
-        .addTo(mapInstanceRef.current)
-        .bindPopup(`<b>Destination:</b> ${destinationName}`)
-        .openPopup();
-      markersRef.current.push(destMarker);
+        const [dLng, dLat] = destinationLocation.split(",").map(parseFloat);
+        if (isNaN(dLat) || isNaN(dLng)) return;
 
-      if (departureLocation) {
-        const [depLng, depLat] = departureLocation.split(",").map(parseFloat);
-        if (!isNaN(depLat) && !isNaN(depLng)) {
-          const depMarker = L.marker([depLat, depLng], { icon: makeIcon("#16a34a") })
-            .addTo(mapInstanceRef.current)
-            .bindPopup(`<b>Departure:</b> ${departureName}`);
-          markersRef.current.push(depMarker);
-          const group = L.featureGroup([destMarker, depMarker]);
-          mapInstanceRef.current.fitBounds(group.getBounds(), { padding: [40, 40] });
+        const destMarker = L.marker([dLat, dLng], { icon: makeIcon("#ef4444") })
+          .addTo(mapInstanceRef.current)
+          .bindPopup(`<b>Destination:</b> ${destinationName}`)
+          .openPopup();
+        markersRef.current.push(destMarker);
+
+        if (departureLocation) {
+          const [depLng, depLat] = departureLocation.split(",").map(parseFloat);
+          if (!isNaN(depLat) && !isNaN(depLng)) {
+            const depMarker = L.marker([depLat, depLng], { icon: makeIcon("#16a34a") })
+              .addTo(mapInstanceRef.current)
+              .bindPopup(`<b>Departure:</b> ${departureName}`);
+            markersRef.current.push(depMarker);
+            const group = L.featureGroup([destMarker, depMarker]);
+            mapInstanceRef.current.fitBounds(group.getBounds(), { padding: [40, 40] });
+          }
+        } else {
+          mapInstanceRef.current.setView([dLat, dLng], 13);
         }
-      } else {
-        mapInstanceRef.current.setView([dLat, dLng], 13);
-      }
+      } catch (e) { console.error("showPin error:", e); }
     });
   };
 
   const showRoad = (startCoords, endCoords, includeBegin = false) => {
-    if (!mapInstanceRef.current) return;
+    if (!mapInstanceRef.current || !isMountedRef.current) return;
 
     import("leaflet").then((L) => {
-      if (routeLayerRef.current) {
-        routeLayerRef.current.remove();
-        routeLayerRef.current = null;
-      }
-
-      let start, end;
+      if (!mapInstanceRef.current || !isMountedRef.current) return;
 
       try {
+        if (routeLayerRef.current) {
+          routeLayerRef.current.remove();
+          routeLayerRef.current = null;
+        }
+
+        let start, end;
+
         if (includeBegin) {
           const [sLng, sLat] = startCoords.split(",").map(parseFloat);
           const [eLng, eLat] = endCoords.split(",").map(parseFloat);
@@ -174,15 +194,13 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
 
         routeLayerRef.current = polyline;
         mapInstanceRef.current.fitBounds(polyline.getBounds(), { padding: [40, 40] });
-      } catch (err) {
-        console.error("showRoad error:", err);
-      }
+      } catch (e) { console.error("showRoad error:", e); }
     });
   };
 
   return (
     <>
-      <style>{`
+      <style suppressHydrationWarning>{`
         .map-container {
           position: absolute;
           top: 0; left: 0;
@@ -198,7 +216,7 @@ const Map = forwardRef(({ location, mapDestination }, ref) => {
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
       />
-      <div ref={mapContainerRef} className="map-container" />
+      <div ref={mapContainerRef} className="map-container" suppressHydrationWarning />
     </>
   );
 });
